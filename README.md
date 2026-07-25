@@ -17,7 +17,8 @@ cari-tech-graphic/
 ├── sobre.html                 ← página "Sobre nós"
 ├── admin.html                 ← painel de administração (login + gestão de leads)
 ├── enviar.php                 ← recebe os formulários e envia o e-mail  ⭐
-├── admin-api.php              ← API do painel (login + leads)  ⭐
+├── admin-api.php              ← API do painel (login + leads + conteúdo)  ⭐
+├── conteudo.php               ← conteúdo público (serviços/portfólio geridos)
 ├── config.php                 ← as SUAS definições (e-mail, WhatsApp, senha do painel, SMTP)  ⭐
 ├── .htaccess                  ← HTTPS, cache, segurança, protecção de ficheiros
 ├── robots.txt
@@ -96,8 +97,10 @@ Página protegida por palavra-passe para gerir os pedidos que chegam pelo site.
 - **Aba Leads (dados reais):** lista os contactos, permite mudar o estado
   (Novo → Contactado → Ganho / Perdido), responder por **WhatsApp** ou **e-mail** com um clique,
   e remover. Os estados ficam guardados em `dados/leads.json`.
-- As abas **Serviços** e **Portfólio** são uma demonstração local (não persistem) —
-  posso ligá-las a uma base de dados quando quiser.
+- **Abas Serviços e Portfólio (editáveis, refletidas no site):** adicione, edite ou remova
+  serviços e projectos. O que marcar como **Activo/Publicado** aparece na página inicial;
+  "Rascunho" fica oculto no site. É guardado automaticamente em `dados/conteudo.json` e lido
+  pelo site através de `conteudo.php`. Enquanto não editar nada, o site mostra os textos padrão.
 
 **Mudar a palavra-passe do painel:**
 ```bash
@@ -214,7 +217,8 @@ o botão de WhatsApp como alternativa.
 |-------------|-------|
 | Contactos mostrados no site (WhatsApp, e-mail, telefone) | `assets/js/config.js` |
 | Para onde chegam os e-mails / SMTP | `config.php` |
-| Textos e traduções (PT/EN) | `assets/js/i18n.js` |
+| Serviços e projectos do portfólio | painel **admin.html** → abas Serviços / Portfólio |
+| Textos e traduções gerais (PT/EN) | `assets/js/i18n.js` |
 | Cores, tipografia, layout | painel **Tweaks** (canto do site) ou `assets/css/` |
 | Imagens (fundador, equipa) | pasta `uploads/` |
 

@@ -40,6 +40,10 @@ return [
     // Onde ficam guardados os leads em JSON (usado pelo painel admin).
     'leads_json' => __DIR__ . '/dados/leads.json',
 
+    // Onde fica o conteúdo gerido no painel (Serviços e Portfólio),
+    // lido pelo site público através de conteudo.php.
+    'content_json' => __DIR__ . '/dados/conteudo.json',
+
     // ---- SMTP (opcional, recomendado para melhor entregabilidade) ----------
     // Deixe 'smtp_enabled' => false para usar a função mail() nativa do PHP.
     // Para activar SMTP é necessário instalar o PHPMailer (ver README).

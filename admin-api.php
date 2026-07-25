@@ -132,6 +132,34 @@ switch ($action) {
         gravar_leads($config, $lista);
         responder(true, ['message' => 'Lead removido.']);
 
+    case 'content':
+        exigir_login();
+        $path = $config['content_json'] ?? (__DIR__ . '/dados/conteudo.json');
+        $c = file_exists($path) ? json_decode(@file_get_contents($path) ?: '{}', true) : [];
+        if (!is_array($c)) $c = [];
+        responder(true, [
+            'services'  => $c['services']  ?? null,
+            'portfolio' => $c['portfolio'] ?? null,
+        ]);
+
+    case 'content-save':
+        exigir_login();
+        $services  = $body['services']  ?? null;
+        $portfolio = $body['portfolio'] ?? null;
+        if (!is_array($services) || !is_array($portfolio)) {
+            responder(false, ['message' => 'Dados inválidos.'], 422);
+        }
+        $path = $config['content_json'] ?? (__DIR__ . '/dados/conteudo.json');
+        @mkdir(dirname($path), 0755, true);
+        $ok = file_put_contents(
+            $path,
+            json_encode(['services' => array_values($services), 'portfolio' => array_values($portfolio)],
+                JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            LOCK_EX
+        );
+        if ($ok === false) responder(false, ['message' => 'Falha ao gravar.'], 500);
+        responder(true, ['message' => 'Conteúdo guardado.']);
+
     case 'stats':
         exigir_login();
         $lista = ler_leads($config);

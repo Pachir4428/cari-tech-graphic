@@ -35,6 +35,19 @@ window.buildWhatsAppLink = function (data) {
   return `https://wa.me/${num}?text=${encodeURIComponent(linhas)}`;
 };
 
+/* Carrega o conteúdo gerido no painel (Serviços e Portfólio) a partir de
+ * conteudo.php. É buscado uma só vez (cache). Se o servidor não estiver
+ * disponível (ex.: sem PHP), devolve arrays vazios e o site usa os textos
+ * padrão do i18n. */
+window.loadContent = function () {
+  if (window.__contentPromise) return window.__contentPromise;
+  window.__contentPromise = fetch('conteudo.php', { headers: { 'Accept': 'application/json' } })
+    .then((r) => (r.ok ? r.json() : {}))
+    .then((d) => ({ services: (d && d.services) || [], portfolio: (d && d.portfolio) || [] }))
+    .catch(() => ({ services: [], portfolio: [] }));
+  return window.__contentPromise;
+};
+
 /* Envia os dados do formulário para o servidor. Devolve { ok, message }.
  * Se o endpoint não existir (ex.: aberto por file:// ou ambiente sem PHP),
  * o chamador deve oferecer o WhatsApp como alternativa. */

@@ -15,9 +15,20 @@ function Portfolio({ t, onView }) {
     { id: 'marketing', label: t.portfolio.filters.marketing },
   ];
 
+  // Conteúdo gerido no painel (se existir) tem prioridade sobre os textos padrão.
+  const [managed, setManaged] = useState2(null);
+  useEffect2(() => {
+    window.loadContent().then((c) => {
+      if (c.portfolio && c.portfolio.length) {
+        setManaged(c.portfolio.map((p) => ({ t: p.t || '', c: p.c || '', tag: p.tag || 'web' })));
+      }
+    });
+  }, []);
+  const source = managed || t.portfolio.items;
+
   const items = filter === 'all'
-    ? t.portfolio.items
-    : t.portfolio.items.filter((i) => i.tag === filter);
+    ? source
+    : source.filter((i) => i.tag === filter);
 
   const tagColors = {
     web: 'linear-gradient(135deg, #22D3EE, #06B6D4)',
