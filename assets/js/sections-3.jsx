@@ -16,10 +16,46 @@ const CONTACT_DEFAULT = { email: 'contacto@caritechgraphic.com', phone: '+258 87
 const telHref = (phone) => 'tel:+' + String(phone || '').replace(/[^\d]/g, '');
 const waHref = (num) => 'https://wa.me/' + String(num || '').replace(/\D/g, '');
 
+// Logótipo gerido no painel (imagem) — com fallback para o logótipo SVG padrão.
+function useBranding() {
+  const [b, setB] = useState3({});
+  useEffect3(() => {
+    window.loadContent().then((d) => { if (d && d.branding) setB(d.branding); });
+  }, []);
+  return b;
+}
+function LogoMark({ logo }) {
+  if (logo) {
+    return <img src={logo} alt="Cari Tech Graphic" className="logo-img" style={{ height: 40, width: 'auto', display: 'block' }} />;
+  }
+  return (
+    <>
+      <div className="logo-mark">
+        <svg viewBox="0 0 32 32" fill="none">
+          <defs>
+            <linearGradient id="lm" x1="0" x2="1">
+              <stop offset="0" stopColor="var(--accent)" />
+              <stop offset="1" stopColor="var(--accent-2)" />
+            </linearGradient>
+          </defs>
+          <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm)" opacity="0.18" />
+          <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm)" strokeWidth="1.6" fill="none" />
+          <text x="16" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="currentColor">C</text>
+        </svg>
+      </div>
+      <span className="logo-text">
+        <span className="logo-name">Cari Tech</span>
+        <span className="logo-sub">Graphic</span>
+      </span>
+    </>
+  );
+}
+
 // ---------- Header ----------
 function Header({ t, lang, setLang, theme, setTheme, onStart }) {
   const [scrolled, setScrolled] = useState3(false);
   const [open, setOpen] = useState3(false);
+  const branding = useBranding();
 
   useEffect3(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -39,29 +75,12 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
     <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
       <div className="container site-header-inner">
         <a href="#home" className="logo" onClick={() => setOpen(false)}>
-          <div className="logo-mark">
-            <svg viewBox="0 0 32 32" fill="none">
-              <defs>
-                <linearGradient id="lm" x1="0" x2="1">
-                  <stop offset="0" stopColor="var(--accent)" />
-                  <stop offset="1" stopColor="var(--accent-2)" />
-                </linearGradient>
-              </defs>
-              <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm)" opacity="0.18" />
-              <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm)" strokeWidth="1.6" fill="none" />
-              <text x="16" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="currentColor">C</text>
-            </svg>
-          </div>
-          <span className="logo-text">
-            <span className="logo-name">Cari Tech</span>
-            <span className="logo-sub">Graphic</span>
-          </span>
+          <LogoMark logo={branding.logo} />
         </a>
         <nav className={`site-nav ${open ? 'open' : ''}`}>
           {links.map((l) => (
             <a key={l.id} href={l.href} onClick={() => setOpen(false)}>{l.label}</a>
           ))}
-          <a href="admin.html" className="nav-admin" onClick={() => setOpen(false)}>Admin</a>
         </nav>
         <div className="site-actions">
           <button
@@ -289,6 +308,7 @@ function Contact({ t }) {
 // ---------- Footer ----------
 function Footer({ t }) {
   const c = useContact();
+  const branding = useBranding();
   const email = c.email || CONTACT_DEFAULT.email;
   const phone = c.phone || CONTACT_DEFAULT.phone;
   const whatsapp = c.whatsapp || CONTACT_DEFAULT.whatsapp;
@@ -299,18 +319,7 @@ function Footer({ t }) {
         <div className="footer-grid">
           <div className="footer-brand">
             <div className="logo">
-              <div className="logo-mark">
-                <svg viewBox="0 0 32 32" fill="none">
-                  <defs><linearGradient id="lm-f" x1="0" x2="1"><stop offset="0" stopColor="var(--accent)" /><stop offset="1" stopColor="var(--accent-2)" /></linearGradient></defs>
-                  <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm-f)" opacity="0.2" />
-                  <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm-f)" strokeWidth="1.6" fill="none" />
-                  <text x="16" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="currentColor">C</text>
-                </svg>
-              </div>
-              <span className="logo-text">
-                <span className="logo-name">Cari Tech</span>
-                <span className="logo-sub">Graphic</span>
-              </span>
+              <LogoMark logo={branding.logo} />
             </div>
             <p>{t.footer.tagline}</p>
             <div className="socials">

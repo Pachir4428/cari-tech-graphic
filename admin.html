@@ -265,6 +265,17 @@
       return { status: res.status, ...data };
     };
 
+    // Upload de ficheiros (logótipo, ZIP) — multipart.
+    const apiUpload = async (action, formData) => {
+      const res = await fetch(`admin-api.php?action=${action}`, {
+        method: 'POST', body: formData, credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      return { status: res.status, ...data };
+    };
+
     const LEAD_STATUS = {
       new:       { label: 'Novo',       cls: 'tag-marketing' },
       contacted: { label: 'Contactado', cls: 'tag-design' },
@@ -284,13 +295,14 @@
 
     // ---- Ecrã de login ----
     function Login({ onOk }) {
+      const [user, setUser] = useState('');
       const [pass, setPass] = useState('');
       const [err, setErr] = useState('');
       const [busy, setBusy] = useState(false);
       const submit = async (e) => {
         e.preventDefault();
         setBusy(true); setErr('');
-        const r = await api('login', 'POST', { password: pass });
+        const r = await api('login', 'POST', { username: user, password: pass });
         setBusy(false);
         if (r.ok) onOk();
         else setErr(r.message || 'Falha na autenticação.');
@@ -306,11 +318,16 @@
               </div>
             </div>
             <div className="field">
+              <label>Utilizador</label>
+              <input value={user} autoFocus onChange={(e) => setUser(e.target.value)} placeholder="admin" />
+              <div className="field-error"/>
+            </div>
+            <div className="field">
               <label>Palavra-passe</label>
-              <input type="password" value={pass} autoFocus onChange={(e) => setPass(e.target.value)} placeholder="••••••••" />
+              <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="••••••••" />
               <div className="field-error">{err}</div>
             </div>
-            <button type="submit" className="btn btn-accent" disabled={busy || !pass} style={{width:'100%',justifyContent:'center',marginTop:8}}>
+            <button type="submit" className="btn btn-accent" disabled={busy || !user || !pass} style={{width:'100%',justifyContent:'center',marginTop:8}}>
               {busy ? 'A entrar…' : 'Entrar'} <FA name="arrow-right-to-bracket" s={14} />
             </button>
           </form>
@@ -431,6 +448,119 @@
       );
     }
 
+    function Aviso({ msg }) {
+      if (!msg) return null;
+      return <p style={{marginTop:10,fontSize:13,fontWeight:600,color: msg.ok ? 'var(--success,#30a46c)' : 'var(--danger,#e5484d)'}}>{msg.text}</p>;
+    }
+
+    function AccountEditor({ username, onChanged }) {
+      const [cur, setCur] = useState('');
+      const [nu, setNu] = useState(username || 'admin');
+      const [np, setNp] = useState('');
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setNu(username || 'admin'); }, [username]);
+      const submit = async (e) => {
+        e.preventDefault();
+        setBusy(true); setMsg(null);
+        const r = await api('change-credentials', 'POST', { current_password: cur, username: nu, new_password: np });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: 'Credenciais actualizadas.' }); setCur(''); setNp(''); onChanged && onChanged(nu); }
+        else setMsg({ ok: false, text: r.message || 'Erro.' });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>Conta de acesso</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Altere o utilizador e a palavra-passe deste painel. É pedida a palavra-passe actual por segurança.</p>
+          <form onSubmit={submit} style={{display:'grid',gap:12,maxWidth:420}}>
+            <div className="field"><label>Palavra-passe actual</label><input type="password" value={cur} onChange={(e) => setCur(e.target.value)} /><div className="field-error"/></div>
+            <div className="field"><label>Novo utilizador</label><input value={nu} onChange={(e) => setNu(e.target.value)} placeholder="admin" /><div className="field-error"/></div>
+            <div className="field"><label>Nova palavra-passe (mín. 6 caracteres)</label><input type="password" value={np} onChange={(e) => setNp(e.target.value)} /><div className="field-error"/></div>
+            <button type="submit" className="btn btn-accent" disabled={busy || !cur || !nu || np.length < 6} style={{justifySelf:'start'}}>
+              {busy ? 'A guardar…' : 'Guardar credenciais'}
+            </button>
+          </form>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function LogoManager({ branding, onChange }) {
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      const fileRef = React.useRef(null);
+      const logo = branding && branding.logo;
+      const upload = async (file) => {
+        if (!file) return;
+        setBusy(true); setMsg(null);
+        const fd = new FormData(); fd.append('logo', file);
+        const r = await apiUpload('upload-logo', fd);
+        setBusy(false);
+        if (r.ok) { onChange({ logo: r.logo }); setMsg({ ok: true, text: 'Logótipo actualizado.' }); }
+        else setMsg({ ok: false, text: r.message || 'Erro.' });
+      };
+      const remove = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('remove-logo', 'POST');
+        setBusy(false);
+        if (r.ok) { onChange({}); setMsg({ ok: true, text: 'Logótipo removido.' }); }
+        else setMsg({ ok: false, text: r.message || 'Erro.' });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>Logótipo do site</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Aparece no cabeçalho e no rodapé (PNG, JPG, SVG… até 2 MB). Sem logótipo, é usado o símbolo padrão.</p>
+          <div style={{display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
+            <div style={{height:56,minWidth:130,background:'var(--brand-deep)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px'}}>
+              {logo ? <img src={logo} alt="logótipo" style={{height:40,width:'auto'}} /> : <span style={{color:'#fff',fontWeight:800,fontSize:13}}>Símbolo padrão</span>}
+            </div>
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style={{display:'none'}} onChange={(e) => upload(e.target.files[0])} />
+            <button type="button" className="btn btn-accent" onClick={() => fileRef.current && fileRef.current.click()} disabled={busy}>
+              <FA name="image" s={13} /> {busy ? 'A enviar…' : 'Carregar logótipo'}
+            </button>
+            {logo && <button type="button" className="btn btn-ghost" onClick={remove} disabled={busy}>Remover</button>}
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function SiteUpdater() {
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      const [file, setFile] = useState(null);
+      const submit = async () => {
+        if (!file) return;
+        if (!window.confirm('Atualizar o site com este ZIP? Os ficheiros serão substituídos. config.php, a pasta dados/ e uploads/ são preservados.')) return;
+        setBusy(true); setMsg(null);
+        const fd = new FormData(); fd.append('zip', file);
+        const r = await apiUpload('update-zip', fd);
+        setBusy(false);
+        setMsg(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.message || 'Erro ao atualizar.' });
+        if (r.ok) setFile(null);
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>Atualizar o site (ZIP)</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:14}}>
+            Envie um <code>.zip</code> com a nova versão. Os ficheiros são substituídos, mas
+            <strong> config.php</strong>, a pasta <strong>dados/</strong> (leads e conteúdo) e
+            <strong> uploads/</strong> (imagens/logótipo) são <strong>sempre preservados</strong>.
+          </p>
+          <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+            <input type="file" accept=".zip,application/zip" onChange={(e) => setFile(e.target.files[0] || null)} />
+            <button type="button" className="btn btn-accent" onClick={submit} disabled={busy || !file}>
+              <FA name="upload" s={13} /> {busy ? 'A atualizar…' : 'Atualizar site'}
+            </button>
+          </div>
+          <Aviso msg={msg} />
+          <div style={{marginTop:12,background:'#fff8e6',border:'1px solid #ffe08a',borderRadius:10,padding:'10px 14px',fontSize:12.5,color:'#7a5b00'}}>
+            <strong>Dica:</strong> faça um backup (hPanel → Backups) antes de atualizar, por precaução.
+          </div>
+        </div>
+      );
+    }
+
     function App() {
       const [authed, setAuthed] = useState(null); // null = a verificar
       const [tab, setTab] = useState('leads');
@@ -439,6 +569,8 @@
       const [headings, setHeadings] = useState(SEED_HEADINGS);
       const [contact, setContact] = useState(SEED_CONTACT);
       const [testimonials, setTestimonials] = useState(SEED_TESTIMONIALS);
+      const [branding, setBranding] = useState({});
+      const [username, setUsername] = useState('admin');
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
       const [editing, setEditing] = useState(null);
@@ -467,6 +599,8 @@
           if (r.contact && Object.keys(r.contact).length) {
             setContact({ ...SEED_CONTACT, ...r.contact });
           }
+          if (r.branding) setBranding(r.branding);
+          if (r.username) setUsername(r.username);
         }
       };
 
@@ -790,31 +924,23 @@
             )}
 
             {tab === 'settings' && (
-              <div className="admin-panel">
-                <h2 style={{marginBottom:16}}>Definições</h2>
-                <p style={{color:'var(--ink-muted)',fontSize:14,marginBottom:20,lineHeight:1.6}}>
-                  As configurações do site (e-mail que recebe os pedidos, WhatsApp, SMTP e palavra-passe deste painel)
-                  ficam no ficheiro <code>config.php</code> no servidor, por segurança.
-                </p>
-                <div style={{display:'grid',gap:14,maxWidth:560}}>
-                  <div style={{background:'var(--bg-soft)',borderRadius:12,padding:16,fontSize:13,lineHeight:1.6}}>
-                    <strong><FA name="key" s={13} /> Mudar a palavra-passe do painel</strong>
-                    <p style={{margin:'8px 0 0',color:'var(--ink-muted)'}}>
-                      No terminal do servidor, gere um novo hash e cole-o em <code>config.php</code> → <code>admin_password_hash</code>:
-                    </p>
-                    <pre style={{background:'var(--brand-deep)',color:'#e5e5e5',padding:'10px 12px',borderRadius:8,fontSize:12,overflowX:'auto',marginTop:8}}>php -r 'echo password_hash("NOVA_SENHA", PASSWORD_DEFAULT);'</pre>
-                  </div>
-                  <div style={{background:'var(--bg-soft)',borderRadius:12,padding:16,fontSize:13,lineHeight:1.6}}>
-                    <strong><FA name="circle-info" s={13} /> O que este painel controla</strong>
-                    <p style={{margin:'8px 0 0',color:'var(--ink-muted)'}}>
-                      Tudo é guardado no servidor e reflectido no site: <strong>Serviços</strong>, <strong>Projectos</strong> e
-                      <strong> Testemunhos</strong> (com cabeçalhos de secção editáveis), os <strong>Contactos</strong> (e-mail, telefone,
-                      WhatsApp, morada) e os <strong>Leads</strong> que chegam do formulário. Itens em "Rascunho" ficam ocultos no site
-                      mas guardados aqui.
-                    </p>
-                  </div>
+              <>
+                <AccountEditor username={username} onChanged={setUsername} />
+                <LogoManager branding={branding} onChange={setBranding} />
+                <SiteUpdater />
+                <div className="admin-panel">
+                  <h2 style={{marginBottom:12}}>Sobre o painel</h2>
+                  <p style={{color:'var(--ink-muted)',fontSize:13,lineHeight:1.6,marginBottom:12}}>
+                    Tudo é guardado no servidor e reflectido no site: <strong>Serviços</strong>, <strong>Projectos</strong> e
+                    <strong> Testemunhos</strong> (com cabeçalhos editáveis), os <strong>Contactos</strong>, o <strong>Logótipo</strong>
+                    e os <strong>Leads</strong> do formulário. Itens em "Rascunho" ficam ocultos no site.
+                  </p>
+                  <p style={{color:'var(--ink-muted)',fontSize:13,lineHeight:1.6}}>
+                    O e-mail que recebe os pedidos, o SMTP e a base de dados configuram-se no ficheiro
+                    <code> config.php</code> no servidor.
+                  </p>
                 </div>
-              </div>
+              </>
             )}
           </main>
 

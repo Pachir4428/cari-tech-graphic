@@ -229,7 +229,6 @@
         <a href="index.html#services">Serviços</a>
         <a href="index.html#portfolio">Portfólio</a>
         <a href="index.html#contact">Contacto</a>
-        <a href="admin.html" class="nav-admin">Admin</a>
       </nav>
       <div class="site-actions">
         <a href="index.html#contact" class="btn btn-primary header-cta">
@@ -407,5 +406,20 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    // Aplica o logótipo personalizado (se definido no painel) ao cabeçalho.
+    fetch('conteudo.php', { headers: { 'Accept': 'application/json' } })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d) => {
+        var logo = d && d.branding && d.branding.logo;
+        if (!logo) return;
+        var el = document.querySelector('.site-header .logo');
+        if (el) {
+          el.innerHTML = '<img src="' + logo + '" alt="Cari Tech Graphic" style="height:40px;width:auto;display:block;" />';
+        }
+      })
+      .catch(function () {});
+  </script>
 </body>
 </html>

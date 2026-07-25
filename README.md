@@ -91,10 +91,12 @@ A pasta `dados/` está bloqueada ao público pelo `.htaccess` (ninguém acede pe
 
 ### 3.1. Painel de administração (`admin.html`)
 
-Página protegida por palavra-passe para gerir os pedidos que chegam pelo site.
+Página protegida por login para gerir os pedidos e todo o conteúdo do site.
+O link "Admin" **não aparece no menu** do site — acede-se apenas indo directamente a
+`https://seudominio.com/admin.html` (guarde nos favoritos).
 
-- **Entrar:** abra `https://seudominio.com/admin.html` — pede a palavra-passe.
-- **Senha padrão:** `caritech2026` — **mude-a assim que publicar** (ver abaixo).
+- **Entrar:** utilizador **`admin`** e senha **`caritech2026`** (padrão) — **mude-os assim que entrar**
+  (Definições → Conta de acesso, ou ver abaixo).
 - **Aba Leads (dados reais):** lista os contactos, permite mudar o estado
   (Novo → Contactado → Ganho / Perdido), responder por **WhatsApp** ou **e-mail** com um clique,
   e remover. Os estados ficam guardados em `dados/leads.json`.
@@ -111,12 +113,17 @@ Página protegida por palavra-passe para gerir os pedidos que chegam pelo site.
   formulários e pelo chat. Guardado automaticamente.
 - **Botão "Ver site":** abre a página pública numa nova aba — como o site lê o conteúdo a cada
   carregamento, mostra sempre a versão mais recente do que guardou.
+- **Definições → Conta de acesso:** mude o **utilizador e a palavra-passe** do painel (pede a senha
+  actual por segurança). Ficam guardados no servidor — já não é preciso editar ficheiros.
+- **Definições → Logótipo:** carregue a **imagem do logótipo** (PNG/JPG/SVG, até 2 MB). Passa a
+  aparecer no cabeçalho e no rodapé do site; sem logótipo, é usado o símbolo padrão.
+- **Definições → Atualizar o site (ZIP):** envie um `.zip` com uma nova versão e o site é
+  actualizado no servidor. O `config.php`, a pasta `dados/` (leads e conteúdo) e `uploads/`
+  (imagens/logótipo) são **sempre preservados** — nunca perde configurações nem dados.
 
-**Mudar a palavra-passe do painel:**
-```bash
-php -r 'echo password_hash("A_SUA_NOVA_SENHA", PASSWORD_DEFAULT);'
-```
-Copie o resultado para `config.php` → `admin_password_hash`. (Também há instruções dentro do painel, na aba Definições.)
+**Mudar as credenciais** faz-se no painel (Definições → Conta de acesso).
+Em alternativa/recuperação, os valores iniciais estão em `config.php` (`admin_user` e
+`admin_password_hash` — gere um hash com `php -r 'echo password_hash("SENHA", PASSWORD_DEFAULT);'`).
 
 > Segurança: o acesso usa sessão PHP com cookie `HttpOnly`/`SameSite=Strict`, a senha é guardada
 > apenas como *hash* bcrypt, e a API (`admin-api.php`) recusa qualquer pedido sem sessão válida.

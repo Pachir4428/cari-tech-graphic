@@ -191,6 +191,104 @@ function store_save_content($config, $data) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Definições singulares (JSON) — credenciais de admin e branding do logo     */
+/* Guardadas fora do conteúdo público. store_get_content/conteudo.php nunca    */
+/* lêem 'admin', por isso as credenciais nunca são expostas.                   */
+/* -------------------------------------------------------------------------- */
+function _meta_get($config, $chave, $ficheiro) {
+    $pdo = ctg_pdo($config);
+    if ($pdo) {
+        $st = $pdo->prepare("SELECT valor FROM settings WHERE chave=?");
+        $st->execute([$chave]);
+        $v = $st->fetchColumn();
+        return $v !== false ? json_decode($v, true) : null;
+    }
+    $path = __DIR__ . '/dados/' . $ficheiro;
+    if (!file_exists($path)) return null;
+    $v = json_decode(@file_get_contents($path), true);
+    return is_array($v) ? $v : null;
+}
+function _meta_set($config, $chave, $ficheiro, $valor) {
+    $pdo = ctg_pdo($config);
+    if ($pdo) {
+        $up = $pdo->prepare("REPLACE INTO settings (chave, valor) VALUES (?,?)");
+        return $up->execute([$chave, json_encode($valor, JSON_UNESCAPED_UNICODE)]);
+    }
+    $path = __DIR__ . '/dados/' . $ficheiro;
+    @mkdir(dirname($path), 0755, true);
+    return file_put_contents($path, json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX) !== false;
+}
+
+/* Credenciais do administrador (utilizador + hash da palavra-passe). */
+function store_get_admin($config)              { return _meta_get($config, 'admin', 'admin.json'); }
+function store_set_admin($config, $user, $hash) { return _meta_set($config, 'admin', 'admin.json', ['user' => $user, 'hash' => $hash]); }
+
+/* Branding: logótipo do site (público). */
+function store_get_branding($config)   { return _meta_get($config, 'branding', 'branding.json') ?: []; }
+function store_set_branding($config, $b) { return _meta_set($config, 'branding', 'branding.json', $b); }
+
+/* -------------------------------------------------------------------------- */
+/* Atualização do site por ZIP                                                */
+/* Extrai o ZIP e copia por cima dos ficheiros do site, PRESERVANDO SEMPRE     */
+/* config.php, a pasta dados/ (leads e conteúdo) e uploads/ (imagens/logo).    */
+/* -------------------------------------------------------------------------- */
+function atualizar_por_zip($raiz, $zipTmp) {
+    $protegidos = ['config.php'];              // ficheiros que nunca são substituídos
+    $pastasProtegidas = ['dados', 'uploads'];  // pastas preservadas por completo
+
+    $zip = new ZipArchive();
+    if ($zip->open($zipTmp) !== true) {
+        return ['ok' => false, 'message' => 'Não foi possível abrir o ZIP.'];
+    }
+    $tmp = sys_get_temp_dir() . '/ctg_update_' . bin2hex(random_bytes(4));
+    @mkdir($tmp, 0755, true);
+    if (!$zip->extractTo($tmp)) {
+        $zip->close();
+        _rmrf($tmp);
+        return ['ok' => false, 'message' => 'Falha ao extrair o ZIP.'];
+    }
+    $zip->close();
+
+    // Se o ZIP tiver uma única pasta raiz (ex.: "site/…"), usa-a como origem.
+    $origem = $tmp;
+    $itens = array_values(array_filter(scandir($tmp), fn($x) => $x !== '.' && $x !== '..'));
+    if (count($itens) === 1 && is_dir($tmp . '/' . $itens[0])) {
+        $origem = $tmp . '/' . $itens[0];
+    }
+
+    $count = 0;
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($origem, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+    foreach ($it as $item) {
+        $rel = ltrim(str_replace('\\', '/', substr($item->getPathname(), strlen($origem))), '/');
+        if ($rel === '') continue;
+        $topo = explode('/', $rel)[0];
+        if (in_array($rel, $protegidos, true) || in_array($topo, $pastasProtegidas, true)) continue;
+        $destino = $raiz . '/' . $rel;
+        if ($item->isDir()) {
+            @mkdir($destino, 0755, true);
+        } else {
+            @mkdir(dirname($destino), 0755, true);
+            if (@copy($item->getPathname(), $destino)) $count++;
+        }
+    }
+    _rmrf($tmp);
+    return ['ok' => true, 'count' => $count];
+}
+
+function _rmrf($dir) {
+    if (!is_dir($dir)) { @unlink($dir); return; }
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($it as $f) { $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname()); }
+    @rmdir($dir);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Backend de ficheiros (fallback / modo sem base de dados)                   */
 /* -------------------------------------------------------------------------- */
 function _leads_path($config)  { return $config['leads_json']   ?? (__DIR__ . '/dados/leads.json'); }
