@@ -102,6 +102,9 @@ Página protegida por palavra-passe para gerir os pedidos que chegam pelo site.
   que aparecem no site). O que marcar como **Activo/Publicado** aparece na página inicial;
   "Rascunho" fica oculto no site. É guardado automaticamente em `dados/conteudo.json` e lido
   pelo site através de `conteudo.php`. Enquanto não editar nada, o site mostra os textos padrão.
+- **Aba Contactos:** edite o e-mail, telefone, WhatsApp, morada e horário. Estes valores
+  aparecem na secção Contacto, no rodapé, no botão flutuante de WhatsApp e são usados pelos
+  formulários e pelo chat. Guardado automaticamente.
 - **Botão "Ver site":** abre a página pública numa nova aba — como o site lê o conteúdo a cada
   carregamento, mostra sempre a versão mais recente do que guardou.
 

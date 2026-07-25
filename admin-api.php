@@ -141,6 +141,7 @@ switch ($action) {
             'services'  => $c['services']  ?? null,
             'portfolio' => $c['portfolio'] ?? null,
             'headings'  => $c['headings']  ?? null,
+            'contact'   => $c['contact']   ?? null,
         ]);
 
     case 'content-save':
@@ -148,6 +149,7 @@ switch ($action) {
         $services  = $body['services']  ?? null;
         $portfolio = $body['portfolio'] ?? null;
         $headings  = $body['headings']  ?? [];
+        $contact   = $body['contact']   ?? [];
         if (!is_array($services) || !is_array($portfolio)) {
             responder(false, ['message' => 'Dados inválidos.'], 422);
         }
@@ -159,6 +161,7 @@ switch ($action) {
                 'services'  => array_values($services),
                 'portfolio' => array_values($portfolio),
                 'headings'  => is_array($headings) ? $headings : [],
+                'contact'   => is_array($contact) ? $contact : [],
             ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
             LOCK_EX
         );

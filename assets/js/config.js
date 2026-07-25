@@ -43,12 +43,20 @@ window.loadContent = function () {
   if (window.__contentPromise) return window.__contentPromise;
   window.__contentPromise = fetch('conteudo.php', { headers: { 'Accept': 'application/json' } })
     .then((r) => (r.ok ? r.json() : {}))
-    .then((d) => ({
-      services: (d && d.services) || [],
-      portfolio: (d && d.portfolio) || [],
-      headings: (d && d.headings) || {},
-    }))
-    .catch(() => ({ services: [], portfolio: [], headings: {} }));
+    .then((d) => {
+      // Contactos geridos no painel passam a valer para os formulários e o chat.
+      const contact = (d && d.contact) || {};
+      if (contact.whatsapp) window.SITE_CONFIG.whatsapp = String(contact.whatsapp).replace(/\D/g, '');
+      if (contact.email) window.SITE_CONFIG.email = contact.email;
+      if (contact.phone) window.SITE_CONFIG.phone = contact.phone;
+      return {
+        services: (d && d.services) || [],
+        portfolio: (d && d.portfolio) || [],
+        headings: (d && d.headings) || {},
+        contact,
+      };
+    })
+    .catch(() => ({ services: [], portfolio: [], headings: {}, contact: {} }));
   return window.__contentPromise;
 };
 

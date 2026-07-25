@@ -344,6 +344,51 @@
       portfolio: { eyebrow: 'Portfólio', title: 'Projectos recentes', lede: 'Uma seleção do trabalho da casa.' },
     };
 
+    // Contactos padrão — iguais aos mostrados no site.
+    const SEED_CONTACT = {
+      email: 'contacto@caritechgraphic.com',
+      phone: '+258 87 987 7200',
+      whatsapp: '258834157731',
+      address: 'Bairro Mutuanha, CP 3100, Nampula',
+      hours: 'Seg–Sex · 08h–17h',
+    };
+
+    const CONTACT_FIELDS = [
+      { k: 'email', label: 'E-mail', ph: 'contacto@seudominio.com' },
+      { k: 'phone', label: 'Telefone (como aparece no site)', ph: '+258 87 987 7200' },
+      { k: 'whatsapp', label: 'WhatsApp (só dígitos, formato internacional)', ph: '258834157731' },
+      { k: 'address', label: 'Morada', ph: 'Bairro, cidade' },
+      { k: 'hours', label: 'Horário', ph: 'Seg–Sex · 08h–17h' },
+    ];
+
+    function ContactEditor({ contact, onCommit, saveState }) {
+      const [local, setLocal] = useState(contact);
+      useEffect(() => { setLocal(contact); }, [contact]);
+      const commit = (k) => { if ((local[k] || '') !== (contact[k] || '')) onCommit(k, local[k]); };
+      return (
+        <div className="admin-panel">
+          <div className="admin-panel-head">
+            <h2>Contactos do site</h2>
+            <SaveHint state={saveState} />
+          </div>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>
+            Estes contactos aparecem na secção Contacto, no rodapé, no botão de WhatsApp e nos formulários. Guardados automaticamente.
+          </p>
+          <div style={{display:'grid',gap:12,maxWidth:560}}>
+            {CONTACT_FIELDS.map((f) => (
+              <div className="field" key={f.k}>
+                <label>{f.label}</label>
+                <input value={local[f.k] || ''} placeholder={f.ph}
+                  onChange={(e) => setLocal({ ...local, [f.k]: e.target.value })}
+                  onBlur={() => commit(f.k)} />
+                <div className="field-error"/>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     function Pencil({ s = 14 }) { return <i className="fa-solid fa-pen" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
     function Trash({ s = 14 }) { return <i className="fa-solid fa-trash-can" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
     function Eye({ s = 14 }) { return <i className="fa-solid fa-eye" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
@@ -384,6 +429,7 @@
       const [services, setServices] = useState(SEED_SERVICES);
       const [portfolio, setPortfolio] = useState(SEED_PORTFOLIO);
       const [headings, setHeadings] = useState(SEED_HEADINGS);
+      const [contact, setContact] = useState(SEED_CONTACT);
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
       const [editing, setEditing] = useState(null);
@@ -408,14 +454,17 @@
           if (r.headings && (r.headings.services || r.headings.portfolio)) {
             setHeadings({ ...SEED_HEADINGS, ...r.headings });
           }
+          if (r.contact && Object.keys(r.contact).length) {
+            setContact({ ...SEED_CONTACT, ...r.contact });
+          }
         }
       };
 
       // Grava o conteúdo actual no servidor (usado pelo site público).
-      const persist = async (svcs, ptf, hds) => {
+      const persist = async (svcs, ptf, hds, cont) => {
         setSaveState('saving');
         const r = await api('content-save', 'POST', {
-          services: svcs, portfolio: ptf, headings: hds || headings,
+          services: svcs, portfolio: ptf, headings: hds || headings, contact: cont || contact,
         });
         setSaveState(r.ok ? 'saved' : 'error');
         if (r.ok) setTimeout(() => setSaveState(''), 2500);
@@ -425,7 +474,14 @@
       const updateHeading = (sec, field, value) => {
         const next = { ...headings, [sec]: { ...headings[sec], [field]: value } };
         setHeadings(next);
-        persist(services, portfolio, next);
+        persist(services, portfolio, next, contact);
+      };
+
+      // Actualiza um contacto e grava.
+      const updateContact = (field, value) => {
+        const next = { ...contact, [field]: value };
+        setContact(next);
+        persist(services, portfolio, headings, next);
       };
 
       // Ao arrancar, verifica a sessão
@@ -509,6 +565,7 @@
             <button className={`admin-nav-item ${tab === 'services' ? 'active' : ''}`} onClick={() => setTab('services')}><FA name="layer-group" s={15} />Serviços</button>
             <button className={`admin-nav-item ${tab === 'portfolio' ? 'active' : ''}`} onClick={() => setTab('portfolio')}><FA name="folder-open" s={15} />Portfólio</button>
             <button className={`admin-nav-item ${tab === 'leads' ? 'active' : ''}`} onClick={() => setTab('leads')}><FA name="inbox" s={15} />Leads</button>
+            <button className={`admin-nav-item ${tab === 'contact' ? 'active' : ''}`} onClick={() => setTab('contact')}><FA name="address-book" s={15} />Contactos</button>
             <button className={`admin-nav-item ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}><FA name="gear" s={15} />Definições</button>
             <button className="admin-nav-item" onClick={logout} style={{marginTop:8}}><FA name="arrow-right-from-bracket" s={15} />Terminar sessão</button>
             <div className="admin-foot">
@@ -520,7 +577,7 @@
           <main className="admin-main">
             <div className="admin-topbar">
               <div>
-                <h1>{tab === 'overview' ? 'Visão geral' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'leads' ? 'Pedidos & Leads' : 'Definições'}</h1>
+                <h1>{tab === 'overview' ? 'Visão geral' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'leads' ? 'Pedidos & Leads' : tab === 'contact' ? 'Contactos' : 'Definições'}</h1>
                 <p>Bem-vindo de volta. Aqui está o estado actual da Cari Tech.</p>
               </div>
               <a className="btn-add" href="index.html" target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>
@@ -670,6 +727,10 @@
                   </div>
                 )}
               </div>
+            )}
+
+            {tab === 'contact' && (
+              <ContactEditor contact={contact} onCommit={updateContact} saveState={saveState} />
             )}
 
             {tab === 'overview' && (
