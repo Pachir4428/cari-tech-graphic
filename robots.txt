@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dados/
+Disallow: /config.php
+
+# Substitua pelo seu domínio real:
+Sitemap: https://caritechgraphic.com/sitemap.xml

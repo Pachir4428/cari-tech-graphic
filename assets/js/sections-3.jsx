@@ -82,9 +82,10 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
 // ---------- Contact ----------
 function Contact({ t }) {
   const ref = window.useReveal();
-  const [form, setForm] = useState3({ name: '', email: '', phone: '', service: '', message: '' });
+  const [form, setForm] = useState3({ name: '', email: '', phone: '', service: '', message: '', website: '' });
   const [errors, setErrors] = useState3({});
-  const [status, setStatus] = useState3('idle'); // idle | sending | sent
+  const [status, setStatus] = useState3('idle'); // idle | sending | sent | error
+  const [feedback, setFeedback] = useState3('');
 
   function update(k, v) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -100,15 +101,26 @@ function Contact({ t }) {
     return Object.keys(e).length === 0;
   }
 
-  function submit(ev) {
+  async function submit(ev) {
     ev.preventDefault();
     if (!validate()) return;
     setStatus('sending');
-    setTimeout(() => {
+    setFeedback('');
+    try {
+      const res = await window.sendLead(form);
       setStatus('sent');
-      setForm({ name: '', email: '', phone: '', service: '', message: '' });
-      setTimeout(() => setStatus('idle'), 4500);
-    }, 1100);
+      setFeedback(res.message || t.contact.success);
+      setForm({ name: '', email: '', phone: '', service: '', message: '', website: '' });
+      setTimeout(() => setStatus('idle'), 6000);
+    } catch (err) {
+      // Servidor indisponível (ex.: PHP não configurado) — oferece WhatsApp
+      setStatus('error');
+      setFeedback('Não foi possível enviar agora. Fale connosco directamente pelo WhatsApp.');
+    }
+  }
+
+  function abrirWhatsApp() {
+    window.open(window.buildWhatsAppLink(form), '_blank', 'noopener');
   }
 
   return (
@@ -219,11 +231,38 @@ function Contact({ t }) {
             />
             <div className="field-error">{errors.message}</div>
           </div>
+          {/* Honeypot anti-spam — invisível para humanos */}
+          <input
+            type="text"
+            name="website"
+            value={form.website}
+            onChange={(e) => update('website', e.target.value)}
+            tabIndex="-1"
+            autoComplete="off"
+            aria-hidden="true"
+            style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+          />
           <button type="submit" className="btn btn-accent cf-submit" disabled={status === 'sending'}>
             {status === 'sending' ? t.contact.sending : status === 'sent' ? t.contact.success : t.contact.send}
             {status !== 'sent' && <Icon.Arrow size={14} />}
             {status === 'sent' && <Icon.Check size={16} />}
           </button>
+          {feedback && (
+            <p className={`cf-feedback ${status === 'error' ? 'error' : 'ok'}`} style={{
+              marginTop: 12, fontSize: 13, fontWeight: 600,
+              color: status === 'error' ? 'var(--danger, #e5484d)' : 'var(--success, #30a46c)',
+            }}>
+              {feedback}
+            </p>
+          )}
+          {status === 'error' && (
+            <button type="button" className="btn btn-whatsapp cf-submit" onClick={abrirWhatsApp} style={{
+              marginTop: 10, background: '#25D366', color: '#fff', display: 'inline-flex',
+              alignItems: 'center', gap: 8, justifyContent: 'center',
+            }}>
+              <i className="fa-brands fa-whatsapp" aria-hidden="true" /> Enviar pelo WhatsApp
+            </button>
+          )}
         </form>
       </div>
     </section>

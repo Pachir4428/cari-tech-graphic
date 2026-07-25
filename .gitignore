@@ -1,0 +1,12 @@
+# Leads reais dos clientes — nunca versionar
+dados/leads.csv
+dados/*.csv
+
+# Dependências PHP (PHPMailer via composer)
+/vendor/
+composer.phar
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,2 @@
+# Bloqueia totalmente o acesso web à pasta de dados (leads.csv).
+Require all denied

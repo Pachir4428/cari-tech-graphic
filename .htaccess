@@ -1,0 +1,56 @@
+# ==========================================================================
+# Cari Tech Graphic — Configuração Apache (Hostinger / cPanel / LiteSpeed)
+# ==========================================================================
+
+# --- Página inicial padrão -------------------------------------------------
+DirectoryIndex index.html
+
+# --- Forçar HTTPS ----------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# --- Bloquear acesso directo a ficheiros sensíveis -------------------------
+<FilesMatch "^(config\.php|\.htaccess|composer\.(json|lock))$">
+  Require all denied
+</FilesMatch>
+
+# --- Proteger a pasta de dados (leads.csv) ---------------------------------
+RedirectMatch 403 ^/dados/.*$
+
+# --- Segurança: cabeçalhos -------------------------------------------------
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# --- Compressão (gzip) -----------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+# --- Cache do navegador ----------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType text/javascript "access plus 7 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# --- Páginas de erro -------------------------------------------------------
+ErrorDocument 404 /index.html
+
+# --- MIME correcto para .jsx (servidos como texto p/ Babel no browser) -----
+<IfModule mod_mime.c>
+  AddType text/babel .jsx
+</IfModule>
