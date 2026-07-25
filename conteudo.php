@@ -14,12 +14,13 @@ header('Access-Control-Allow-Origin: *');
 $config = require __DIR__ . '/config.php';
 $path = $config['content_json'] ?? (__DIR__ . '/dados/conteudo.json');
 
-$dados = ['services' => [], 'portfolio' => []];
+$dados = ['services' => [], 'portfolio' => [], 'headings' => new stdClass()];
 if (file_exists($path)) {
     $lido = json_decode(@file_get_contents($path) ?: '{}', true);
     if (is_array($lido)) {
         $dados['services']  = $lido['services']  ?? [];
         $dados['portfolio'] = $lido['portfolio'] ?? [];
+        $dados['headings']  = $lido['headings']  ?? new stdClass();
     }
 }
 
@@ -33,4 +34,5 @@ echo json_encode([
     'ok'        => true,
     'services'  => $publicos($dados['services']),
     'portfolio' => $publicos($dados['portfolio']),
+    'headings'  => $dados['headings'],
 ], JSON_UNESCAPED_UNICODE);

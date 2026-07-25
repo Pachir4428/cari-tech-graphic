@@ -17,14 +17,19 @@ function Portfolio({ t, onView }) {
 
   // Conteúdo gerido no painel (se existir) tem prioridade sobre os textos padrão.
   const [managed, setManaged] = useState2(null);
+  const [head, setHead] = useState2(null);
   useEffect2(() => {
     window.loadContent().then((c) => {
       if (c.portfolio && c.portfolio.length) {
         setManaged(c.portfolio.map((p) => ({ t: p.t || '', c: p.c || '', tag: p.tag || 'web' })));
       }
+      if (c.headings && c.headings.portfolio) setHead(c.headings.portfolio);
     });
   }, []);
   const source = managed || t.portfolio.items;
+  const eyebrow = (head && head.eyebrow) || t.portfolio.eyebrow;
+  const title = (head && head.title) || t.portfolio.title;
+  const lede = (head && head.lede) || t.portfolio.lede;
 
   const items = filter === 'all'
     ? source
@@ -41,9 +46,9 @@ function Portfolio({ t, onView }) {
       <div className="container">
         <div className="portfolio-head">
           <div>
-            <div className="eyebrow reveal">{t.portfolio.eyebrow}</div>
-            <h2 className="h-section reveal delay-1">{t.portfolio.title}</h2>
-            <p className="lede reveal delay-2">{t.portfolio.lede}</p>
+            <div className="eyebrow reveal">{eyebrow}</div>
+            <h2 className="h-section reveal delay-1">{title}</h2>
+            <p className="lede reveal delay-2">{lede}</p>
           </div>
           <div className="filter-bar reveal delay-2" role="tablist">
             <Icon.Filter size={14} />

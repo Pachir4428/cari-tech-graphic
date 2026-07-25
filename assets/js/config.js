@@ -43,8 +43,12 @@ window.loadContent = function () {
   if (window.__contentPromise) return window.__contentPromise;
   window.__contentPromise = fetch('conteudo.php', { headers: { 'Accept': 'application/json' } })
     .then((r) => (r.ok ? r.json() : {}))
-    .then((d) => ({ services: (d && d.services) || [], portfolio: (d && d.portfolio) || [] }))
-    .catch(() => ({ services: [], portfolio: [] }));
+    .then((d) => ({
+      services: (d && d.services) || [],
+      portfolio: (d && d.portfolio) || [],
+      headings: (d && d.headings) || {},
+    }))
+    .catch(() => ({ services: [], portfolio: [], headings: {} }));
   return window.__contentPromise;
 };
 

@@ -98,9 +98,12 @@ Página protegida por palavra-passe para gerir os pedidos que chegam pelo site.
   (Novo → Contactado → Ganho / Perdido), responder por **WhatsApp** ou **e-mail** com um clique,
   e remover. Os estados ficam guardados em `dados/leads.json`.
 - **Abas Serviços e Portfólio (editáveis, refletidas no site):** adicione, edite ou remova
-  serviços e projectos. O que marcar como **Activo/Publicado** aparece na página inicial;
+  serviços e projectos, **e edite os cabeçalhos de cada secção** (rótulo, título e descrição
+  que aparecem no site). O que marcar como **Activo/Publicado** aparece na página inicial;
   "Rascunho" fica oculto no site. É guardado automaticamente em `dados/conteudo.json` e lido
   pelo site através de `conteudo.php`. Enquanto não editar nada, o site mostra os textos padrão.
+- **Botão "Ver site":** abre a página pública numa nova aba — como o site lê o conteúdo a cada
+  carregamento, mostra sempre a versão mais recente do que guardou.
 
 **Mudar a palavra-passe do painel:**
 ```bash

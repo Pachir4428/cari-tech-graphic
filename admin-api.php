@@ -140,12 +140,14 @@ switch ($action) {
         responder(true, [
             'services'  => $c['services']  ?? null,
             'portfolio' => $c['portfolio'] ?? null,
+            'headings'  => $c['headings']  ?? null,
         ]);
 
     case 'content-save':
         exigir_login();
         $services  = $body['services']  ?? null;
         $portfolio = $body['portfolio'] ?? null;
+        $headings  = $body['headings']  ?? [];
         if (!is_array($services) || !is_array($portfolio)) {
             responder(false, ['message' => 'Dados inválidos.'], 422);
         }
@@ -153,8 +155,11 @@ switch ($action) {
         @mkdir(dirname($path), 0755, true);
         $ok = file_put_contents(
             $path,
-            json_encode(['services' => array_values($services), 'portfolio' => array_values($portfolio)],
-                JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            json_encode([
+                'services'  => array_values($services),
+                'portfolio' => array_values($portfolio),
+                'headings'  => is_array($headings) ? $headings : [],
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
             LOCK_EX
         );
         if ($ok === false) responder(false, ['message' => 'Falha ao gravar.'], 500);

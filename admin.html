@@ -338,6 +338,12 @@
       { id: 6, t: 'TechMoz Insights', c: 'Estratégia de redes sociais', tag: 'marketing', status: 'active', year: 2025 },
     ];
 
+    // Cabeçalhos padrão das secções — iguais aos do site (i18n).
+    const SEED_HEADINGS = {
+      services:  { eyebrow: 'Os nossos serviços', title: 'Tudo o que precisa para crescer online.', lede: 'Da identidade visual ao deploy. Seis áreas, uma equipa.' },
+      portfolio: { eyebrow: 'Portfólio', title: 'Projectos recentes', lede: 'Uma seleção do trabalho da casa.' },
+    };
+
     function Pencil({ s = 14 }) { return <i className="fa-solid fa-pen" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
     function Trash({ s = 14 }) { return <i className="fa-solid fa-trash-can" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
     function Eye({ s = 14 }) { return <i className="fa-solid fa-eye" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
@@ -354,11 +360,30 @@
       return <span style={{fontSize:12,fontWeight:600,color:s.c,display:'inline-flex',alignItems:'center',gap:6}}><FA name={s.i} s={12} />{s.t}</span>;
     }
 
+    function HeadingEditor({ heading, onCommit }) {
+      const [local, setLocal] = useState(heading);
+      useEffect(() => { setLocal(heading); }, [heading]);
+      const commit = (f) => { if ((local[f] || '') !== (heading[f] || '')) onCommit(f, local[f]); };
+      return (
+        <div className="admin-panel" style={{marginBottom:16,background:'var(--bg-soft)'}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',color:'var(--ink-muted)',marginBottom:12}}>
+            <FA name="heading" s={12} /> Cabeçalho da secção (aparece no site)
+          </div>
+          <div style={{display:'grid',gap:10,maxWidth:640}}>
+            <div className="field"><label>Rótulo (eyebrow)</label><input value={local.eyebrow || ''} onChange={(e) => setLocal({...local, eyebrow: e.target.value})} onBlur={() => commit('eyebrow')} /><div className="field-error"/></div>
+            <div className="field"><label>Título</label><input value={local.title || ''} onChange={(e) => setLocal({...local, title: e.target.value})} onBlur={() => commit('title')} /><div className="field-error"/></div>
+            <div className="field"><label>Descrição</label><input value={local.lede || ''} onChange={(e) => setLocal({...local, lede: e.target.value})} onBlur={() => commit('lede')} /><div className="field-error"/></div>
+          </div>
+        </div>
+      );
+    }
+
     function App() {
       const [authed, setAuthed] = useState(null); // null = a verificar
       const [tab, setTab] = useState('leads');
       const [services, setServices] = useState(SEED_SERVICES);
       const [portfolio, setPortfolio] = useState(SEED_PORTFOLIO);
+      const [headings, setHeadings] = useState(SEED_HEADINGS);
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
       const [editing, setEditing] = useState(null);
@@ -380,15 +405,27 @@
         if (r.ok) {
           if (Array.isArray(r.services)) setServices(r.services);
           if (Array.isArray(r.portfolio)) setPortfolio(r.portfolio);
+          if (r.headings && (r.headings.services || r.headings.portfolio)) {
+            setHeadings({ ...SEED_HEADINGS, ...r.headings });
+          }
         }
       };
 
       // Grava o conteúdo actual no servidor (usado pelo site público).
-      const persist = async (svcs, ptf) => {
+      const persist = async (svcs, ptf, hds) => {
         setSaveState('saving');
-        const r = await api('content-save', 'POST', { services: svcs, portfolio: ptf });
+        const r = await api('content-save', 'POST', {
+          services: svcs, portfolio: ptf, headings: hds || headings,
+        });
         setSaveState(r.ok ? 'saved' : 'error');
         if (r.ok) setTimeout(() => setSaveState(''), 2500);
+      };
+
+      // Actualiza um campo de cabeçalho e grava.
+      const updateHeading = (sec, field, value) => {
+        const next = { ...headings, [sec]: { ...headings[sec], [field]: value } };
+        setHeadings(next);
+        persist(services, portfolio, next);
       };
 
       // Ao arrancar, verifica a sessão
@@ -486,6 +523,9 @@
                 <h1>{tab === 'overview' ? 'Visão geral' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'leads' ? 'Pedidos & Leads' : 'Definições'}</h1>
                 <p>Bem-vindo de volta. Aqui está o estado actual da Cari Tech.</p>
               </div>
+              <a className="btn-add" href="index.html" target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>
+                <FA name="up-right-from-square" s={13} />Ver site
+              </a>
             </div>
 
             <div className="kpi-row">
@@ -498,6 +538,8 @@
             </div>
 
             {tab === 'services' && (
+              <>
+              <HeadingEditor heading={headings.services} onCommit={(f, v) => updateHeading('services', f, v)} />
               <div className="admin-panel">
                 <div className="admin-panel-head">
                   <h2>Serviços oferecidos</h2>
@@ -530,9 +572,12 @@
                   </table>
                 </div>
               </div>
+              </>
             )}
 
             {tab === 'portfolio' && (
+              <>
+              <HeadingEditor heading={headings.portfolio} onCommit={(f, v) => updateHeading('portfolio', f, v)} />
               <div className="admin-panel">
                 <div className="admin-panel-head">
                   <h2>Projectos do portfólio</h2>
@@ -563,6 +608,7 @@
                   </table>
                 </div>
               </div>
+              </>
             )}
 
             {tab === 'leads' && (
