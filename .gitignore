@@ -1,6 +1,8 @@
 # Leads reais dos clientes — nunca versionar
 dados/leads.csv
+dados/leads.json
 dados/*.csv
+dados/*.json
 
 # Dependências PHP (PHPMailer via composer)
 /vendor/

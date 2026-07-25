@@ -15,9 +15,10 @@ registo automático de leads, botão de WhatsApp e chat de apoio.
 cari-tech-graphic/
 ├── index.html                 ← página principal (abre automaticamente no domínio)
 ├── sobre.html                 ← página "Sobre nós"
-├── admin.html                 ← painel de demonstração (interface, dados de exemplo)
+├── admin.html                 ← painel de administração (login + gestão de leads)
 ├── enviar.php                 ← recebe os formulários e envia o e-mail  ⭐
-├── config.php                 ← as SUAS definições (e-mail, WhatsApp, SMTP)  ⭐
+├── admin-api.php              ← API do painel (login + leads)  ⭐
+├── config.php                 ← as SUAS definições (e-mail, WhatsApp, senha do painel, SMTP)  ⭐
 ├── .htaccess                  ← HTTPS, cache, segurança, protecção de ficheiros
 ├── robots.txt
 ├── assets/
@@ -82,8 +83,30 @@ Se não carregar a versão nova, faça *hard refresh*: `Ctrl+Shift+R` (Windows) 
 | **Botão WhatsApp** | Abre uma conversa com mensagem pré-preenchida (nome, serviço, mensagem). |
 | **Chat de apoio** | Responde a perguntas comuns (preços, serviços, prazos, contactos) e encaminha para o WhatsApp. Não precisa de nenhuma chave de API para funcionar no site publicado. |
 
-**Ver os leads guardados:** no Gestor de Ficheiros, baixe `dados/leads.csv` e abra no Excel/Sheets.
+**Ver os leads guardados:** use o **painel de administração** (ver secção 3.1) ou, em alternativa,
+baixe `dados/leads.csv` do Gestor de Ficheiros e abra no Excel/Sheets.
 A pasta `dados/` está bloqueada ao público pelo `.htaccess` (ninguém acede pela web).
+
+### 3.1. Painel de administração (`admin.html`)
+
+Página protegida por palavra-passe para gerir os pedidos que chegam pelo site.
+
+- **Entrar:** abra `https://seudominio.com/admin.html` — pede a palavra-passe.
+- **Senha padrão:** `caritech2026` — **mude-a assim que publicar** (ver abaixo).
+- **Aba Leads (dados reais):** lista os contactos, permite mudar o estado
+  (Novo → Contactado → Ganho / Perdido), responder por **WhatsApp** ou **e-mail** com um clique,
+  e remover. Os estados ficam guardados em `dados/leads.json`.
+- As abas **Serviços** e **Portfólio** são uma demonstração local (não persistem) —
+  posso ligá-las a uma base de dados quando quiser.
+
+**Mudar a palavra-passe do painel:**
+```bash
+php -r 'echo password_hash("A_SUA_NOVA_SENHA", PASSWORD_DEFAULT);'
+```
+Copie o resultado para `config.php` → `admin_password_hash`. (Também há instruções dentro do painel, na aba Definições.)
+
+> Segurança: o acesso usa sessão PHP com cookie `HttpOnly`/`SameSite=Strict`, a senha é guardada
+> apenas como *hash* bcrypt, e a API (`admin-api.php`) recusa qualquer pedido sem sessão válida.
 
 ### Melhorar a entrega de e-mail (opcional, mas recomendado)
 A função `mail()` do PHP às vezes cai no spam. Para entrega fiável via SMTP:
@@ -203,9 +226,8 @@ o botão de WhatsApp como alternativa.
 - [x] `config.php` e `dados/` bloqueados ao acesso web
 - [x] Honeypot anti-spam nos formulários
 - [x] Validação e limpeza dos dados no servidor
-- [ ] Depois de publicar, mude a `smtp_pass` em `config.php` e nunca a partilhe
-- [ ] O `admin.html` é uma **demonstração** sem palavra-passe — não coloque dados reais nele
-      até adicionar autenticação (posso ajudar quando quiser)
+- [x] Painel `admin.html` protegido por login (sessão PHP + senha em hash bcrypt)
+- [ ] Depois de publicar, **mude a senha do painel** (secção 3.1) e a `smtp_pass` em `config.php`
 
 ---
 

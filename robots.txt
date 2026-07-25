@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /admin-api.php
 Disallow: /dados/
 Disallow: /config.php
 

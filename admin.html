@@ -255,6 +255,69 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
+    // ---- API do painel (admin-api.php) ----
+    const api = async (action, method = 'GET', body = null) => {
+      const opts = { method, headers: { 'Accept': 'application/json' }, credentials: 'same-origin' };
+      if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+      const res = await fetch(`admin-api.php?action=${action}`, opts);
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      return { status: res.status, ...data };
+    };
+
+    const LEAD_STATUS = {
+      new:       { label: 'Novo',       cls: 'tag-marketing' },
+      contacted: { label: 'Contactado', cls: 'tag-design' },
+      won:       { label: 'Ganho',      cls: 'tag-active' },
+      lost:      { label: 'Perdido',    cls: 'tag-draft' },
+    };
+
+    const fmtData = (iso) => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      const p = (n) => String(n).padStart(2, '0');
+      return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    };
+
+    function FA({ name, s = 14, style = {} }) { return <i className={`fa-solid fa-${name}`} style={{fontSize:s,lineHeight:1,...style}} aria-hidden="true" />; }
+
+    // ---- Ecrã de login ----
+    function Login({ onOk }) {
+      const [pass, setPass] = useState('');
+      const [err, setErr] = useState('');
+      const [busy, setBusy] = useState(false);
+      const submit = async (e) => {
+        e.preventDefault();
+        setBusy(true); setErr('');
+        const r = await api('login', 'POST', { password: pass });
+        setBusy(false);
+        if (r.ok) onOk();
+        else setErr(r.message || 'Falha na autenticação.');
+      };
+      return (
+        <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'var(--brand-deep)'}}>
+          <form onSubmit={submit} style={{background:'var(--bg-elev)',borderRadius:20,padding:'40px 36px',width:'100%',maxWidth:380,boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:24}}>
+              <div style={{width:40,height:40,background:'var(--accent)',borderRadius:12,display:'inline-flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'#fff',fontSize:18}}>C</div>
+              <div>
+                <div style={{fontWeight:800,fontSize:16}}>Cari Tech</div>
+                <div style={{fontSize:11,color:'var(--ink-muted)'}}>Painel de administração</div>
+              </div>
+            </div>
+            <div className="field">
+              <label>Palavra-passe</label>
+              <input type="password" value={pass} autoFocus onChange={(e) => setPass(e.target.value)} placeholder="••••••••" />
+              <div className="field-error">{err}</div>
+            </div>
+            <button type="submit" className="btn btn-accent" disabled={busy || !pass} style={{width:'100%',justifyContent:'center',marginTop:8}}>
+              {busy ? 'A entrar…' : 'Entrar'} <FA name="arrow-right-to-bracket" s={14} />
+            </button>
+          </form>
+        </div>
+      );
+    }
+
     const SEED_SERVICES = [
       { id: 1, name: 'Design Gráfico', category: 'design', price: '15.000 MZN', status: 'active', orders: 42 },
       { id: 2, name: 'Desenvolvimento Web', category: 'web', price: '80.000 MZN', status: 'active', orders: 28 },
@@ -273,26 +336,58 @@
       { id: 6, title: 'TechMoz Insights', client: 'TechMoz', tag: 'marketing', status: 'active', year: 2025 },
     ];
 
-    const SEED_LEADS = [
-      { id: 1, name: 'Manuel J.', email: 'manuel@empresa.mz', service: 'Desenvolvimento Web', date: '02 Mai 2026', status: 'new' },
-      { id: 2, name: 'Telma R.', email: 'telma@negocio.com', service: 'Branding', date: '01 Mai 2026', status: 'contacted' },
-      { id: 3, name: 'João C.', email: 'joao@startup.mz', service: 'Marketing Digital', date: '30 Abr 2026', status: 'won' },
-      { id: 4, name: 'Sara M.', email: 'sara@loja.mz', service: 'Design Gráfico', date: '28 Abr 2026', status: 'new' },
-    ];
-
     function Pencil({ s = 14 }) { return <i className="fa-solid fa-pen" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
     function Trash({ s = 14 }) { return <i className="fa-solid fa-trash-can" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
     function Eye({ s = 14 }) { return <i className="fa-solid fa-eye" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
     function Plus({ s = 14 }) { return <i className="fa-solid fa-plus" style={{fontSize:s,lineHeight:1}} aria-hidden="true" />; }
-    function FA({ name, s = 14, style = {} }) { return <i className={`fa-solid fa-${name}`} style={{fontSize:s,lineHeight:1,...style}} aria-hidden="true" />; }
 
     function App() {
-      const [tab, setTab] = useState('services');
+      const [authed, setAuthed] = useState(null); // null = a verificar
+      const [tab, setTab] = useState('leads');
       const [services, setServices] = useState(SEED_SERVICES);
       const [portfolio, setPortfolio] = useState(SEED_PORTFOLIO);
-      const [leads] = useState(SEED_LEADS);
+      const [leads, setLeads] = useState([]);
+      const [leadsLoading, setLeadsLoading] = useState(false);
       const [editing, setEditing] = useState(null);
       const [editType, setEditType] = useState('');
+
+      const loadLeads = async () => {
+        setLeadsLoading(true);
+        const r = await api('leads');
+        setLeadsLoading(false);
+        if (r.ok) setLeads(r.leads || []);
+        else if (r.status === 401) setAuthed(false);
+      };
+
+      // Ao arrancar, verifica a sessão
+      useEffect(() => {
+        api('session').then((r) => {
+          const ok = !!r.authenticated;
+          setAuthed(ok);
+          if (ok) loadLeads();
+        });
+      }, []);
+
+      const logout = async () => { await api('logout', 'POST'); setAuthed(false); setLeads([]); };
+
+      const setLeadStatus = async (id, status) => {
+        setLeads((ls) => ls.map((l) => l.id === id ? { ...l, status } : l)); // optimista
+        const r = await api('lead-status', 'POST', { id, status });
+        if (!r.ok) loadLeads();
+      };
+      const deleteLead = async (id) => {
+        if (!window.confirm('Remover este lead? Esta acção não pode ser desfeita.')) return;
+        setLeads((ls) => ls.filter((l) => l.id !== id));
+        const r = await api('lead-delete', 'POST', { id });
+        if (!r.ok) loadLeads();
+      };
+
+      if (authed === null) {
+        return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}>A carregar…</div>;
+      }
+      if (!authed) {
+        return <Login onOk={() => { setAuthed(true); loadLeads(); }} />;
+      }
 
       const openNew = (type) => {
         setEditType(type);
@@ -319,10 +414,10 @@
       };
 
       const kpis = [
-        { l: 'Serviços activos', v: services.filter((s) => s.status === 'active').length },
-        { l: 'Projectos', v: portfolio.length },
+        { l: 'Total de leads', v: leads.length },
         { l: 'Leads novos', v: leads.filter((l) => l.status === 'new').length },
-        { l: 'Receita estimada', v: '2.4M MZN' },
+        { l: 'Ganhos', v: leads.filter((l) => l.status === 'won').length },
+        { l: 'Projectos', v: portfolio.length },
       ];
 
       return (
@@ -340,8 +435,9 @@
             <button className={`admin-nav-item ${tab === 'portfolio' ? 'active' : ''}`} onClick={() => setTab('portfolio')}><FA name="folder-open" s={15} />Portfólio</button>
             <button className={`admin-nav-item ${tab === 'leads' ? 'active' : ''}`} onClick={() => setTab('leads')}><FA name="inbox" s={15} />Leads</button>
             <button className={`admin-nav-item ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}><FA name="gear" s={15} />Definições</button>
+            <button className="admin-nav-item" onClick={logout} style={{marginTop:8}}><FA name="arrow-right-from-bracket" s={15} />Terminar sessão</button>
             <div className="admin-foot">
-              Logado como Admin<br/>
+              Sessão activa<br/>
               <a href="index.html"><FA name="arrow-left" s={11} /> Ver site público</a>
             </div>
           </aside>
@@ -359,7 +455,6 @@
                 <div className="kpi" key={i}>
                   <div className="kpi-label">{k.l}</div>
                   <div className="kpi-num">{k.v}</div>
-                  <div className="kpi-trend"><FA name="arrow-trend-up" s={12} /> +12% este mês</div>
                 </div>
               ))}
             </div>
@@ -421,21 +516,62 @@
 
             {tab === 'leads' && (
               <div className="admin-panel">
-                <div className="admin-panel-head"><h2>Pedidos recentes</h2></div>
-                <table className="admin-table">
-                  <thead><tr><th>Nome</th><th>Email</th><th>Serviço</th><th>Data</th><th>Estado</th></tr></thead>
-                  <tbody>
-                    {leads.map((l) => (
-                      <tr key={l.id}>
-                        <td style={{fontWeight:600}}>{l.name}</td>
-                        <td>{l.email}</td>
-                        <td>{l.service}</td>
-                        <td>{l.date}</td>
-                        <td><span className={`table-tag tag-${l.status === 'won' ? 'active' : l.status === 'new' ? 'marketing' : 'design'}`}>{l.status}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="admin-panel-head">
+                  <h2>Pedidos dos clientes</h2>
+                  <button className="btn-add" onClick={loadLeads} style={{background:'var(--bg-soft)',color:'var(--ink)'}}>
+                    <FA name="rotate" s={13} />Actualizar
+                  </button>
+                </div>
+                {leadsLoading ? (
+                  <p style={{color:'var(--ink-muted)',fontSize:14,padding:'20px 0'}}>A carregar pedidos…</p>
+                ) : leads.length === 0 ? (
+                  <div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-muted)'}}>
+                    <FA name="inbox" s={40} style={{opacity:0.3}} />
+                    <p style={{marginTop:14,fontSize:15,fontWeight:600}}>Ainda não há pedidos.</p>
+                    <p style={{fontSize:13}}>Os contactos enviados pelo formulário do site aparecem aqui.</p>
+                  </div>
+                ) : (
+                  <div style={{overflowX:'auto'}}>
+                    <table className="admin-table">
+                      <thead><tr><th>Nome</th><th>Contacto</th><th>Serviço</th><th>Mensagem</th><th>Data</th><th>Estado</th><th></th></tr></thead>
+                      <tbody>
+                        {leads.map((l) => (
+                          <tr key={l.id}>
+                            <td style={{fontWeight:600}}>{l.nome}</td>
+                            <td style={{fontSize:12}}>
+                              <div>{l.email}</div>
+                              {l.telefone && <div style={{color:'var(--ink-muted)'}}>{l.telefone}</div>}
+                            </td>
+                            <td>{l.servico || '—'}</td>
+                            <td style={{maxWidth:240,fontSize:12,color:'var(--ink-soft)'}} title={l.mensagem}>
+                              {(l.mensagem || '').length > 70 ? l.mensagem.slice(0, 70) + '…' : l.mensagem}
+                            </td>
+                            <td style={{fontSize:12,whiteSpace:'nowrap'}}>{fmtData(l.data)}</td>
+                            <td>
+                              <select
+                                value={l.status || 'new'}
+                                onChange={(e) => setLeadStatus(l.id, e.target.value)}
+                                style={{padding:'5px 8px',borderRadius:8,border:'1px solid var(--line)',fontSize:12,fontWeight:600,background:'var(--bg-soft)',color:'var(--ink)'}}
+                              >
+                                {Object.entries(LEAD_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                              </select>
+                            </td>
+                            <td>
+                              <div className="row-actions">
+                                {l.telefone && (
+                                  <a className="ra-btn" title="WhatsApp" target="_blank" rel="noreferrer"
+                                     href={`https://wa.me/${(l.telefone||'').replace(/\D/g,'')}`}><i className="fa-brands fa-whatsapp" style={{fontSize:13,lineHeight:1}} aria-hidden="true" /></a>
+                                )}
+                                <a className="ra-btn" title="Responder por e-mail" href={`mailto:${l.email}?subject=${encodeURIComponent('Cari Tech Graphic — o seu pedido')}`}><FA name="reply" s={13} /></a>
+                                <button className="ra-btn danger" title="Remover" onClick={() => deleteLead(l.id)}><Trash /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
@@ -449,11 +585,25 @@
             {tab === 'settings' && (
               <div className="admin-panel">
                 <h2 style={{marginBottom:16}}>Definições</h2>
-                <p style={{color:'var(--ink-muted)',fontSize:14,marginBottom:20}}>Configure aqui as integrações, contactos e API do chat assistente.</p>
-                <div style={{display:'grid',gap:12,maxWidth:480}}>
-                  <div className="field"><label>API Key — Chat Assistente</label><input type="password" defaultValue="sk-...redacted..." /><div className="field-error"/></div>
-                  <div className="field"><label>Email de notificação</label><input defaultValue="contacto@caritechgraphic.com" /><div className="field-error"/></div>
-                  <button className="btn btn-accent" style={{alignSelf:'flex-start',marginTop:8}}>Guardar definições</button>
+                <p style={{color:'var(--ink-muted)',fontSize:14,marginBottom:20,lineHeight:1.6}}>
+                  As configurações do site (e-mail que recebe os pedidos, WhatsApp, SMTP e palavra-passe deste painel)
+                  ficam no ficheiro <code>config.php</code> no servidor, por segurança.
+                </p>
+                <div style={{display:'grid',gap:14,maxWidth:560}}>
+                  <div style={{background:'var(--bg-soft)',borderRadius:12,padding:16,fontSize:13,lineHeight:1.6}}>
+                    <strong><FA name="key" s={13} /> Mudar a palavra-passe do painel</strong>
+                    <p style={{margin:'8px 0 0',color:'var(--ink-muted)'}}>
+                      No terminal do servidor, gere um novo hash e cole-o em <code>config.php</code> → <code>admin_password_hash</code>:
+                    </p>
+                    <pre style={{background:'var(--brand-deep)',color:'#e5e5e5',padding:'10px 12px',borderRadius:8,fontSize:12,overflowX:'auto',marginTop:8}}>php -r 'echo password_hash("NOVA_SENHA", PASSWORD_DEFAULT);'</pre>
+                  </div>
+                  <div style={{background:'var(--bg-soft)',borderRadius:12,padding:16,fontSize:13,lineHeight:1.6}}>
+                    <strong><FA name="circle-info" s={13} /> Serviços e Portfólio</strong>
+                    <p style={{margin:'8px 0 0',color:'var(--ink-muted)'}}>
+                      As abas Serviços e Portfólio são uma demonstração local (as alterações não são guardadas ao recarregar).
+                      A aba <strong>Leads</strong> usa dados reais do site. Posso ligar Serviços/Portfólio a uma base de dados quando quiser.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

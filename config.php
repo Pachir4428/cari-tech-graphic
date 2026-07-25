@@ -29,6 +29,17 @@ return [
     // resposta para oferecer continuação da conversa.
     'whatsapp'    => '258834157731',
 
+    // ---- Painel de administração (admin.html) ------------------------------
+    // Palavra-passe de acesso ao painel, guardada como hash (NUNCA em texto).
+    // Senha padrão: "caritech2026" — MUDE-A assim que publicar!
+    // Para gerar um novo hash, corra no terminal (ou peça-me para gerar):
+    //   php -r 'echo password_hash("A_SUA_SENHA", PASSWORD_DEFAULT), PHP_EOL;'
+    // e cole o resultado aqui.
+    'admin_password_hash' => '$2y$12$X.Q5w2g879KLOCGa9daRReVzTHnGCdfluiLK.MRxwfLPTy1ny2f1S',
+
+    // Onde ficam guardados os leads em JSON (usado pelo painel admin).
+    'leads_json' => __DIR__ . '/dados/leads.json',
+
     // ---- SMTP (opcional, recomendado para melhor entregabilidade) ----------
     // Deixe 'smtp_enabled' => false para usar a função mail() nativa do PHP.
     // Para activar SMTP é necessário instalar o PHPMailer (ver README).
