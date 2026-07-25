@@ -98,7 +98,18 @@ function ShuffleTestimonialCard({ handleShuffle, testimonial, position, id, auth
 
 function ShuffleTestimonials({ t }) {
   const ref = window.useReveal();
-  const items = t.testimonials.items.slice(0, 3).map((it, i) => ({
+  const [managed, setManaged] = React.useState(null);
+  const [head, setHead] = React.useState(null);
+  React.useEffect(() => {
+    window.loadContent().then((c) => {
+      if (c.testimonials && c.testimonials.length) setManaged(c.testimonials);
+      if (c.headings && c.headings.testimonials) setHead(c.headings.testimonials);
+    });
+  }, []);
+  const source = managed || t.testimonials.items;
+  const eyebrow = (head && head.eyebrow) || t.testimonials.eyebrow;
+  const title = (head && head.title) || t.testimonials.title;
+  const items = source.slice(0, 3).map((it, i) => ({
     id: i + 1,
     testimonial: it.q,
     author: it.n,
@@ -117,8 +128,8 @@ function ShuffleTestimonials({ t }) {
     <section className="section testimonials shuffle-section" id="testimonials" ref={ref} data-screen-label="08 Testimonials">
       <div className="container shuffle-grid">
         <div className="shuffle-copy">
-          <div className="eyebrow reveal">{t.testimonials.eyebrow}</div>
-          <h2 className="h-section reveal delay-1">{t.testimonials.title}</h2>
+          <div className="eyebrow reveal">{eyebrow}</div>
+          <h2 className="h-section reveal delay-1">{title}</h2>
           <p className="lede reveal delay-2" style={{ marginTop: 16 }}>
             Arraste o cartão para o lado para ver o próximo testemunho.
           </p>

@@ -33,15 +33,17 @@ function Modal({ open, onClose, children, size = 'md' }) {
 
 // ---------- Lead/Quote Form Modal ----------
 function LeadModal({ open, onClose, t, prefilledService = '' }) {
-  const [form, setForm] = useS4({ name: '', email: '', phone: '', service: '', message: '' });
+  const [form, setForm] = useS4({ name: '', email: '', phone: '', service: '', message: '', website: '' });
   const [errors, setErrors] = useS4({});
   const [status, setStatus] = useS4('idle');
+  const [feedback, setFeedback] = useS4('');
 
   useE4(() => {
     if (open) {
       setForm((f) => ({ ...f, service: prefilledService }));
       setStatus('idle');
       setErrors({});
+      setFeedback('');
     }
   }, [open, prefilledService]);
 
@@ -57,15 +59,22 @@ function LeadModal({ open, onClose, t, prefilledService = '' }) {
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-  const submit = (ev) => {
+  const submit = async (ev) => {
     ev.preventDefault();
     if (!validate()) return;
     setStatus('sending');
-    setTimeout(() => {
+    setFeedback('');
+    try {
+      const res = await window.sendLead(form);
       setStatus('sent');
-      setTimeout(() => { onClose(); setStatus('idle'); }, 2400);
-    }, 1100);
+      setFeedback(res.message || t.contact.success);
+      setTimeout(() => { onClose(); setStatus('idle'); }, 3200);
+    } catch (err) {
+      setStatus('error');
+      setFeedback('Não foi possível enviar agora. Continue pelo WhatsApp.');
+    }
   };
+  const abrirWhatsApp = () => window.open(window.buildWhatsAppLink(form), '_blank', 'noopener');
 
   return (
     <Modal open={open} onClose={onClose} size="lg">
@@ -126,10 +135,30 @@ function LeadModal({ open, onClose, t, prefilledService = '' }) {
                 <textarea rows="4" value={form.message} onChange={(e) => update('message', e.target.value)} placeholder={t.contact.placeholder_message} />
                 <div className="field-error">{errors.message}</div>
               </div>
+              {/* Honeypot anti-spam — invisível para humanos */}
+              <input
+                type="text" name="website" value={form.website}
+                onChange={(e) => update('website', e.target.value)}
+                tabIndex="-1" autoComplete="off" aria-hidden="true"
+                style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+              />
               <button type="submit" className="btn btn-accent cf-submit" disabled={status === 'sending'}>
                 {status === 'sending' ? t.contact.sending : t.contact.send}
                 <Icon.Arrow size={14} />
               </button>
+              {feedback && (
+                <p style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: status === 'error' ? 'var(--danger, #e5484d)' : 'var(--success, #30a46c)' }}>
+                  {feedback}
+                </p>
+              )}
+              {status === 'error' && (
+                <button type="button" className="btn cf-submit" onClick={abrirWhatsApp} style={{
+                  marginTop: 10, background: '#25D366', color: '#fff', display: 'inline-flex',
+                  alignItems: 'center', gap: 8, justifyContent: 'center',
+                }}>
+                  <i className="fa-brands fa-whatsapp" aria-hidden="true" /> Continuar no WhatsApp
+                </button>
+              )}
             </>
           )}
         </form>
@@ -267,18 +296,42 @@ function ChatAssistant() {
     setMsgs((m) => [...m, { role: 'user', text: q }]);
     setBusy(true);
     try {
-      const sys = `Tu és o assistente virtual da Cari Tech Graphic — um estúdio de design, marketing e tecnologia em Nampula, Moçambique. Serviços: Design Gráfico, Desenvolvimento Web, Marketing Digital, Branding, Redes Sociais, Soluções com IA. Contactos: contacto@caritechgraphic.com, +258 87 987 7200, WhatsApp 83 415 7731. Responde em português de Moçambique, sé curto, simpático e útil. Se não souberes, sugere falar com a equipa.`;
-      const reply = await window.claude.complete({
-        messages: [
-          { role: 'user', content: `${sys}\n\nPergunta do utilizador: ${q}` },
-        ],
-      });
-      setMsgs((m) => [...m, { role: 'assistant', text: reply || 'Desculpe, não consegui processar agora. Tente outra vez ou contacte-nos.' }]);
+      // Se o assistente com IA estiver disponível (ambiente Claude), usa-o.
+      if (window.claude && typeof window.claude.complete === 'function') {
+        const sys = `Tu és o assistente virtual da Cari Tech Graphic — um estúdio de design, marketing e tecnologia em Nampula, Moçambique. Serviços: Design Gráfico, Desenvolvimento Web, Marketing Digital, Branding, Redes Sociais, Soluções com IA. Contactos: contacto@caritechgraphic.com, +258 87 987 7200, WhatsApp 83 415 7731. Responde em português de Moçambique, sé curto, simpático e útil. Se não souberes, sugere falar com a equipa.`;
+        const reply = await window.claude.complete({
+          messages: [{ role: 'user', content: `${sys}\n\nPergunta do utilizador: ${q}` }],
+        });
+        setMsgs((m) => [...m, { role: 'assistant', text: reply || respostaLocal(q) }]);
+      } else {
+        // Site publicado (ex.: Hostinger): resposta local + encaminhamento humano.
+        await new Promise((r) => setTimeout(r, 500));
+        setMsgs((m) => [...m, { role: 'assistant', text: respostaLocal(q), wa: true }]);
+      }
     } catch (err) {
-      setMsgs((m) => [...m, { role: 'assistant', text: 'Tive um problema a contactar o serviço. Pode tentar novamente, ou ligar para +258 87 987 7200.' }]);
+      setMsgs((m) => [...m, { role: 'assistant', text: respostaLocal(q), wa: true }]);
     } finally {
       setBusy(false);
     }
+  };
+
+  // Respostas úteis sem depender de API externa.
+  const respostaLocal = (q) => {
+    const s = q.toLowerCase();
+    if (/(preço|preco|orçament|orcament|custa|quanto|valor)/.test(s))
+      return 'Os valores dependem do âmbito de cada projecto. Deixe-nos o seu contacto pelo formulário "Pedir orçamento" ou fale connosco no WhatsApp que respondemos em menos de 24h.';
+    if (/(serviç|servic|fazem|oferec|design|web|marketing|branding|logo|site)/.test(s))
+      return 'Fazemos Design Gráfico, Desenvolvimento Web, Marketing Digital, Branding, Gestão de Redes Sociais e Soluções com IA. Sobre qual gostaria de saber mais?';
+    if (/(prazo|tempo|demora|quando)/.test(s))
+      return 'Os prazos variam entre 2 e 6 semanas conforme o projecto. Podemos dar-lhe uma estimativa precisa após um breve briefing.';
+    if (/(contact|telefone|email|falar|whatsapp|onde)/.test(s))
+      return 'Pode falar connosco pelo WhatsApp 83 415 7731, por e-mail contacto@caritechgraphic.com ou ligar para +258 87 987 7200. Estamos em Nampula, Moçambique.';
+    return 'Boa pergunta! Para lhe responder com detalhe, o melhor é falar directamente com a nossa equipa. Toque no botão abaixo para continuar no WhatsApp.';
+  };
+
+  const abrirWhatsApp = () => {
+    const num = (window.SITE_CONFIG && window.SITE_CONFIG.whatsapp) || '258834157731';
+    window.open(`https://wa.me/${num}`, '_blank', 'noopener');
   };
 
   return (
@@ -308,7 +361,22 @@ function ChatAssistant() {
         <div className="chat-body" ref={scrollRef}>
           {msgs.map((m, i) => (
             <div key={i} className={`chat-msg chat-${m.role}`}>
-              <div className="chat-bubble">{m.text}</div>
+              <div className="chat-bubble">
+                {m.text}
+                {m.wa && (
+                  <button
+                    type="button"
+                    onClick={abrirWhatsApp}
+                    style={{
+                      marginTop: 10, background: '#25D366', color: '#fff', border: 'none',
+                      borderRadius: 8, padding: '8px 12px', fontWeight: 600, fontSize: 13,
+                      display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                    }}
+                  >
+                    <i className="fa-brands fa-whatsapp" aria-hidden="true" /> Falar no WhatsApp
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {busy && (

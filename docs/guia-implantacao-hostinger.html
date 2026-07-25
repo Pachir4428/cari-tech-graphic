@@ -251,12 +251,12 @@
   <div class="step">
     <div class="step-num">6</div>
     <div class="step-body">
-      <h3>Renomeie o arquivo principal</h3>
-      <p>Para que o site abra automaticamente no domínio, o arquivo <code>Cari Tech Graphic.html</code> precisa virar <code>index.html</code>.</p>
-      <p>Clique com o botão direito sobre ele → <strong>Renomear</strong> → digite <code>index.html</code> → confirme.</p>
-      <div class="alert">
-        <span class="label">Importante</span>
-        Sem esse passo, o navegador vai exibir uma lista de arquivos em vez do site, ou um erro 403/404.
+      <h3>Crie o e-mail e configure os contactos</h3>
+      <p>Em <strong>E-mails → Contas de E-mail</strong>, crie <code>contacto@seudominio.com</code> (recebe os pedidos) e <code>no-reply@seudominio.com</code> (remetente).</p>
+      <p>Depois edite <code>config.php</code> (para onde chegam os e-mails) e <code>assets/js/config.js</code> (WhatsApp, e-mail e telefone mostrados no site).</p>
+      <div class="alert tip">
+        <span class="label">Bom saber</span>
+        Já não é preciso renomear nada — o arquivo principal já se chama <code>index.html</code> e abre sozinho no domínio.
       </div>
     </div>
   </div>
@@ -264,29 +264,24 @@
   <div class="step">
     <div class="step-num">7</div>
     <div class="step-body">
-      <h3>Teste o site</h3>
-      <p>Abra seu domínio no navegador. Se aparecer cache antigo ou tela em branco, force um <strong>hard refresh</strong>: <code>Ctrl + Shift + R</code> (Windows) ou <code>Cmd + Shift + R</code> (Mac).</p>
+      <h3>Teste o site e o formulário</h3>
+      <p>Abra seu domínio, preencha o formulário de contacto e confirme que o e-mail chega. Se aparecer cache antigo ou tela em branco, force um <strong>hard refresh</strong>: <code>Ctrl + Shift + R</code> (Windows) ou <code>Cmd + Shift + R</code> (Mac).</p>
     </div>
   </div>
 
   <h2>Estrutura final esperada</h2>
   <p>Dentro de <code>public_html/</code> você deve ter:</p>
 <pre><span class="dir">public_html/</span>
-├── <span class="hi">index.html</span>          <span class="cm">← renomeado de "Cari Tech Graphic.html"</span>
+├── <span class="hi">index.html</span>          <span class="cm">← página principal (abre sozinha)</span>
 ├── sobre.html
 ├── admin.html
-├── app.jsx
-├── i18n.js
-├── icons.jsx
-├── sections-1.jsx ... sections-5.jsx
-├── styles.css
-├── styles-extras.css
-├── styles-modals.css
-├── styles-sections.css
-├── styles-sections-2.css
-├── dotted-surface.js
-├── tweaks-panel.jsx
-└── <span class="dir">uploads/</span></pre>
+├── <span class="hi">enviar.php</span>          <span class="cm">← recebe os formulários</span>
+├── <span class="hi">config.php</span>          <span class="cm">← as suas definições (e-mail, WhatsApp)</span>
+├── .htaccess
+├── robots.txt
+├── <span class="dir">assets/</span>            <span class="cm">← css/ e js/ (estilos e componentes)</span>
+├── <span class="dir">uploads/</span>           <span class="cm">← imagens</span>
+└── <span class="dir">dados/</span>             <span class="cm">← cópia dos leads (protegida)</span></pre>
 
   <h2>Configurações recomendadas</h2>
 
@@ -313,7 +308,8 @@
   <ul>
     <li><strong>Tela em branco:</strong> verifique se o <code>index.html</code> foi renomeado corretamente e está em <code>public_html/</code>.</li>
     <li><strong>Imagens não aparecem:</strong> confirme que a pasta <code>uploads/</code> foi enviada por completo, com permissões 755.</li>
-    <li><strong>CSS quebrado:</strong> verifique se todos os arquivos <code>.css</code> estão no mesmo nível que o <code>index.html</code>.</li>
+    <li><strong>CSS quebrado:</strong> confirme que a pasta <code>assets/</code> (com <code>css/</code> e <code>js/</code>) foi enviada por completo, junto ao <code>index.html</code>.</li>
+    <li><strong>Formulário não envia e-mail:</strong> verifique o <code>config.php</code> (<code>to_email</code> e <code>from_email</code> devem ser do seu domínio). Os pedidos ficam sempre guardados em <code>dados/leads.csv</code>.</li>
     <li><strong>Erro 403:</strong> selecione todos os arquivos no gerenciador → botão direito → <strong>Permissões</strong> → defina <code>644</code> para arquivos e <code>755</code> para pastas.</li>
     <li><strong>Site não atualiza:</strong> limpe o cache do navegador e do LiteSpeed (em <strong>Avançado → Gerenciar cache</strong>).</li>
   </ul>

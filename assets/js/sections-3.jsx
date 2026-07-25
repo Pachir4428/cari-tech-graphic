@@ -4,6 +4,18 @@
 
 const { useState: useState3, useEffect: useEffect3, useRef: useRef3 } = React;
 
+// ---------- Contactos geridos no painel (com fallback para os valores padrão) ----------
+function useContact() {
+  const [c, setC] = useState3({});
+  useEffect3(() => {
+    window.loadContent().then((d) => { if (d && d.contact) setC(d.contact); });
+  }, []);
+  return c;
+}
+const CONTACT_DEFAULT = { email: 'contacto@caritechgraphic.com', phone: '+258 87 987 7200', whatsapp: '258834157731' };
+const telHref = (phone) => 'tel:+' + String(phone || '').replace(/[^\d]/g, '');
+const waHref = (num) => 'https://wa.me/' + String(num || '').replace(/\D/g, '');
+
 // ---------- Header ----------
 function Header({ t, lang, setLang, theme, setTheme, onStart }) {
   const [scrolled, setScrolled] = useState3(false);
@@ -82,9 +94,15 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
 // ---------- Contact ----------
 function Contact({ t }) {
   const ref = window.useReveal();
-  const [form, setForm] = useState3({ name: '', email: '', phone: '', service: '', message: '' });
+  const c = useContact();
+  const email = c.email || CONTACT_DEFAULT.email;
+  const phone = c.phone || CONTACT_DEFAULT.phone;
+  const address = c.address || t.contact.address;
+  const hours = c.hours || t.contact.hours;
+  const [form, setForm] = useState3({ name: '', email: '', phone: '', service: '', message: '', website: '' });
   const [errors, setErrors] = useState3({});
-  const [status, setStatus] = useState3('idle'); // idle | sending | sent
+  const [status, setStatus] = useState3('idle'); // idle | sending | sent | error
+  const [feedback, setFeedback] = useState3('');
 
   function update(k, v) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -100,15 +118,26 @@ function Contact({ t }) {
     return Object.keys(e).length === 0;
   }
 
-  function submit(ev) {
+  async function submit(ev) {
     ev.preventDefault();
     if (!validate()) return;
     setStatus('sending');
-    setTimeout(() => {
+    setFeedback('');
+    try {
+      const res = await window.sendLead(form);
       setStatus('sent');
-      setForm({ name: '', email: '', phone: '', service: '', message: '' });
-      setTimeout(() => setStatus('idle'), 4500);
-    }, 1100);
+      setFeedback(res.message || t.contact.success);
+      setForm({ name: '', email: '', phone: '', service: '', message: '', website: '' });
+      setTimeout(() => setStatus('idle'), 6000);
+    } catch (err) {
+      // Servidor indisponível (ex.: PHP não configurado) — oferece WhatsApp
+      setStatus('error');
+      setFeedback('Não foi possível enviar agora. Fale connosco directamente pelo WhatsApp.');
+    }
+  }
+
+  function abrirWhatsApp() {
+    window.open(window.buildWhatsAppLink(form), '_blank', 'noopener');
   }
 
   return (
@@ -120,26 +149,26 @@ function Contact({ t }) {
           <p className="lede reveal delay-2">{t.contact.lede}</p>
 
           <div className="contact-cards reveal delay-3">
-            <a className="contact-card" href="mailto:contacto@caritechgraphic.com">
+            <a className="contact-card" href={`mailto:${email}`}>
               <div className="cc-icon"><Icon.Mail size={20} /></div>
               <div>
                 <div className="cc-lab">{t.contact.info_email}</div>
-                <div className="cc-val">contacto@caritechgraphic.com</div>
+                <div className="cc-val">{email}</div>
               </div>
             </a>
-            <a className="contact-card" href="tel:+258879877200">
+            <a className="contact-card" href={telHref(phone)}>
               <div className="cc-icon"><Icon.Phone size={20} /></div>
               <div>
                 <div className="cc-lab">{t.contact.info_phone}</div>
-                <div className="cc-val">+258 87 987 7200</div>
+                <div className="cc-val">{phone}</div>
               </div>
             </a>
             <div className="contact-card">
               <div className="cc-icon"><Icon.MapPin size={20} /></div>
               <div>
                 <div className="cc-lab">{t.contact.info_address}</div>
-                <div className="cc-val">{t.contact.address}</div>
-                <div className="cc-hours">{t.contact.hours}</div>
+                <div className="cc-val">{address}</div>
+                <div className="cc-hours">{hours}</div>
               </div>
             </div>
           </div>
@@ -219,11 +248,38 @@ function Contact({ t }) {
             />
             <div className="field-error">{errors.message}</div>
           </div>
+          {/* Honeypot anti-spam — invisível para humanos */}
+          <input
+            type="text"
+            name="website"
+            value={form.website}
+            onChange={(e) => update('website', e.target.value)}
+            tabIndex="-1"
+            autoComplete="off"
+            aria-hidden="true"
+            style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+          />
           <button type="submit" className="btn btn-accent cf-submit" disabled={status === 'sending'}>
             {status === 'sending' ? t.contact.sending : status === 'sent' ? t.contact.success : t.contact.send}
             {status !== 'sent' && <Icon.Arrow size={14} />}
             {status === 'sent' && <Icon.Check size={16} />}
           </button>
+          {feedback && (
+            <p className={`cf-feedback ${status === 'error' ? 'error' : 'ok'}`} style={{
+              marginTop: 12, fontSize: 13, fontWeight: 600,
+              color: status === 'error' ? 'var(--danger, #e5484d)' : 'var(--success, #30a46c)',
+            }}>
+              {feedback}
+            </p>
+          )}
+          {status === 'error' && (
+            <button type="button" className="btn btn-whatsapp cf-submit" onClick={abrirWhatsApp} style={{
+              marginTop: 10, background: '#25D366', color: '#fff', display: 'inline-flex',
+              alignItems: 'center', gap: 8, justifyContent: 'center',
+            }}>
+              <i className="fa-brands fa-whatsapp" aria-hidden="true" /> Enviar pelo WhatsApp
+            </button>
+          )}
         </form>
       </div>
     </section>
@@ -232,6 +288,11 @@ function Contact({ t }) {
 
 // ---------- Footer ----------
 function Footer({ t }) {
+  const c = useContact();
+  const email = c.email || CONTACT_DEFAULT.email;
+  const phone = c.phone || CONTACT_DEFAULT.phone;
+  const whatsapp = c.whatsapp || CONTACT_DEFAULT.whatsapp;
+  const address = c.address || t.contact.address;
   return (
     <footer className="site-footer">
       <div className="container">
@@ -273,10 +334,10 @@ function Footer({ t }) {
           </div>
           <div className="footer-col">
             <div className="fc-title">{t.footer.contact}</div>
-            <a href="mailto:contacto@caritechgraphic.com">contacto@caritechgraphic.com</a>
-            <a href="tel:+258879877200">+258 87 987 7200</a>
-            <a href="https://wa.me/258834157731" target="_blank" rel="noreferrer">WhatsApp · 83 415 7731</a>
-            <div className="fc-addr">{t.contact.address}</div>
+            <a href={`mailto:${email}`}>{email}</a>
+            <a href={telHref(phone)}>{phone}</a>
+            <a href={waHref(whatsapp)} target="_blank" rel="noreferrer">WhatsApp</a>
+            <div className="fc-addr">{address}</div>
           </div>
         </div>
         <div className="footer-bottom">
@@ -291,6 +352,8 @@ function Footer({ t }) {
 // ---------- WhatsApp floating ----------
 function WhatsAppFab() {
   const [visible, setVisible] = useState3(false);
+  const c = useContact();
+  const whatsapp = c.whatsapp || CONTACT_DEFAULT.whatsapp;
   useEffect3(() => {
     const onScroll = () => setVisible(window.scrollY > 600);
     window.addEventListener('scroll', onScroll);
@@ -298,7 +361,7 @@ function WhatsAppFab() {
   }, []);
   return (
     <a
-      href="https://wa.me/258834157731"
+      href={waHref(whatsapp)}
       target="_blank"
       rel="noreferrer"
       className={`whatsapp-fab ${visible ? 'show' : ''}`}

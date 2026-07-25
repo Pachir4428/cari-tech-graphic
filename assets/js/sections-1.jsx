@@ -284,19 +284,39 @@ function Services({ t, onView, onRequest }) {
   const ref = useReveal();
   const icons = [Icon.Pen, Icon.Code, Icon.Megaphone, Icon.Tag, Icon.Share, Icon.Brain];
 
+  // Conteúdo gerido no painel (se existir) tem prioridade sobre os textos padrão.
+  const [managed, setManaged] = useState(null);
+  const [head, setHead] = useState(null);
+  useEffect(() => {
+    window.loadContent().then((c) => {
+      if (c.services && c.services.length) {
+        setManaged(c.services.map((s, i) => ({
+          n: s.n || String(i + 1).padStart(2, '0'),
+          t: s.t || s.name || '',
+          d: s.d || '',
+        })));
+      }
+      if (c.headings && c.headings.services) setHead(c.headings.services);
+    });
+  }, []);
+  const items = managed || t.services.items;
+  const eyebrow = (head && head.eyebrow) || t.services.eyebrow;
+  const title = (head && head.title) || t.services.title;
+  const lede = (head && head.lede) || t.services.lede;
+
   return (
     <section className="section services" id="services" ref={ref} data-screen-label="04 Services">
       <div className="container">
         <div className="services-head">
           <div>
-            <div className="eyebrow reveal">{t.services.eyebrow}</div>
-            <h2 className="h-section reveal delay-1">{t.services.title}</h2>
+            <div className="eyebrow reveal">{eyebrow}</div>
+            <h2 className="h-section reveal delay-1">{title}</h2>
           </div>
-          <p className="lede reveal delay-2">{t.services.lede}</p>
+          <p className="lede reveal delay-2">{lede}</p>
         </div>
         <div className="services-grid">
-          {t.services.items.map((s, i) => {
-            const Ico = icons[i];
+          {items.map((s, i) => {
+            const Ico = icons[i % icons.length];
             return (
               <article className={`card service-card reveal delay-${(i % 4) + 1}`} key={i}>
                 <div className="service-num">{s.n}</div>
