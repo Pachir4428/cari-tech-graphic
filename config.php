@@ -42,7 +42,25 @@ return [
 
     // Onde fica o conteúdo gerido no painel (Serviços e Portfólio),
     // lido pelo site público através de conteudo.php.
+    // (Usado apenas quando a base de dados está DESLIGADA — ver 'db' abaixo.)
     'content_json' => __DIR__ . '/dados/conteudo.json',
+
+    // ---- Base de dados MySQL (opcional) ------------------------------------
+    // Por omissão o site guarda tudo em ficheiros (dados/*.json) e funciona
+    // sem qualquer configuração. Para usar MySQL da Hostinger:
+    //   1. hPanel → Bases de Dados → MySQL: crie uma base de dados e um
+    //      utilizador (anote nome, utilizador e palavra-passe).
+    //   2. Preencha os dados abaixo e ponha 'enabled' => true.
+    //   3. As tabelas são criadas automaticamente na primeira utilização.
+    // Se a ligação falhar, o site volta automaticamente aos ficheiros.
+    'db' => [
+        'enabled' => false,
+        'host'    => 'localhost',              // na Hostinger é normalmente 'localhost'
+        'name'    => '',                       // ex.: u123456789_caritech
+        'user'    => '',                       // ex.: u123456789_admin
+        'pass'    => '',
+        'charset' => 'utf8mb4',
+    ],
 
     // ---- SMTP (opcional, recomendado para melhor entregabilidade) ----------
     // Deixe 'smtp_enabled' => false para usar a função mail() nativa do PHP.

@@ -12,6 +12,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 
 $config = require __DIR__ . '/config.php';
+require_once __DIR__ . '/armazenamento.php';
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -85,33 +86,19 @@ if ($fh = @fopen($csvPath, 'a')) {
     fclose($fh);
 }
 
-/* Também grava em JSON — é a fonte usada pelo painel admin (com id e estado). */
-$jsonPath = $config['leads_json'] ?? (__DIR__ . '/dados/leads.json');
-@mkdir(dirname($jsonPath), 0755, true);
-if ($fh = @fopen($jsonPath, 'c+')) {
-    if (flock($fh, LOCK_EX)) {
-        $conteudo = stream_get_contents($fh);
-        $lista = json_decode($conteudo ?: '[]', true);
-        if (!is_array($lista)) $lista = [];
-        $lista[] = [
-            'id'       => bin2hex(random_bytes(8)),
-            'data'     => date('c'),
-            'nome'     => $nome,
-            'email'    => $email,
-            'telefone' => $telefone,
-            'servico'  => $servico,
-            'mensagem' => $mensagem,
-            'ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
-            'status'   => 'new',
-        ];
-        ftruncate($fh, 0);
-        rewind($fh);
-        fwrite($fh, json_encode($lista, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-        fflush($fh);
-        flock($fh, LOCK_UN);
-    }
-    fclose($fh);
-}
+/* Grava o lead no armazenamento (MySQL se configurado, senão dados/leads.json).
+   É a fonte usada pelo painel admin (com id e estado). */
+store_add_lead($config, [
+    'id'       => bin2hex(random_bytes(8)),
+    'data'     => date('c'),
+    'nome'     => $nome,
+    'email'    => $email,
+    'telefone' => $telefone,
+    'servico'  => $servico,
+    'mensagem' => $mensagem,
+    'ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
+    'status'   => 'new',
+]);
 
 /* -------------------------------------------------------------------------- */
 /* Montar e enviar o e-mail                                                   */

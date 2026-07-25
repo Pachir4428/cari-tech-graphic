@@ -1,30 +1,20 @@
 <?php
 /**
- * Cari Tech Graphic — Conteúdo público (Serviços e Portfólio)
+ * Cari Tech Graphic — Conteúdo público (Serviços, Portfólio, Testemunhos…)
  * ---------------------------------------------------------------------------
- * Devolve, em JSON, os serviços e projectos geridos no painel de administração.
+ * Devolve, em JSON, o conteúdo gerido no painel de administração.
  * É apenas de LEITURA e público (o site usa-o para mostrar o conteúdo).
- * Se ainda não houver conteúdo gerido, devolve arrays vazios e o site usa os
- * textos padrão do i18n.
+ * Lê do MySQL ou dos ficheiros, conforme a configuração (ver armazenamento.php).
+ * Se ainda não houver conteúdo gerido, devolve vazio e o site usa o i18n.
  */
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache');
 header('Access-Control-Allow-Origin: *');
 
 $config = require __DIR__ . '/config.php';
-$path = $config['content_json'] ?? (__DIR__ . '/dados/conteudo.json');
+require_once __DIR__ . '/armazenamento.php';
 
-$dados = ['services' => [], 'portfolio' => [], 'testimonials' => [], 'headings' => new stdClass(), 'contact' => new stdClass()];
-if (file_exists($path)) {
-    $lido = json_decode(@file_get_contents($path) ?: '{}', true);
-    if (is_array($lido)) {
-        $dados['services']     = $lido['services']     ?? [];
-        $dados['portfolio']    = $lido['portfolio']    ?? [];
-        $dados['testimonials'] = $lido['testimonials'] ?? [];
-        $dados['headings']     = $lido['headings']     ?? new stdClass();
-        $dados['contact']      = $lido['contact']      ?? new stdClass();
-    }
-}
+$dados = store_get_content($config);
 
 /* Só expõe ao público os itens marcados como activos/publicados. */
 $publicos = fn($lista) => array_values(array_filter(
@@ -32,11 +22,14 @@ $publicos = fn($lista) => array_values(array_filter(
     fn($i) => ($i['status'] ?? 'active') === 'active'
 ));
 
+/* Objectos vazios quando não há nada guardado (para o site usar os padrões). */
+$obj = fn($v) => (is_array($v) && $v) ? $v : new stdClass();
+
 echo json_encode([
-    'ok'        => true,
+    'ok'           => true,
     'services'     => $publicos($dados['services']),
     'portfolio'    => $publicos($dados['portfolio']),
     'testimonials' => $publicos($dados['testimonials']),
-    'headings'     => $dados['headings'],
-    'contact'      => $dados['contact'],
+    'headings'     => $obj($dados['headings']),
+    'contact'      => $obj($dados['contact']),
 ], JSON_UNESCAPED_UNICODE);
