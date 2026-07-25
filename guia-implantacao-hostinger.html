@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Guia de Implantação na Hostinger - Cari Tech Graphic</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: #1a1a1a;
+    font-size: 11pt;
+    line-height: 1.55;
+    background: #fff;
+  }
+  .page {
+    max-width: 178mm;
+    margin: 0 auto;
+    padding: 0;
+  }
+  header.cover {
+    border-left: 6px solid #0066ff;
+    padding: 4mm 0 4mm 6mm;
+    margin-bottom: 10mm;
+  }
+  header.cover .eyebrow {
+    font-size: 9pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #0066ff;
+    font-weight: 700;
+    margin: 0 0 2mm 0;
+  }
+  header.cover h1 {
+    font-size: 24pt;
+    line-height: 1.15;
+    margin: 0 0 3mm 0;
+    font-weight: 800;
+    color: #0a0a0a;
+    letter-spacing: -0.01em;
+  }
+  header.cover .sub {
+    font-size: 10.5pt;
+    color: #555;
+    margin: 0;
+  }
+
+  h2 {
+    font-size: 14pt;
+    margin: 8mm 0 3mm 0;
+    color: #0a0a0a;
+    font-weight: 700;
+    page-break-after: avoid;
+    border-bottom: 1.5px solid #e5e5e5;
+    padding-bottom: 1.5mm;
+  }
+  h3 {
+    font-size: 11.5pt;
+    margin: 5mm 0 1.5mm 0;
+    color: #0066ff;
+    font-weight: 700;
+    page-break-after: avoid;
+  }
+  p { margin: 0 0 2.5mm 0; }
+  ul, ol { margin: 0 0 3mm 0; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+
+  .step {
+    display: flex;
+    gap: 4mm;
+    margin-bottom: 5mm;
+    page-break-inside: avoid;
+  }
+  .step-num {
+    flex: 0 0 9mm;
+    height: 9mm;
+    border-radius: 50%;
+    background: #0066ff;
+    color: #fff;
+    font-weight: 800;
+    font-size: 12pt;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-body { flex: 1; padding-top: 0.5mm; }
+  .step-body h3 { margin-top: 0; color: #0a0a0a; font-size: 12pt; }
+
+  code, .code {
+    font-family: 'Courier New', Courier, monospace;
+    background: #f4f4f5;
+    border: 1px solid #e5e5e5;
+    padding: 0.5mm 1.5mm;
+    border-radius: 1mm;
+    font-size: 10pt;
+    color: #0066ff;
+  }
+  pre {
+    background: #0a0a0a;
+    color: #e5e5e5;
+    padding: 4mm 5mm;
+    border-radius: 2mm;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9.5pt;
+    line-height: 1.55;
+    overflow-x: auto;
+    margin: 3mm 0;
+    page-break-inside: avoid;
+  }
+  pre .dir { color: #62b6ff; font-weight: 700; }
+  pre .hi { color: #ffd166; }
+  pre .cm { color: #888; }
+
+  .alert {
+    border-left: 4px solid #ffb800;
+    background: #fff8e6;
+    padding: 3mm 4mm;
+    margin: 3mm 0;
+    border-radius: 0 2mm 2mm 0;
+    font-size: 10.5pt;
+    page-break-inside: avoid;
+  }
+  .alert.tip {
+    border-left-color: #00a86b;
+    background: #ebfaf3;
+  }
+  .alert .label {
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #b07c00;
+    display: block;
+    margin-bottom: 1mm;
+  }
+  .alert.tip .label { color: #007a4d; }
+
+  footer {
+    margin-top: 12mm;
+    padding-top: 4mm;
+    border-top: 1px solid #e5e5e5;
+    font-size: 9pt;
+    color: #777;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
+    margin: 3mm 0;
+  }
+  .card {
+    border: 1px solid #e5e5e5;
+    border-radius: 2mm;
+    padding: 3mm 4mm;
+    page-break-inside: avoid;
+  }
+  .card h4 {
+    margin: 0 0 1.5mm 0;
+    font-size: 10.5pt;
+    color: #0066ff;
+  }
+  .card p { font-size: 10pt; margin: 0; color: #444; }
+
+  .page-break { page-break-before: always; }
+
+  @media screen {
+    body { background: #e5e5e5; padding: 20px; }
+    .page {
+      background: #fff;
+      padding: 18mm 16mm;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      min-height: 297mm;
+      width: 210mm;
+      margin-bottom: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="cover">
+    <p class="eyebrow">Guia de Implantação</p>
+    <h1>Como publicar seu site na Hostinger</h1>
+    <p class="sub">Cari Tech Graphic — passo a passo completo, do upload ao site no ar.</p>
+  </header>
+
+  <h2>Antes de começar</h2>
+  <p>Você vai precisar de:</p>
+  <ul>
+    <li>Conta ativa na <strong>Hostinger</strong> com um plano de hospedagem</li>
+    <li>O arquivo <strong>ZIP do projeto</strong> baixado (Cari Tech Graphic)</li>
+    <li>Um domínio configurado (ou usar o subdomínio gratuito da Hostinger)</li>
+  </ul>
+
+  <h2>Passo a passo</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Baixe e descompacte o ZIP</h3>
+      <p>Localize o arquivo ZIP do projeto no seu computador e descompacte-o em uma pasta de fácil acesso. Você verá os arquivos <code>.html</code>, <code>.css</code>, <code>.jsx</code> e <code>.js</code> que compõem o site.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Acesse o hPanel da Hostinger</h3>
+      <p>Entre em <code>hpanel.hostinger.com</code> com sua conta e selecione o site/domínio onde quer publicar.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Abra o Gerenciador de Arquivos</h3>
+      <p>No menu lateral, clique em <strong>Arquivos → Gerenciador de Arquivos</strong>. Depois, entre na pasta <code>public_html</code> — é a pasta raiz do seu site.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Limpe arquivos padrão</h3>
+      <p>Se houver arquivos pré-existentes como <code>default.php</code>, <code>index.html</code> em branco ou pastas vazias da Hostinger, selecione e exclua para não causar conflito.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>Faça o upload dos arquivos</h3>
+      <p>Clique no botão <strong>Upload</strong> (ícone de seta para cima, no topo do gerenciador). Selecione <strong>todos os arquivos descompactados</strong> — os arquivos soltos, não a pasta. Aguarde o upload finalizar.</p>
+      <div class="alert tip">
+        <span class="label">Dica</span>
+        Para acelerar, recompacte tudo em um novo ZIP, envie esse ZIP e use a opção <strong>"Extract"</strong> do Gerenciador de Arquivos para descompactar direto no servidor.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <h3>Renomeie o arquivo principal</h3>
+      <p>Para que o site abra automaticamente no domínio, o arquivo <code>Cari Tech Graphic.html</code> precisa virar <code>index.html</code>.</p>
+      <p>Clique com o botão direito sobre ele → <strong>Renomear</strong> → digite <code>index.html</code> → confirme.</p>
+      <div class="alert">
+        <span class="label">Importante</span>
+        Sem esse passo, o navegador vai exibir uma lista de arquivos em vez do site, ou um erro 403/404.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-body">
+      <h3>Teste o site</h3>
+      <p>Abra seu domínio no navegador. Se aparecer cache antigo ou tela em branco, force um <strong>hard refresh</strong>: <code>Ctrl + Shift + R</code> (Windows) ou <code>Cmd + Shift + R</code> (Mac).</p>
+    </div>
+  </div>
+
+  <h2>Estrutura final esperada</h2>
+  <p>Dentro de <code>public_html/</code> você deve ter:</p>
+<pre><span class="dir">public_html/</span>
+├── <span class="hi">index.html</span>          <span class="cm">← renomeado de "Cari Tech Graphic.html"</span>
+├── sobre.html
+├── admin.html
+├── app.jsx
+├── i18n.js
+├── icons.jsx
+├── sections-1.jsx ... sections-5.jsx
+├── styles.css
+├── styles-extras.css
+├── styles-modals.css
+├── styles-sections.css
+├── styles-sections-2.css
+├── dotted-surface.js
+├── tweaks-panel.jsx
+└── <span class="dir">uploads/</span></pre>
+
+  <h2>Configurações recomendadas</h2>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Ativar HTTPS (SSL)</h4>
+      <p>No hPanel, vá em <strong>Segurança → SSL</strong> e ative o certificado gratuito Let's Encrypt. É 1 clique e deixa seu site com cadeado verde.</p>
+    </div>
+    <div class="card">
+      <h4>Domínio personalizado</h4>
+      <p>Em <strong>Domínios → Gerenciar</strong>, configure os DNS para apontar para a Hostinger. Pode levar até 24h para propagar.</p>
+    </div>
+    <div class="card">
+      <h4>Cache e performance</h4>
+      <p>Ative o <strong>LiteSpeed Cache</strong> no hPanel para o site carregar mais rápido para visitantes recorrentes.</p>
+    </div>
+    <div class="card">
+      <h4>Backup automático</h4>
+      <p>Habilite os backups diários em <strong>Arquivos → Backups</strong> para conseguir restaurar o site caso algo dê errado.</p>
+    </div>
+  </div>
+
+  <h2>Resolução de problemas</h2>
+  <ul>
+    <li><strong>Tela em branco:</strong> verifique se o <code>index.html</code> foi renomeado corretamente e está em <code>public_html/</code>.</li>
+    <li><strong>Imagens não aparecem:</strong> confirme que a pasta <code>uploads/</code> foi enviada por completo, com permissões 755.</li>
+    <li><strong>CSS quebrado:</strong> verifique se todos os arquivos <code>.css</code> estão no mesmo nível que o <code>index.html</code>.</li>
+    <li><strong>Erro 403:</strong> selecione todos os arquivos no gerenciador → botão direito → <strong>Permissões</strong> → defina <code>644</code> para arquivos e <code>755</code> para pastas.</li>
+    <li><strong>Site não atualiza:</strong> limpe o cache do navegador e do LiteSpeed (em <strong>Avançado → Gerenciar cache</strong>).</li>
+  </ul>
+
+  <footer>
+    <span>Cari Tech Graphic — Guia de Implantação</span>
+    <span>Versão 1.0</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

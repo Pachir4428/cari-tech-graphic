@@ -1,0 +1,313 @@
+// ==========================================================================
+// Cari Tech Graphic — Sections part 3 (Contact, Footer, Header, WhatsApp)
+// ==========================================================================
+
+const { useState: useState3, useEffect: useEffect3, useRef: useRef3 } = React;
+
+// ---------- Header ----------
+function Header({ t, lang, setLang, theme, setTheme, onStart }) {
+  const [scrolled, setScrolled] = useState3(false);
+  const [open, setOpen] = useState3(false);
+
+  useEffect3(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const links = [
+    { id: 'home', label: t.nav.home, href: '#home' },
+    { id: 'about', label: t.nav.about, href: 'sobre.html' },
+    { id: 'services', label: t.nav.services, href: '#services' },
+    { id: 'portfolio', label: t.nav.portfolio, href: '#portfolio' },
+    { id: 'contact', label: t.nav.contact, href: '#contact' },
+  ];
+
+  return (
+    <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
+      <div className="container site-header-inner">
+        <a href="#home" className="logo" onClick={() => setOpen(false)}>
+          <div className="logo-mark">
+            <svg viewBox="0 0 32 32" fill="none">
+              <defs>
+                <linearGradient id="lm" x1="0" x2="1">
+                  <stop offset="0" stopColor="var(--accent)" />
+                  <stop offset="1" stopColor="var(--accent-2)" />
+                </linearGradient>
+              </defs>
+              <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm)" opacity="0.18" />
+              <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm)" strokeWidth="1.6" fill="none" />
+              <text x="16" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="currentColor">C</text>
+            </svg>
+          </div>
+          <span className="logo-text">
+            <span className="logo-name">Cari Tech</span>
+            <span className="logo-sub">Graphic</span>
+          </span>
+        </a>
+        <nav className={`site-nav ${open ? 'open' : ''}`}>
+          {links.map((l) => (
+            <a key={l.id} href={l.href} onClick={() => setOpen(false)}>{l.label}</a>
+          ))}
+          <a href="admin.html" className="nav-admin" onClick={() => setOpen(false)}>Admin</a>
+        </nav>
+        <div className="site-actions">
+          <button
+            className="action-btn lang-toggle"
+            onClick={() => setLang(lang === 'pt' ? 'en' : 'pt')}
+            aria-label="Toggle language"
+          >
+            <Icon.Globe size={14} />
+            <span>{lang.toUpperCase()}</span>
+          </button>
+          <button
+            className="action-btn theme-toggle"
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <Icon.Moon size={16} /> : <Icon.Sun size={16} />}
+          </button>
+          <button type="button" className="btn btn-primary header-cta" onClick={() => onStart('')}>
+            {t.nav.cta}<Icon.Arrow size={14} />
+          </button>
+          <button className="hamburger" onClick={() => setOpen(!open)} aria-label="Menu">
+            <span /><span /><span />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ---------- Contact ----------
+function Contact({ t }) {
+  const ref = window.useReveal();
+  const [form, setForm] = useState3({ name: '', email: '', phone: '', service: '', message: '' });
+  const [errors, setErrors] = useState3({});
+  const [status, setStatus] = useState3('idle'); // idle | sending | sent
+
+  function update(k, v) {
+    setForm((f) => ({ ...f, [k]: v }));
+    setErrors((e) => ({ ...e, [k]: undefined }));
+  }
+
+  function validate() {
+    const e = {};
+    if (!form.name.trim()) e.name = t.contact.err_name;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = t.contact.err_email;
+    if (form.message.trim().length < 10) e.message = t.contact.err_message;
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function submit(ev) {
+    ev.preventDefault();
+    if (!validate()) return;
+    setStatus('sending');
+    setTimeout(() => {
+      setStatus('sent');
+      setForm({ name: '', email: '', phone: '', service: '', message: '' });
+      setTimeout(() => setStatus('idle'), 4500);
+    }, 1100);
+  }
+
+  return (
+    <section className="section contact" id="contact" ref={ref} data-screen-label="09 Contact">
+      <div className="container contact-grid">
+        <div className="contact-info">
+          <div className="eyebrow reveal">{t.contact.eyebrow}</div>
+          <h2 className="h-section reveal delay-1">{t.contact.title}</h2>
+          <p className="lede reveal delay-2">{t.contact.lede}</p>
+
+          <div className="contact-cards reveal delay-3">
+            <a className="contact-card" href="mailto:contacto@caritechgraphic.com">
+              <div className="cc-icon"><Icon.Mail size={20} /></div>
+              <div>
+                <div className="cc-lab">{t.contact.info_email}</div>
+                <div className="cc-val">contacto@caritechgraphic.com</div>
+              </div>
+            </a>
+            <a className="contact-card" href="tel:+258879877200">
+              <div className="cc-icon"><Icon.Phone size={20} /></div>
+              <div>
+                <div className="cc-lab">{t.contact.info_phone}</div>
+                <div className="cc-val">+258 87 987 7200</div>
+              </div>
+            </a>
+            <div className="contact-card">
+              <div className="cc-icon"><Icon.MapPin size={20} /></div>
+              <div>
+                <div className="cc-lab">{t.contact.info_address}</div>
+                <div className="cc-val">{t.contact.address}</div>
+                <div className="cc-hours">{t.contact.hours}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="contact-map reveal delay-4">
+            <div className="map-stub">
+              <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--line)" strokeWidth="1"/>
+                  </pattern>
+                </defs>
+                <rect width="400" height="200" fill="var(--bg-soft)"/>
+                <rect width="400" height="200" fill="url(#grid)"/>
+                <path d="M0 110 Q120 70 220 100 T400 80" stroke="var(--accent-2)" strokeWidth="2" fill="none" opacity="0.5"/>
+                <path d="M50 0 L80 200 M180 0 L210 200 M280 0 L310 200" stroke="var(--line)" strokeWidth="1"/>
+              </svg>
+              <div className="map-pin">
+                <div className="map-pin-dot" />
+                <div className="map-pin-pulse" />
+                <div className="map-pin-label">Bairro Mutuanha · Nampula</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <form className="contact-form reveal delay-2" onSubmit={submit} noValidate>
+          <div className="cf-row">
+            <div className={`field ${errors.name ? 'error' : ''}`}>
+              <label>{t.contact.name}</label>
+              <input
+                value={form.name}
+                onChange={(e) => update('name', e.target.value)}
+                placeholder={t.contact.placeholder_name}
+              />
+              <div className="field-error">{errors.name}</div>
+            </div>
+            <div className={`field ${errors.email ? 'error' : ''}`}>
+              <label>{t.contact.email}</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => update('email', e.target.value)}
+                placeholder={t.contact.placeholder_email}
+              />
+              <div className="field-error">{errors.email}</div>
+            </div>
+          </div>
+          <div className="cf-row">
+            <div className="field">
+              <label>{t.contact.phone}</label>
+              <input
+                value={form.phone}
+                onChange={(e) => update('phone', e.target.value)}
+                placeholder={t.contact.placeholder_phone}
+              />
+              <div className="field-error" />
+            </div>
+            <div className="field">
+              <label>{t.contact.service}</label>
+              <select value={form.service} onChange={(e) => update('service', e.target.value)}>
+                <option value="">—</option>
+                {t.services.items.map((s, i) => (
+                  <option key={i} value={s.t}>{s.t}</option>
+                ))}
+              </select>
+              <div className="field-error" />
+            </div>
+          </div>
+          <div className={`field ${errors.message ? 'error' : ''}`}>
+            <label>{t.contact.message}</label>
+            <textarea
+              rows="5"
+              value={form.message}
+              onChange={(e) => update('message', e.target.value)}
+              placeholder={t.contact.placeholder_message}
+            />
+            <div className="field-error">{errors.message}</div>
+          </div>
+          <button type="submit" className="btn btn-accent cf-submit" disabled={status === 'sending'}>
+            {status === 'sending' ? t.contact.sending : status === 'sent' ? t.contact.success : t.contact.send}
+            {status !== 'sent' && <Icon.Arrow size={14} />}
+            {status === 'sent' && <Icon.Check size={16} />}
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+// ---------- Footer ----------
+function Footer({ t }) {
+  return (
+    <footer className="site-footer">
+      <div className="container">
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <div className="logo">
+              <div className="logo-mark">
+                <svg viewBox="0 0 32 32" fill="none">
+                  <defs><linearGradient id="lm-f" x1="0" x2="1"><stop offset="0" stopColor="var(--accent)" /><stop offset="1" stopColor="var(--accent-2)" /></linearGradient></defs>
+                  <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm-f)" opacity="0.2" />
+                  <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm-f)" strokeWidth="1.6" fill="none" />
+                  <text x="16" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="currentColor">C</text>
+                </svg>
+              </div>
+              <span className="logo-text">
+                <span className="logo-name">Cari Tech</span>
+                <span className="logo-sub">Graphic</span>
+              </span>
+            </div>
+            <p>{t.footer.tagline}</p>
+            <div className="socials">
+              <a href="#" aria-label="Instagram"><Icon.Instagram size={16} /></a>
+              <a href="#" aria-label="Facebook"><Icon.Facebook size={16} /></a>
+              <a href="#" aria-label="LinkedIn"><Icon.LinkedIn size={16} /></a>
+            </div>
+          </div>
+          <div className="footer-col">
+            <div className="fc-title">{t.footer.explore}</div>
+            <a href="#home">{t.nav.home}</a>
+            <a href="#about">{t.nav.about}</a>
+            <a href="#portfolio">{t.nav.portfolio}</a>
+            <a href="#testimonials">{t.testimonials.eyebrow}</a>
+          </div>
+          <div className="footer-col">
+            <div className="fc-title">{t.footer.services}</div>
+            {t.services.items.slice(0, 5).map((s, i) => (
+              <a key={i} href="#services">{s.t}</a>
+            ))}
+          </div>
+          <div className="footer-col">
+            <div className="fc-title">{t.footer.contact}</div>
+            <a href="mailto:contacto@caritechgraphic.com">contacto@caritechgraphic.com</a>
+            <a href="tel:+258879877200">+258 87 987 7200</a>
+            <a href="https://wa.me/258834157731" target="_blank" rel="noreferrer">WhatsApp · 83 415 7731</a>
+            <div className="fc-addr">{t.contact.address}</div>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <span>{t.footer.rights}</span>
+          <span>{t.footer.built}</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ---------- WhatsApp floating ----------
+function WhatsAppFab() {
+  const [visible, setVisible] = useState3(false);
+  useEffect3(() => {
+    const onScroll = () => setVisible(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return (
+    <a
+      href="https://wa.me/258834157731"
+      target="_blank"
+      rel="noreferrer"
+      className={`whatsapp-fab ${visible ? 'show' : ''}`}
+      aria-label="WhatsApp"
+    >
+      <Icon.WhatsApp size={26} />
+      <span className="wf-pulse" />
+    </a>
+  );
+}
+
+Object.assign(window, { Header, Contact, Footer, WhatsAppFab });

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sobre Nós — Cari Tech Graphic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-sections.css" />
+  <link rel="stylesheet" href="styles-sections-2.css" />
+  <link rel="stylesheet" href="styles-modals.css" />
+  <style>
+    .about-hero {
+      padding: 160px 0 80px;
+      background: linear-gradient(160deg, var(--brand-deep), var(--brand-mid));
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .about-hero::after {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, var(--accent), transparent 70%);
+      top: -100px; right: -100px;
+      opacity: 0.4; filter: blur(60px);
+    }
+    .about-hero .container { position: relative; z-index: 1; }
+    .about-hero h1 { color: #fff; max-width: 800px; }
+    .about-hero .lede { color: rgba(255,255,255,0.78); }
+    .about-hero .eyebrow { color: var(--accent); }
+    .breadcrumb {
+      display: inline-flex; gap: 8px; align-items: center;
+      font-size: 12px; font-weight: 600;
+      color: rgba(255,255,255,0.6); margin-bottom: 16px;
+    }
+    .breadcrumb a { color: rgba(255,255,255,0.85); }
+    .breadcrumb a:hover { color: var(--accent); }
+    .timeline {
+      display: flex; flex-direction: column; gap: 32px;
+      margin-top: 48px; position: relative;
+    }
+    .timeline::before {
+      content: ''; position: absolute;
+      left: 19px; top: 8px; bottom: 8px;
+      width: 2px; background: var(--line-strong);
+    }
+    .tl-item {
+      display: grid; grid-template-columns: 60px 1fr;
+      gap: 24px; align-items: flex-start;
+    }
+    .tl-dot {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px;
+      box-shadow: 0 4px 12px var(--accent-glow);
+      flex-shrink: 0; z-index: 1;
+    }
+    .tl-content h4 { font-size: 18px; margin-bottom: 4px; }
+    .tl-content p { color: var(--ink-soft); font-size: 14px; line-height: 1.6; margin: 0; }
+    .team-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 20px; margin-top: 48px;
+    }
+    .team-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .team-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
+    .team-photo {
+      aspect-ratio: 1 / 1; background: var(--bg-soft);
+    }
+    .team-photo .placeholder-img { border-radius: 0; height: 100%; }
+    .team-photo .team-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center 18%;
+      background: linear-gradient(160deg, var(--bg-soft), rgba(255,114,0,0.08));
+    }
+    .team-meta { padding: 20px; }
+    .team-name { font-size: 17px; font-weight: 700; }
+    .team-role { font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
+    .values-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; margin-top: 40px;
+    }
+    .value-card {
+      padding: 32px;
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+    }
+    .value-icon {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255,114,0,0.14), rgba(229,101,0,0.06));
+      color: var(--accent);
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .value-num {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
+      color: var(--ink-muted); margin-bottom: 8px;
+    }
+    .value-card h4 { font-size: 20px; margin-bottom: 8px; }
+    .value-card p { color: var(--ink-soft); font-size: 14px; margin: 0; }
+    @media (max-width: 1024px) {
+      .team-grid { grid-template-columns: repeat(2, 1fr); }
+      .values-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .team-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Mission two-column with casual photo */
+    .mission-split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 56px;
+      align-items: center;
+    }
+    .mission-figure {
+      position: relative;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(160deg, var(--bg-soft), rgba(255,114,0,0.07));
+      border: 1px solid var(--line);
+      min-height: 380px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .mission-figure::before {
+      content: '';
+      position: absolute;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, var(--accent), transparent 70%);
+      top: -60px; right: -60px;
+      opacity: 0.22; filter: blur(40px);
+    }
+    .mission-figure img {
+      position: relative;
+      width: 86%;
+      max-height: 440px;
+      object-fit: contain;
+      object-position: bottom center;
+      filter: drop-shadow(0 24px 40px rgba(0,0,0,0.18));
+    }
+
+    /* Founder feature */
+    .founder-section { background: var(--brand-deep); color: #fff; }
+    .founder-split {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .founder-figure {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: 460px;
+    }
+    .founder-panel {
+      position: absolute;
+      left: 50%; bottom: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 380px;
+      height: 88%;
+      border-radius: 28px;
+      background: linear-gradient(165deg, var(--accent), var(--brand-mid));
+      box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    }
+    .founder-figure img {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      object-fit: contain;
+      object-position: bottom center;
+      filter: drop-shadow(0 24px 30px rgba(0,0,0,0.35));
+    }
+    .founder-copy .eyebrow { color: var(--accent); }
+    .founder-quote {
+      font-size: clamp(22px, 2.4vw, 30px);
+      line-height: 1.4;
+      font-weight: 600;
+      color: #fff;
+      margin: 20px 0 28px;
+      max-width: 600px;
+      text-wrap: pretty;
+    }
+    .founder-name { font-size: 20px; font-weight: 800; }
+    .founder-role { font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+    @media (max-width: 900px) {
+      .mission-split { grid-template-columns: 1fr; gap: 32px; }
+      .founder-split { grid-template-columns: 1fr; gap: 32px; }
+      .founder-figure { min-height: 380px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header scrolled">
+    <div class="container site-header-inner">
+      <a href="Cari Tech Graphic.html" class="logo">
+        <div class="logo-mark">
+          <svg viewBox="0 0 32 32" fill="none">
+            <defs><linearGradient id="lm" x1="0" x2="1"><stop offset="0" stop-color="#FF7200"/><stop offset="1" stop-color="#E56500"/></linearGradient></defs>
+            <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm)" opacity="0.18"/>
+            <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm)" stroke-width="1.6" fill="none"/>
+            <text x="16" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="currentColor">C</text>
+          </svg>
+        </div>
+        <span class="logo-text">
+          <span class="logo-name">Cari Tech</span>
+          <span class="logo-sub">Graphic</span>
+        </span>
+      </a>
+      <nav class="site-nav">
+        <a href="Cari Tech Graphic.html#home">Início</a>
+        <a href="sobre.html" style="color: var(--ink); font-weight: 700;">Sobre</a>
+        <a href="Cari Tech Graphic.html#services">Serviços</a>
+        <a href="Cari Tech Graphic.html#portfolio">Portfólio</a>
+        <a href="Cari Tech Graphic.html#contact">Contacto</a>
+        <a href="admin.html" class="nav-admin">Admin</a>
+      </nav>
+      <div class="site-actions">
+        <a href="Cari Tech Graphic.html#contact" class="btn btn-primary header-cta">
+          Começar Agora
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="about-hero">
+    <div class="container">
+      <div class="breadcrumb"><a href="Cari Tech Graphic.html">Início</a> · Sobre Nós</div>
+      <div class="eyebrow">A nossa história</div>
+      <h1 class="h-display" style="font-size: clamp(40px, 5vw, 64px); margin-top: 16px;">
+        Construímos a Cari Tech para colocar Nampula no mapa digital.
+      </h1>
+      <p class="lede" style="margin-top: 16px; max-width: 700px;">
+        Somos uma equipa de designers, programadores e estrategistas que acreditam que boas marcas merecem boa tecnologia — independentemente de onde estejam.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="mission-split">
+        <div class="mission-copy">
+          <div class="eyebrow">Missão</div>
+          <h2 class="h-section" style="margin-top: 12px; max-width: 560px;">
+            Tornar o digital acessível, bonito e mensurável para empresas em Moçambique.
+          </h2>
+          <p class="lede" style="margin-top: 16px;">
+            Acreditamos que cada negócio — pequeno ou grande — merece uma presença digital à altura da sua ambição. Trabalhamos para fechar essa diferença, projecto a projecto.
+          </p>
+        </div>
+        <div class="mission-figure">
+          <img src="uploads/owner-casual.png" alt="Fundador da Cari Tech Graphic a trabalhar" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section founder-section">
+    <div class="container">
+      <div class="founder-split">
+        <div class="founder-figure">
+          <div class="founder-panel"></div>
+          <img src="uploads/owner-portrait.png" alt="Pachir — Fundador da Cari Tech Graphic" />
+        </div>
+        <div class="founder-copy">
+          <div class="eyebrow">Mensagem do fundador</div>
+          <blockquote class="founder-quote">
+            “Comecei a Cari Tech com uma convicção simples: o talento aqui não fica atrás de ninguém. Só precisava de uma plataforma à altura. Hoje, cada projecto que entregamos é uma prova disso.”
+          </blockquote>
+          <div class="founder-name">Pachir</div>
+          <div class="founder-role">Fundador &amp; Director Executivo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background: var(--bg-soft);">
+    <div class="container">
+      <div class="eyebrow">Os nossos valores</div>
+      <h2 class="h-section" style="margin-top: 12px;">Como pensamos e trabalhamos</h2>
+      <div class="values-grid">
+        <div class="value-card">
+          <div class="value-num">01</div>
+          <h4>Transparência radical</h4>
+          <p>Mostramos os passos, os custos e os obstáculos. Sem surpresas no fim do projecto.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-num">02</div>
+          <h4>Craft acima de pressa</h4>
+          <p>Preferimos atrasar uma semana e entregar algo de que nos orgulhemos do que cumprir prazo com mediocridade.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-num">03</div>
+          <h4>Parceria, não fornecimento</h4>
+          <p>Não somos um vendor. Somos a equipa de design e tech que a sua empresa nunca teve internamente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">A nossa jornada</div>
+      <h2 class="h-section" style="margin-top: 12px;">5 anos a construir.</h2>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot">21</div>
+          <div class="tl-content">
+            <h4>Fundação</h4>
+            <p>A Cari Tech Graphic abre portas no Bairro Mutuanha com 3 fundadores e um foco claro: design e desenvolvimento web.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">22</div>
+          <div class="tl-content">
+            <h4>Primeiro grande cliente</h4>
+            <p>Lançamos a plataforma do Banco Horizonte. O projecto define os nossos padrões de qualidade.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">23</div>
+          <div class="tl-content">
+            <h4>Equipa cresce</h4>
+            <p>Chegamos a 12 pessoas e abrimos a divisão de marketing digital e gestão de redes sociais.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">24</div>
+          <div class="tl-content">
+            <h4>Reconhecimento regional</h4>
+            <p>Premiados como melhor estúdio de design da região norte de Moçambique. 80+ clientes activos.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">25</div>
+          <div class="tl-content">
+            <h4>Era da IA</h4>
+            <p>Integramos IA em todos os fluxos — geração de conteúdo, análise preditiva e automações para clientes.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">26</div>
+          <div class="tl-content">
+            <h4>Hoje</h4>
+            <p>120+ projectos entregues. Continuamos a crescer com humildade e ambição em partes iguais.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background: var(--bg-soft);">
+    <div class="container">
+      <div class="eyebrow">A equipa</div>
+      <h2 class="h-section" style="margin-top: 12px;">As pessoas por trás do estúdio.</h2>
+      <div class="team-grid">
+        <div class="team-card">
+          <div class="team-photo"><img class="team-img" src="uploads/owner-portrait.png" alt="Pachir" /></div>
+          <div class="team-meta"><div class="team-name">Pachir</div><div class="team-role">Fundador &amp; Director Executivo</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-photo"><div class="placeholder-img">retrato · CTO</div></div>
+          <div class="team-meta"><div class="team-name">Carlos Tembe</div><div class="team-role">CTO & Co-fundador</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-photo"><div class="placeholder-img">retrato · design lead</div></div>
+          <div class="team-meta"><div class="team-name">Lúcia Faque</div><div class="team-role">Design Lead</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-photo"><div class="placeholder-img">retrato · marketing</div></div>
+          <div class="team-meta"><div class="team-name">João Naparama</div><div class="team-role">Marketing Lead</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container" style="text-align: center; max-width: 700px; margin: 0 auto;">
+      <div class="eyebrow">Vamos trabalhar juntos</div>
+      <h2 class="h-section" style="margin: 12px 0 16px;">Pronto para o próximo passo?</h2>
+      <p class="lede" style="margin: 0 auto 28px;">Conte-nos sobre o seu projecto. Respondemos em menos de 24 horas.</p>
+      <a href="Cari Tech Graphic.html#contact" class="btn btn-accent">Falar connosco →</a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+        <span>© 2026 Cari Tech Graphic. Todos os direitos reservados.</span>
+        <span>Feito com cuidado em Nampula.</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
