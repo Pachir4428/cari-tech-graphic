@@ -30,11 +30,15 @@ return [
     'whatsapp'    => '258834157731',
 
     // ---- Painel de administração (admin.html) ------------------------------
-    // Palavra-passe de acesso ao painel, guardada como hash (NUNCA em texto).
-    // Senha padrão: "caritech2026" — MUDE-A assim que publicar!
-    // Para gerar um novo hash, corra no terminal (ou peça-me para gerar):
+    // Credenciais INICIAIS de acesso. Depois de entrar, pode alterar o
+    // utilizador e a palavra-passe directamente no painel (Definições → Conta),
+    // e passam a ser guardados na base de dados/ficheiro. Estes valores servem
+    // apenas como padrão de arranque / recuperação.
+    //   Utilizador padrão: "admin"
+    //   Senha padrão:      "caritech2026"   (MUDE-A assim que entrar!)
+    // Para gerar um hash manualmente:
     //   php -r 'echo password_hash("A_SUA_SENHA", PASSWORD_DEFAULT), PHP_EOL;'
-    // e cole o resultado aqui.
+    'admin_user'          => 'admin',
     'admin_password_hash' => '$2y$12$X.Q5w2g879KLOCGa9daRReVzTHnGCdfluiLK.MRxwfLPTy1ny2f1S',
 
     // Onde ficam guardados os leads em JSON (usado pelo painel admin).

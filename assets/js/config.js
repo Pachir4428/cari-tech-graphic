@@ -55,9 +55,10 @@ window.loadContent = function () {
         testimonials: (d && d.testimonials) || [],
         headings: (d && d.headings) || {},
         contact,
+        branding: (d && d.branding) || {},
       };
     })
-    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {} }));
+    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {}, branding: {} }));
   return window.__contentPromise;
 };
 
