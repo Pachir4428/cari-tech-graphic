@@ -44,33 +44,7 @@ function exigir_login() {
     if (!autenticado()) responder(false, ['message' => 'Sessão não autorizada.'], 401);
 }
 
-/* --- Ler/escrever leads ---------------------------------------------------- */
-function caminho_leads($config) {
-    return $config['leads_json'] ?? (__DIR__ . '/dados/leads.json');
-}
-function ler_leads($config) {
-    $path = caminho_leads($config);
-    if (!file_exists($path)) return [];
-    $lista = json_decode(@file_get_contents($path) ?: '[]', true);
-    return is_array($lista) ? $lista : [];
-}
-function gravar_leads($config, $lista) {
-    $path = caminho_leads($config);
-    @mkdir(dirname($path), 0755, true);
-    $fh = fopen($path, 'c+');
-    if (!$fh) return false;
-    $ok = false;
-    if (flock($fh, LOCK_EX)) {
-        ftruncate($fh, 0);
-        rewind($fh);
-        fwrite($fh, json_encode(array_values($lista), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-        fflush($fh);
-        flock($fh, LOCK_UN);
-        $ok = true;
-    }
-    fclose($fh);
-    return $ok;
-}
+require_once __DIR__ . '/armazenamento.php';
 
 /* --- Entrada --------------------------------------------------------------- */
 $action = $_GET['action'] ?? '';
@@ -100,9 +74,7 @@ switch ($action) {
 
     case 'leads':
         exigir_login();
-        $lista = ler_leads($config);
-        usort($lista, fn($a, $b) => strcmp($b['data'] ?? '', $a['data'] ?? ''));
-        responder(true, ['leads' => $lista]);
+        responder(true, ['leads' => store_get_leads($config)]);
 
     case 'lead-status':
         exigir_login();
@@ -112,31 +84,22 @@ switch ($action) {
         if (!in_array($status, $validos, true)) {
             responder(false, ['message' => 'Estado inválido.'], 422);
         }
-        $lista = ler_leads($config);
-        $encontrado = false;
-        foreach ($lista as &$l) {
-            if (($l['id'] ?? '') === $id) { $l['status'] = $status; $encontrado = true; break; }
+        if (!store_set_lead_status($config, $id, $status)) {
+            responder(false, ['message' => 'Lead não encontrado.'], 404);
         }
-        unset($l);
-        if (!$encontrado) responder(false, ['message' => 'Lead não encontrado.'], 404);
-        gravar_leads($config, $lista);
         responder(true, ['message' => 'Estado actualizado.']);
 
     case 'lead-delete':
         exigir_login();
         $id = (string) ($body['id'] ?? '');
-        $lista = ler_leads($config);
-        $antes = count($lista);
-        $lista = array_filter($lista, fn($l) => ($l['id'] ?? '') !== $id);
-        if (count($lista) === $antes) responder(false, ['message' => 'Lead não encontrado.'], 404);
-        gravar_leads($config, $lista);
+        if (!store_delete_lead($config, $id)) {
+            responder(false, ['message' => 'Lead não encontrado.'], 404);
+        }
         responder(true, ['message' => 'Lead removido.']);
 
     case 'content':
         exigir_login();
-        $path = $config['content_json'] ?? (__DIR__ . '/dados/conteudo.json');
-        $c = file_exists($path) ? json_decode(@file_get_contents($path) ?: '{}', true) : [];
-        if (!is_array($c)) $c = [];
+        $c = store_get_content($config);
         responder(true, [
             'services'     => $c['services']     ?? null,
             'portfolio'    => $c['portfolio']    ?? null,
@@ -155,25 +118,19 @@ switch ($action) {
         if (!is_array($services) || !is_array($portfolio)) {
             responder(false, ['message' => 'Dados inválidos.'], 422);
         }
-        $path = $config['content_json'] ?? (__DIR__ . '/dados/conteudo.json');
-        @mkdir(dirname($path), 0755, true);
-        $ok = file_put_contents(
-            $path,
-            json_encode([
-                'services'     => array_values($services),
-                'portfolio'    => array_values($portfolio),
-                'testimonials' => is_array($testimonials) ? array_values($testimonials) : [],
-                'headings'     => is_array($headings) ? $headings : [],
-                'contact'      => is_array($contact) ? $contact : [],
-            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
-            LOCK_EX
-        );
-        if ($ok === false) responder(false, ['message' => 'Falha ao gravar.'], 500);
+        $ok = store_save_content($config, [
+            'services'     => $services,
+            'portfolio'    => $portfolio,
+            'testimonials' => is_array($testimonials) ? $testimonials : [],
+            'headings'     => is_array($headings) ? $headings : [],
+            'contact'      => is_array($contact) ? $contact : [],
+        ]);
+        if (!$ok) responder(false, ['message' => 'Falha ao gravar.'], 500);
         responder(true, ['message' => 'Conteúdo guardado.']);
 
     case 'stats':
         exigir_login();
-        $lista = ler_leads($config);
+        $lista = store_get_leads($config);
         $conta = fn($s) => count(array_filter($lista, fn($l) => ($l['status'] ?? 'new') === $s));
         responder(true, ['stats' => [
             'total'     => count($lista),

@@ -19,7 +19,8 @@ cari-tech-graphic/
 ├── enviar.php                 ← recebe os formulários e envia o e-mail  ⭐
 ├── admin-api.php              ← API do painel (login + leads + conteúdo)  ⭐
 ├── conteudo.php               ← conteúdo público (serviços/portfólio geridos)
-├── config.php                 ← as SUAS definições (e-mail, WhatsApp, senha do painel, SMTP)  ⭐
+├── armazenamento.php          ← camada de dados: MySQL ou ficheiros (fallback)
+├── config.php                 ← as SUAS definições (e-mail, WhatsApp, senha, BD, SMTP)  ⭐
 ├── .htaccess                  ← HTTPS, cache, segurança, protecção de ficheiros
 ├── robots.txt
 ├── assets/
@@ -129,6 +130,31 @@ A função `mail()` do PHP às vezes cai no spam. Para entrega fiável via SMTP:
    ```
 2. Em `config.php`, ponha `'smtp_enabled' => true` e preencha `smtp_host`, `smtp_user`, `smtp_pass`
    (use os dados SMTP da sua caixa de e-mail Hostinger — porta 465/SSL).
+
+---
+
+## 3.5. Onde os dados são guardados — ficheiros ou MySQL
+
+Por omissão, **não é preciso base de dados**: tudo (leads e conteúdo) é guardado em ficheiros
+dentro da pasta `dados/` — funciona logo, sem qualquer configuração, e o backup é só copiar a pasta.
+
+| Dados | Modo ficheiros (padrão) | Modo MySQL |
+|-------|-------------------------|------------|
+| Leads | `dados/leads.json` (+ `dados/leads.csv`) | tabela `leads` |
+| Serviços, Portfólio, Testemunhos, Cabeçalhos, Contactos | `dados/conteudo.json` | tabelas `content_items` + `settings` |
+
+### Usar a base de dados MySQL da Hostinger (opcional)
+Útil se esperar **muitos** leads, quiser relatórios ou vários utilizadores em simultâneo.
+
+1. No hPanel: **Bases de Dados → MySQL** → crie uma base de dados e um utilizador
+   (anote **nome da BD**, **utilizador** e **palavra-passe**).
+2. Em `config.php`, na secção `'db'`, preencha `name`, `user`, `pass` e ponha `'enabled' => true`.
+3. Pronto — **as tabelas são criadas automaticamente** na primeira utilização.
+   (O esquema também está em `docs/schema.sql`, caso prefira criá-las à mão no phpMyAdmin.)
+
+> **Rede de segurança:** se o MySQL estiver activado mas a ligação falhar (dados errados, servidor
+> em baixo), o site volta **automaticamente** aos ficheiros — nunca fica offline por causa da BD.
+> O ficheiro `dados/leads.csv` continua a ser escrito como cópia extra em qualquer dos modos.
 
 ---
 
