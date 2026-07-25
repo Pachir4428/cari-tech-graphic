@@ -246,4 +246,8 @@ o botão de WhatsApp como alternativa.
 
 ## 8. Suporte
 
-Guia visual passo-a-passo (para imprimir/partilhar): **`docs/guia-implantacao-hostinger.html`**.
+- **Checklist de primeira publicação** (recomendado, interactivo e imprimível):
+  **`docs/checklist-primeira-publicacao.html`** — abra no navegador e marque cada passo;
+  o progresso fica guardado. Cobre todo o fluxo: subir → e-mails → configurar → SSL →
+  testar → mudar a senha do painel → personalizar.
+- **Guia visual detalhado:** **`docs/guia-implantacao-hostinger.html`**.
