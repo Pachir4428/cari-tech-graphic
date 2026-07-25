@@ -138,18 +138,20 @@ switch ($action) {
         $c = file_exists($path) ? json_decode(@file_get_contents($path) ?: '{}', true) : [];
         if (!is_array($c)) $c = [];
         responder(true, [
-            'services'  => $c['services']  ?? null,
-            'portfolio' => $c['portfolio'] ?? null,
-            'headings'  => $c['headings']  ?? null,
-            'contact'   => $c['contact']   ?? null,
+            'services'     => $c['services']     ?? null,
+            'portfolio'    => $c['portfolio']    ?? null,
+            'testimonials' => $c['testimonials'] ?? null,
+            'headings'     => $c['headings']     ?? null,
+            'contact'      => $c['contact']      ?? null,
         ]);
 
     case 'content-save':
         exigir_login();
-        $services  = $body['services']  ?? null;
-        $portfolio = $body['portfolio'] ?? null;
-        $headings  = $body['headings']  ?? [];
-        $contact   = $body['contact']   ?? [];
+        $services     = $body['services']     ?? null;
+        $portfolio    = $body['portfolio']    ?? null;
+        $testimonials = $body['testimonials'] ?? [];
+        $headings     = $body['headings']     ?? [];
+        $contact      = $body['contact']      ?? [];
         if (!is_array($services) || !is_array($portfolio)) {
             responder(false, ['message' => 'Dados inválidos.'], 422);
         }
@@ -158,10 +160,11 @@ switch ($action) {
         $ok = file_put_contents(
             $path,
             json_encode([
-                'services'  => array_values($services),
-                'portfolio' => array_values($portfolio),
-                'headings'  => is_array($headings) ? $headings : [],
-                'contact'   => is_array($contact) ? $contact : [],
+                'services'     => array_values($services),
+                'portfolio'    => array_values($portfolio),
+                'testimonials' => is_array($testimonials) ? array_values($testimonials) : [],
+                'headings'     => is_array($headings) ? $headings : [],
+                'contact'      => is_array($contact) ? $contact : [],
             ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
             LOCK_EX
         );

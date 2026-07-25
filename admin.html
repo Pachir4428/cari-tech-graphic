@@ -342,7 +342,15 @@
     const SEED_HEADINGS = {
       services:  { eyebrow: 'Os nossos serviços', title: 'Tudo o que precisa para crescer online.', lede: 'Da identidade visual ao deploy. Seis áreas, uma equipa.' },
       portfolio: { eyebrow: 'Portfólio', title: 'Projectos recentes', lede: 'Uma seleção do trabalho da casa.' },
+      testimonials: { eyebrow: 'Testemunhos', title: 'O que dizem os nossos clientes', lede: '' },
     };
+
+    // Testemunhos padrão — iguais aos do site (i18n). Só os 3 primeiros activos aparecem.
+    const SEED_TESTIMONIALS = [
+      { id: 1, q: 'Entregaram a plataforma três semanas antes do prazo. Atenção ao detalhe que não vemos noutros estúdios em Moçambique.', n: 'Aida M.', r: 'CEO, Horizonte Lda.', status: 'active' },
+      { id: 2, q: 'Reposicionaram a nossa marca por completo. As vendas subiram 40% no trimestre seguinte ao rebrand.', n: 'Carlos T.', r: 'Fundador, Studio Mutuanha', status: 'active' },
+      { id: 3, q: 'A equipa percebe de negócio, não só de design. Foi a parceria que faltava ao Café Naparama.', n: 'Lúcia F.', r: 'Diretora de Marketing', status: 'active' },
+    ];
 
     // Contactos padrão — iguais aos mostrados no site.
     const SEED_CONTACT = {
@@ -430,6 +438,7 @@
       const [portfolio, setPortfolio] = useState(SEED_PORTFOLIO);
       const [headings, setHeadings] = useState(SEED_HEADINGS);
       const [contact, setContact] = useState(SEED_CONTACT);
+      const [testimonials, setTestimonials] = useState(SEED_TESTIMONIALS);
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
       const [editing, setEditing] = useState(null);
@@ -451,7 +460,8 @@
         if (r.ok) {
           if (Array.isArray(r.services)) setServices(r.services);
           if (Array.isArray(r.portfolio)) setPortfolio(r.portfolio);
-          if (r.headings && (r.headings.services || r.headings.portfolio)) {
+          if (Array.isArray(r.testimonials)) setTestimonials(r.testimonials);
+          if (r.headings && (r.headings.services || r.headings.portfolio || r.headings.testimonials)) {
             setHeadings({ ...SEED_HEADINGS, ...r.headings });
           }
           if (r.contact && Object.keys(r.contact).length) {
@@ -461,10 +471,15 @@
       };
 
       // Grava o conteúdo actual no servidor (usado pelo site público).
-      const persist = async (svcs, ptf, hds, cont) => {
+      // Recebe um objecto com apenas os campos alterados; o resto usa o estado actual.
+      const persist = async (over = {}) => {
         setSaveState('saving');
         const r = await api('content-save', 'POST', {
-          services: svcs, portfolio: ptf, headings: hds || headings, contact: cont || contact,
+          services: over.services || services,
+          portfolio: over.portfolio || portfolio,
+          testimonials: over.testimonials || testimonials,
+          headings: over.headings || headings,
+          contact: over.contact || contact,
         });
         setSaveState(r.ok ? 'saved' : 'error');
         if (r.ok) setTimeout(() => setSaveState(''), 2500);
@@ -474,14 +489,14 @@
       const updateHeading = (sec, field, value) => {
         const next = { ...headings, [sec]: { ...headings[sec], [field]: value } };
         setHeadings(next);
-        persist(services, portfolio, next, contact);
+        persist({ headings: next });
       };
 
       // Actualiza um contacto e grava.
       const updateContact = (field, value) => {
         const next = { ...contact, [field]: value };
         setContact(next);
-        persist(services, portfolio, headings, next);
+        persist({ contact: next });
       };
 
       // Ao arrancar, verifica a sessão
@@ -514,34 +529,32 @@
         return <Login onOk={() => { setAuthed(true); loadLeads(); loadContent(); }} />;
       }
 
-      const openNew = (type) => {
-        setEditType(type);
-        setEditing(type === 'service'
-          ? { id: Date.now(), t: '', d: '', category: 'design', price: '', status: 'active' }
-          : { id: Date.now(), t: '', c: '', tag: 'web', status: 'active', year: new Date().getFullYear() });
+      const NEW_ITEM = {
+        service: () => ({ id: Date.now(), t: '', d: '', category: 'design', price: '', status: 'active' }),
+        portfolio: () => ({ id: Date.now(), t: '', c: '', tag: 'web', status: 'active', year: new Date().getFullYear() }),
+        testimonial: () => ({ id: Date.now(), q: '', n: '', r: '', status: 'active' }),
       };
+      const openNew = (type) => { setEditType(type); setEditing(NEW_ITEM[type]()); };
       const openEdit = (type, item) => { setEditType(type); setEditing({ ...item }); };
+
+      const upsert = (list, item) => list.find((x) => x.id === item.id)
+        ? list.map((x) => x.id === item.id ? item : x)
+        : [...list, item];
+
       const save = () => {
-        let svcs = services, ptf = portfolio;
         if (editType === 'service') {
-          svcs = services.find((x) => x.id === editing.id)
-            ? services.map((x) => x.id === editing.id ? editing : x)
-            : [...services, editing];
-          setServices(svcs);
+          const next = upsert(services, editing); setServices(next); persist({ services: next });
+        } else if (editType === 'portfolio') {
+          const next = upsert(portfolio, editing); setPortfolio(next); persist({ portfolio: next });
         } else {
-          ptf = portfolio.find((x) => x.id === editing.id)
-            ? portfolio.map((x) => x.id === editing.id ? editing : x)
-            : [...portfolio, editing];
-          setPortfolio(ptf);
+          const next = upsert(testimonials, editing); setTestimonials(next); persist({ testimonials: next });
         }
         setEditing(null);
-        persist(svcs, ptf);
       };
       const remove = (type, id) => {
-        let svcs = services, ptf = portfolio;
-        if (type === 'service') { svcs = services.filter((x) => x.id !== id); setServices(svcs); }
-        else { ptf = portfolio.filter((x) => x.id !== id); setPortfolio(ptf); }
-        persist(svcs, ptf);
+        if (type === 'service') { const next = services.filter((x) => x.id !== id); setServices(next); persist({ services: next }); }
+        else if (type === 'portfolio') { const next = portfolio.filter((x) => x.id !== id); setPortfolio(next); persist({ portfolio: next }); }
+        else { const next = testimonials.filter((x) => x.id !== id); setTestimonials(next); persist({ testimonials: next }); }
       };
 
       const kpis = [
@@ -564,6 +577,7 @@
             <button className={`admin-nav-item ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}><FA name="gauge-high" s={15} />Visão geral</button>
             <button className={`admin-nav-item ${tab === 'services' ? 'active' : ''}`} onClick={() => setTab('services')}><FA name="layer-group" s={15} />Serviços</button>
             <button className={`admin-nav-item ${tab === 'portfolio' ? 'active' : ''}`} onClick={() => setTab('portfolio')}><FA name="folder-open" s={15} />Portfólio</button>
+            <button className={`admin-nav-item ${tab === 'testimonials' ? 'active' : ''}`} onClick={() => setTab('testimonials')}><FA name="quote-right" s={15} />Testemunhos</button>
             <button className={`admin-nav-item ${tab === 'leads' ? 'active' : ''}`} onClick={() => setTab('leads')}><FA name="inbox" s={15} />Leads</button>
             <button className={`admin-nav-item ${tab === 'contact' ? 'active' : ''}`} onClick={() => setTab('contact')}><FA name="address-book" s={15} />Contactos</button>
             <button className={`admin-nav-item ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}><FA name="gear" s={15} />Definições</button>
@@ -577,7 +591,7 @@
           <main className="admin-main">
             <div className="admin-topbar">
               <div>
-                <h1>{tab === 'overview' ? 'Visão geral' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'leads' ? 'Pedidos & Leads' : tab === 'contact' ? 'Contactos' : 'Definições'}</h1>
+                <h1>{tab === 'overview' ? 'Visão geral' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'testimonials' ? 'Gestão de Testemunhos' : tab === 'leads' ? 'Pedidos & Leads' : tab === 'contact' ? 'Contactos' : 'Definições'}</h1>
                 <p>Bem-vindo de volta. Aqui está o estado actual da Cari Tech.</p>
               </div>
               <a className="btn-add" href="index.html" target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>
@@ -658,6 +672,41 @@
                           <td><div className="row-actions">
                             <button className="ra-btn" onClick={() => openEdit('portfolio', p)}><Pencil /></button>
                             <button className="ra-btn danger" onClick={() => remove('portfolio', p.id)}><Trash /></button>
+                          </div></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              </>
+            )}
+
+            {tab === 'testimonials' && (
+              <>
+              <HeadingEditor heading={headings.testimonials} onCommit={(f, v) => updateHeading('testimonials', f, v)} />
+              <div className="admin-panel">
+                <div className="admin-panel-head">
+                  <h2>Testemunhos de clientes</h2>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <SaveHint state={saveState} />
+                    <button className="btn-add" onClick={() => openNew('testimonial')}><Plus />Novo testemunho</button>
+                  </div>
+                </div>
+                <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Os 3 primeiros testemunhos activos aparecem no site. Guardado automaticamente.</p>
+                <div style={{overflowX:'auto'}}>
+                  <table className="admin-table">
+                    <thead><tr><th>Depoimento</th><th>Cliente</th><th>Cargo</th><th>Estado</th><th></th></tr></thead>
+                    <tbody>
+                      {testimonials.map((it) => (
+                        <tr key={it.id}>
+                          <td style={{fontSize:12,color:'var(--ink-soft)',maxWidth:360}}>“{(it.q || '').length > 90 ? it.q.slice(0, 90) + '…' : it.q}”</td>
+                          <td style={{fontWeight:600}}>{it.n}</td>
+                          <td style={{fontSize:12,color:'var(--ink-muted)'}}>{it.r}</td>
+                          <td><span className={`table-tag tag-${it.status}`}>{it.status === 'active' ? 'Activo' : 'Rascunho'}</span></td>
+                          <td><div className="row-actions">
+                            <button className="ra-btn" onClick={() => openEdit('testimonial', it)}><Pencil /></button>
+                            <button className="ra-btn danger" onClick={() => remove('testimonial', it.id)}><Trash /></button>
                           </div></td>
                         </tr>
                       ))}
@@ -756,11 +805,12 @@
                     <pre style={{background:'var(--brand-deep)',color:'#e5e5e5',padding:'10px 12px',borderRadius:8,fontSize:12,overflowX:'auto',marginTop:8}}>php -r 'echo password_hash("NOVA_SENHA", PASSWORD_DEFAULT);'</pre>
                   </div>
                   <div style={{background:'var(--bg-soft)',borderRadius:12,padding:16,fontSize:13,lineHeight:1.6}}>
-                    <strong><FA name="circle-info" s={13} /> Serviços, Portfólio e Leads</strong>
+                    <strong><FA name="circle-info" s={13} /> O que este painel controla</strong>
                     <p style={{margin:'8px 0 0',color:'var(--ink-muted)'}}>
-                      Tudo é guardado no servidor e reflectido no site em tempo real: os <strong>Serviços</strong> e <strong>Projectos</strong>
-                      que marcar como activos aparecem na página inicial, e os <strong>Leads</strong> chegam do formulário do site.
-                      Itens em "Rascunho" ficam ocultos no site mas guardados aqui.
+                      Tudo é guardado no servidor e reflectido no site: <strong>Serviços</strong>, <strong>Projectos</strong> e
+                      <strong> Testemunhos</strong> (com cabeçalhos de secção editáveis), os <strong>Contactos</strong> (e-mail, telefone,
+                      WhatsApp, morada) e os <strong>Leads</strong> que chegam do formulário. Itens em "Rascunho" ficam ocultos no site
+                      mas guardados aqui.
                     </p>
                   </div>
                 </div>
@@ -772,7 +822,7 @@
             <div className="form-modal show" onClick={() => setEditing(null)}>
               <div className="form-shell" onClick={(e) => e.stopPropagation()}>
                 <button className="form-close" onClick={() => setEditing(null)}><FA name="xmark" s={14} /></button>
-                <h3>{editType === 'service' ? 'Serviço' : 'Projecto'}</h3>
+                <h3>{editType === 'service' ? 'Serviço' : editType === 'portfolio' ? 'Projecto' : 'Testemunho'}</h3>
                 <div style={{display:'grid',gap:12}}>
                   {editType === 'service' ? (
                     <>
@@ -792,7 +842,7 @@
                         <div className="field-error"/>
                       </div>
                     </>
-                  ) : (
+                  ) : editType === 'portfolio' ? (
                     <>
                       <div className="field"><label>Título do projecto</label><input value={editing.t} onChange={(e) => setEditing({...editing, t: e.target.value})} placeholder="Ex.: Banco Horizonte" /><div className="field-error"/></div>
                       <div className="field"><label>Descrição (aparece no site)</label><input value={editing.c} onChange={(e) => setEditing({...editing, c: e.target.value})} placeholder="Ex.: Plataforma de banking digital" /><div className="field-error"/></div>
@@ -806,6 +856,18 @@
                       <div className="field"><label>Estado</label>
                         <select value={editing.status} onChange={(e) => setEditing({...editing, status: e.target.value})}>
                           <option value="active">Publicado (visível no site)</option><option value="draft">Rascunho (oculto)</option>
+                        </select>
+                        <div className="field-error"/>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="field"><label>Depoimento</label><textarea rows="4" value={editing.q} onChange={(e) => setEditing({...editing, q: e.target.value})} placeholder="O que o cliente disse sobre o vosso trabalho." /><div className="field-error"/></div>
+                      <div className="field"><label>Nome do cliente</label><input value={editing.n} onChange={(e) => setEditing({...editing, n: e.target.value})} placeholder="Ex.: Aida M." /><div className="field-error"/></div>
+                      <div className="field"><label>Cargo / empresa</label><input value={editing.r} onChange={(e) => setEditing({...editing, r: e.target.value})} placeholder="Ex.: CEO, Horizonte Lda." /><div className="field-error"/></div>
+                      <div className="field"><label>Estado</label>
+                        <select value={editing.status} onChange={(e) => setEditing({...editing, status: e.target.value})}>
+                          <option value="active">Activo (visível no site)</option><option value="draft">Rascunho (oculto)</option>
                         </select>
                         <div className="field-error"/>
                       </div>

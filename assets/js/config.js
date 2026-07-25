@@ -52,11 +52,12 @@ window.loadContent = function () {
       return {
         services: (d && d.services) || [],
         portfolio: (d && d.portfolio) || [],
+        testimonials: (d && d.testimonials) || [],
         headings: (d && d.headings) || {},
         contact,
       };
     })
-    .catch(() => ({ services: [], portfolio: [], headings: {}, contact: {} }));
+    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {} }));
   return window.__contentPromise;
 };
 
