@@ -162,8 +162,16 @@ switch ($action) {
             'headings'     => $c['headings']     ?? null,
             'contact'      => $c['contact']      ?? null,
             'branding'     => store_get_branding($config),
+            'payments'     => store_get_payments($config),
             'username'     => ctg_admin_user($config),
         ]);
+
+    case 'payments-save':
+        exigir_login();
+        $p = $body['payments'] ?? null;
+        if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        store_set_payments($config, $p);
+        responder(true, ['message' => 'Pagamentos guardados.']);
 
     case 'content-save':
         exigir_login();

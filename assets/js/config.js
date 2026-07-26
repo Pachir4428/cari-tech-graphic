@@ -64,9 +64,10 @@ window.loadContent = function () {
         headings: (d && d.headings) || {},
         contact,
         branding: (d && d.branding) || {},
+        payments: (d && d.payments) || {},
       };
     })
-    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {}, branding: {} }));
+    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {}, branding: {}, payments: {} }));
   return window.__contentPromise;
 };
 

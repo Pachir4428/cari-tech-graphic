@@ -16,6 +16,7 @@ require_once __DIR__ . '/armazenamento.php';
 
 $dados = store_get_content($config);
 $branding = store_get_branding($config);
+$payments = store_get_payments($config);
 
 /* Só expõe ao público os itens marcados como activos/publicados. */
 $publicos = fn($lista) => array_values(array_filter(
@@ -34,4 +35,5 @@ echo json_encode([
     'headings'     => $obj($dados['headings']),
     'contact'      => $obj($dados['contact']),
     'branding'     => $obj($branding),
+    'payments'     => $obj($payments),
 ], JSON_UNESCAPED_UNICODE);

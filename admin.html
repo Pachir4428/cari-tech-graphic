@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=100" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=100" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=100" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=101" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=101" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=101" />
   <style>
     body { background: var(--bg-soft); }
     .admin-shell {
@@ -417,7 +417,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.0.0';
+    const APP_VERSION = '1.0.1';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -793,6 +793,40 @@
       );
     }
 
+    function PaymentsEditor({ payments, onSaved }) {
+      const [p, setP] = useState(payments || {});
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setP(payments || {}); }, [payments]);
+      const f = (k, v) => setP((x) => ({ ...x, [k]: v }));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('payments-save', 'POST', { payments: p });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: 'Pagamentos guardados.' }); onSaved && onSaved(p); }
+        else setMsg({ ok: false, text: r.message || 'Erro.' });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>Pagamentos (checkout)</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Métodos mostrados ao cliente ao finalizar o pedido. Active e preencha só os que usa. O link online pode ser um pagamento hospedado (ex.: PayPal, Stripe, Paysuite).</p>
+          <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,fontWeight:600,fontSize:14,cursor:'pointer'}}>
+            <input type="checkbox" checked={!!p.enabled} onChange={(e) => f('enabled', e.target.checked)} style={{width:18,height:18,accentColor:'var(--accent)'}} />
+            Mostrar formas de pagamento no checkout
+          </label>
+          <div style={{display:'grid',gap:12,maxWidth:520}}>
+            <div className="field"><label>M-Pesa (número / nome)</label><input value={p.mpesa || ''} onChange={(e) => f('mpesa', e.target.value)} placeholder="84 000 0000 · Nome" /><div className="field-error"/></div>
+            <div className="field"><label>e-Mola (número / nome)</label><input value={p.emola || ''} onChange={(e) => f('emola', e.target.value)} placeholder="86 000 0000 · Nome" /><div className="field-error"/></div>
+            <div className="field"><label>Transferência bancária</label><input value={p.bank || ''} onChange={(e) => f('bank', e.target.value)} placeholder="Banco · NIB / conta" /><div className="field-error"/></div>
+            <div className="field"><label>Link de pagamento online (opcional)</label><input value={p.onlineLink || ''} onChange={(e) => f('onlineLink', e.target.value)} placeholder="https://…" /><div className="field-error"/></div>
+            <div className="field"><label>Nota (opcional)</label><input value={p.note || ''} onChange={(e) => f('note', e.target.value)} placeholder="Ex.: Envie o comprovativo por WhatsApp." /><div className="field-error"/></div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? 'A guardar…' : 'Guardar pagamentos'}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
     const ADMIN_I18N = {
       pt: {
         overview:'Visão geral', leads:'Leads', services:'Serviços', portfolio:'Portfólio', testimonials:'Testemunhos', contact:'Contactos', settings:'Definições', logout:'Terminar sessão',
@@ -806,6 +840,13 @@
         sNew:'Novos', sContacted:'Contactados', sWon:'Ganhos', sLost:'Perdidos',
         svcTitle:'Serviços oferecidos', newSvc:'Novo serviço', portTitle:'Projectos do portfólio', newPort:'Novo projecto',
         testTitle:'Testemunhos de clientes', newTest:'Novo testemunho', leadsTitle:'Pedidos dos clientes', refresh:'Actualizar',
+        svcNote:'{T.svcNote}',
+        portNote:'{T.portNote}',
+        testNote:'{T.testNote}',
+        thService:'Serviço', thCategory:'Categoria', thPrice:'Preço', thState:'Estado', thProject:'Projecto', thDesc:'Descrição', thYear:'Ano',
+        thTestimonial:'Depoimento', thClient:'Cliente', thRole:'Cargo', thName:'Nome', thContact:'Contacto', thMessage:'Mensagem', thDate:'Data',
+        stActiveT:'Activo', stDraftT:'Rascunho', stPub:'Publicado',
+        loadingReq:'A carregar pedidos…', noReqT:'Ainda não há pedidos.', noReqS:'Os contactos enviados pelo formulário do site aparecem aqui.',
       },
       en: {
         overview:'Overview', leads:'Leads', services:'Services', portfolio:'Portfolio', testimonials:'Testimonials', contact:'Contacts', settings:'Settings', logout:'Log out',
@@ -819,6 +860,13 @@
         sNew:'New', sContacted:'Contacted', sWon:'Won', sLost:'Lost',
         svcTitle:'Services offered', newSvc:'New service', portTitle:'Portfolio projects', newPort:'New project',
         testTitle:'Client testimonials', newTest:'New testimonial', leadsTitle:'Client requests', refresh:'Refresh',
+        svcNote:'These services appear on the public site. Changes are saved automatically.',
+        portNote:'These projects appear on the public site. Changes are saved automatically.',
+        testNote:'The first 3 active testimonials appear on the site. Saved automatically.',
+        thService:'Service', thCategory:'Category', thPrice:'Price', thState:'Status', thProject:'Project', thDesc:'Description', thYear:'Year',
+        thTestimonial:'Testimonial', thClient:'Client', thRole:'Role', thName:'Name', thContact:'Contact', thMessage:'Message', thDate:'Date',
+        stActiveT:'Active', stDraftT:'Draft', stPub:'Published',
+        loadingReq:'Loading requests…', noReqT:'No requests yet.', noReqS:'Contacts sent via the site form appear here.',
       },
     };
 
@@ -838,6 +886,7 @@
       const [contact, setContact] = useState(SEED_CONTACT);
       const [testimonials, setTestimonials] = useState(SEED_TESTIMONIALS);
       const [branding, setBranding] = useState({});
+      const [payments, setPayments] = useState({});
       const [username, setUsername] = useState('admin');
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
@@ -894,6 +943,7 @@
             setContact({ ...SEED_CONTACT, ...r.contact });
           }
           if (r.branding) setBranding(r.branding);
+          if (r.payments) setPayments(r.payments);
           if (r.username) setUsername(r.username);
         }
       };
@@ -1109,10 +1159,10 @@
                     <button className="btn-add" onClick={() => openNew('service')}><Plus />{T.newSvc}</button>
                   </div>
                 </div>
-                <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Estes serviços aparecem no site público. As alterações são guardadas automaticamente.</p>
+                <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{T.svcNote}</p>
                 <div style={{overflowX:'auto'}}>
                   <table className="admin-table">
-                    <thead><tr><th>Serviço</th><th>Categoria</th><th>Preço</th><th>Estado</th><th></th></tr></thead>
+                    <thead><tr><th>{T.thService}</th><th>{T.thCategory}</th><th>{T.thPrice}</th><th>{T.thState}</th><th></th></tr></thead>
                     <tbody>
                       {fServices.map((s) => (
                         <tr key={s.id}>
@@ -1122,7 +1172,7 @@
                           </td>
                           <td><span className={`table-tag tag-${s.category}`}>{s.category}</span></td>
                           <td style={{whiteSpace:'nowrap'}}>{s.price}</td>
-                          <td><span className={`table-tag tag-${s.status}`}>{s.status === 'active' ? 'Activo' : 'Rascunho'}</span></td>
+                          <td><span className={`table-tag tag-${s.status}`}>{s.status === 'active' ? T.stActiveT : T.stDraftT}</span></td>
                           <td><div className="row-actions">
                             <button className="ra-btn" onClick={() => openEdit('service', s)}><Pencil /></button>
                             <button className="ra-btn danger" onClick={() => remove('service', s.id)}><Trash /></button>
@@ -1147,10 +1197,10 @@
                     <button className="btn-add" onClick={() => openNew('portfolio')}><Plus />{T.newPort}</button>
                   </div>
                 </div>
-                <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Estes projectos aparecem no site público. As alterações são guardadas automaticamente.</p>
+                <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{T.portNote}</p>
                 <div style={{overflowX:'auto'}}>
                   <table className="admin-table">
-                    <thead><tr><th>Projecto</th><th>Descrição</th><th>Categoria</th><th>Ano</th><th>Estado</th><th></th></tr></thead>
+                    <thead><tr><th>{T.thProject}</th><th>{T.thDesc}</th><th>{T.thCategory}</th><th>{T.thYear}</th><th>{T.thState}</th><th></th></tr></thead>
                     <tbody>
                       {fPortfolio.map((p) => (
                         <tr key={p.id}>
@@ -1158,7 +1208,7 @@
                           <td style={{fontSize:12,color:'var(--ink-soft)',maxWidth:280}}>{p.c}</td>
                           <td><span className={`table-tag tag-${p.tag}`}>{p.tag}</span></td>
                           <td>{p.year}</td>
-                          <td><span className={`table-tag tag-${p.status}`}>{p.status === 'active' ? 'Publicado' : 'Rascunho'}</span></td>
+                          <td><span className={`table-tag tag-${p.status}`}>{p.status === 'active' ? T.stPub : T.stDraftT}</span></td>
                           <td><div className="row-actions">
                             <button className="ra-btn" onClick={() => openEdit('portfolio', p)}><Pencil /></button>
                             <button className="ra-btn danger" onClick={() => remove('portfolio', p.id)}><Trash /></button>
@@ -1183,17 +1233,17 @@
                     <button className="btn-add" onClick={() => openNew('testimonial')}><Plus />{T.newTest}</button>
                   </div>
                 </div>
-                <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Os 3 primeiros testemunhos activos aparecem no site. Guardado automaticamente.</p>
+                <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{T.testNote}</p>
                 <div style={{overflowX:'auto'}}>
                   <table className="admin-table">
-                    <thead><tr><th>Depoimento</th><th>Cliente</th><th>Cargo</th><th>Estado</th><th></th></tr></thead>
+                    <thead><tr><th>{T.thTestimonial}</th><th>{T.thClient}</th><th>{T.thRole}</th><th>{T.thState}</th><th></th></tr></thead>
                     <tbody>
                       {fTestimonials.map((it) => (
                         <tr key={it.id}>
                           <td style={{fontSize:12,color:'var(--ink-soft)',maxWidth:360}}>“{(it.q || '').length > 90 ? it.q.slice(0, 90) + '…' : it.q}”</td>
                           <td style={{fontWeight:600}}>{it.n}</td>
                           <td style={{fontSize:12,color:'var(--ink-muted)'}}>{it.r}</td>
-                          <td><span className={`table-tag tag-${it.status}`}>{it.status === 'active' ? 'Activo' : 'Rascunho'}</span></td>
+                          <td><span className={`table-tag tag-${it.status}`}>{it.status === 'active' ? T.stActiveT : T.stDraftT}</span></td>
                           <td><div className="row-actions">
                             <button className="ra-btn" onClick={() => openEdit('testimonial', it)}><Pencil /></button>
                             <button className="ra-btn danger" onClick={() => remove('testimonial', it.id)}><Trash /></button>
@@ -1216,17 +1266,17 @@
                   </button>
                 </div>
                 {leadsLoading ? (
-                  <p style={{color:'var(--ink-muted)',fontSize:14,padding:'20px 0'}}>A carregar pedidos…</p>
+                  <p style={{color:'var(--ink-muted)',fontSize:14,padding:'20px 0'}}>{T.loadingReq}</p>
                 ) : leads.length === 0 ? (
                   <div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-muted)'}}>
                     <FA name="inbox" s={40} style={{opacity:0.3}} />
-                    <p style={{marginTop:14,fontSize:15,fontWeight:600}}>Ainda não há pedidos.</p>
-                    <p style={{fontSize:13}}>Os contactos enviados pelo formulário do site aparecem aqui.</p>
+                    <p style={{marginTop:14,fontSize:15,fontWeight:600}}>{T.noReqT}</p>
+                    <p style={{fontSize:13}}>{T.noReqS}</p>
                   </div>
                 ) : (
                   <div style={{overflowX:'auto'}}>
                     <table className="admin-table">
-                      <thead><tr><th>Nome</th><th>Contacto</th><th>Serviço</th><th>Mensagem</th><th>Data</th><th>Estado</th><th></th></tr></thead>
+                      <thead><tr><th>{T.thName}</th><th>{T.thContact}</th><th>{T.thService}</th><th>{T.thMessage}</th><th>{T.thDate}</th><th>{T.thState}</th><th></th></tr></thead>
                       <tbody>
                         {fLeads.map((l) => (
                           <tr key={l.id}>
@@ -1246,7 +1296,7 @@
                                 onChange={(e) => setLeadStatus(l.id, e.target.value)}
                                 style={{padding:'5px 8px',borderRadius:8,border:'1px solid var(--line)',fontSize:12,fontWeight:600,background:'var(--bg-soft)',color:'var(--ink)'}}
                               >
-                                {Object.entries(LEAD_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                                {[['new',T.sNew],['contacted',T.sContacted],['won',T.sWon],['lost',T.sLost]].map(([k,lab]) => <option key={k} value={k}>{lab}</option>)}
                               </select>
                             </td>
                             <td>
@@ -1306,7 +1356,7 @@
                             <div className="rl-sub">{l.servico || l.email}</div>
                           </div>
                           <div style={{textAlign:'right',flex:'0 0 auto'}}>
-                            <span className={`table-tag tag-${l.status === 'won' ? 'active' : l.status === 'new' ? 'marketing' : 'design'}`}>{(LEAD_STATUS[l.status] || {}).label || l.status}</span>
+                            <span className={`table-tag tag-${l.status === 'won' ? 'active' : l.status === 'new' ? 'marketing' : 'design'}`}>{({new:T.sNew,contacted:T.sContacted,won:T.sWon,lost:T.sLost}[l.status]) || l.status}</span>
                             <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{fmtData(l.data)}</div>
                           </div>
                         </div>
@@ -1345,6 +1395,7 @@
               <>
                 <AccountEditor username={username} onChanged={setUsername} />
                 <LogoManager branding={branding} onChange={setBranding} />
+                <PaymentsEditor payments={payments} onSaved={setPayments} />
                 <SiteUpdater />
                 <div className="admin-panel">
                   <h2 style={{marginBottom:12}}>Sobre o painel</h2>
