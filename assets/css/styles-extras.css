@@ -141,3 +141,21 @@
   .shuffle-stack { margin-left: 0; margin-right: 0; }
   .shuffle-stage { justify-content: flex-start; padding-left: 40px; }
 }
+
+/* ==========================================================================
+   Segurança de responsividade (mobile) — apenas ajustes de layout,
+   sem alterar conteúdo. Evita scroll horizontal e cortes em ecrãs pequenos.
+   ========================================================================== */
+html, body { overflow-x: hidden; max-width: 100%; }
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
+@media (max-width: 640px) {
+  .container { padding-left: 18px; padding-right: 18px; }
+  .section { padding-top: 56px; padding-bottom: 56px; }
+  /* Grelhas comuns passam a uma coluna no telemóvel */
+  .services-grid, .portfolio-grid, .stats-grid, .why-grid,
+  .contact-grid, .footer-grid, .about-grid { grid-template-columns: 1fr !important; }
+  .services-head, .portfolio-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+  /* Evita que tabelas/blocos largos rebentem a página */
+  pre, table { max-width: 100%; overflow-x: auto; display: block; }
+}
