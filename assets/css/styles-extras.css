@@ -264,3 +264,28 @@ html, body { overflow-x: hidden; max-width: 100%; }
 @media (max-width: 460px) {
   .orbital-card { display: none !important; }
 }
+
+/* ==========================================================================
+   1.0.1 — Fim do transbordo lateral no telemóvel + menu (dropdown) visível
+   Blobs decorativos (right:-160px, -10% …) criavam scroll horizontal e
+   empurravam o conteúdo (logótipo cortado). Clipamos as secções.
+   ========================================================================== */
+@media (max-width: 900px) {
+  .hero, .section, .about-hero, .founder-section { overflow-x: clip; }
+  /* Menu do telemóvel sempre por cima e bem visível */
+  .site-header { z-index: 200; }
+  .site-nav { z-index: 300 !important; box-shadow: 0 24px 48px rgba(2,31,33,0.35); }
+  .hamburger { z-index: 301; position: relative; }
+  /* Logótipo não encolhe nem é cortado */
+  .site-header-inner { min-width: 0; }
+  .logo { flex-shrink: 0; }
+}
+
+/* Formas de pagamento no checkout */
+.cart-pay { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+.cart-pay-head { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.cart-pay-note { font-size: 13px; color: var(--ink-muted); margin-bottom: 10px; }
+.cart-pay-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.cart-pay-list li { display: flex; justify-content: space-between; gap: 12px; background: var(--bg-soft); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.cart-pay-list li strong { color: var(--ink); }
+.cart-pay-list li span { color: var(--ink-soft); font-weight: 600; }

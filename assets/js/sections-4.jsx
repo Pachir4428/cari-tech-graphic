@@ -432,7 +432,12 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
   const [form, setForm] = useS4({ name: '', email: '', phone: '' });
   const [status, setStatus] = useS4('idle');
   const [feedback, setFeedback] = useS4('');
-  useE4(() => { if (open) { setStatus('idle'); setFeedback(''); } }, [open]);
+  const [pay, setPay] = useS4({});
+  useE4(() => {
+    if (open) { setStatus('idle'); setFeedback(''); }
+    window.loadContent().then((c) => { if (c && c.payments) setPay(c.payments); });
+  }, [open]);
+  const hasPay = pay && pay.enabled && (pay.mpesa || pay.emola || pay.bank || pay.onlineLink);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -495,6 +500,22 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                   </button>
                 </div>
               </form>
+            )}
+            {hasPay && (
+              <div className="cart-pay">
+                <div className="cart-pay-head"><i className="fa-solid fa-credit-card" aria-hidden="true" /> Formas de pagamento</div>
+                {pay.note && <p className="cart-pay-note">{pay.note}</p>}
+                <ul className="cart-pay-list">
+                  {pay.mpesa && <li><strong>M-Pesa</strong><span>{pay.mpesa}</span></li>}
+                  {pay.emola && <li><strong>e-Mola</strong><span>{pay.emola}</span></li>}
+                  {pay.bank && <li><strong>Transferência</strong><span>{pay.bank}</span></li>}
+                </ul>
+                {pay.onlineLink && (
+                  <a className="btn btn-accent" href={pay.onlineLink} target="_blank" rel="noreferrer noopener" style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <i className="fa-solid fa-lock" aria-hidden="true" /> Pagar online
+                  </a>
+                )}
+              </div>
             )}
           </>
         )}

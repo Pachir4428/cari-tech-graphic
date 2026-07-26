@@ -227,6 +227,10 @@ function store_set_admin($config, $user, $hash) { return _meta_set($config, 'adm
 function store_get_branding($config)   { return _meta_get($config, 'branding', 'branding.json') ?: []; }
 function store_set_branding($config, $b) { return _meta_set($config, 'branding', 'branding.json', $b); }
 
+/* Pagamentos: métodos mostrados no checkout (público). */
+function store_get_payments($config)   { return _meta_get($config, 'payments', 'payments.json') ?: []; }
+function store_set_payments($config, $p) { return _meta_set($config, 'payments', 'payments.json', $p); }
+
 /* -------------------------------------------------------------------------- */
 /* Atualização do site por ZIP                                                */
 /* Extrai o ZIP e copia por cima dos ficheiros do site, PRESERVANDO SEMPRE     */
