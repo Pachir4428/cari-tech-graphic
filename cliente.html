@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área de Cliente — Cari Tech Graphic</title>
+  <meta name="description" content="Acompanhe o seu pedido e receba as suas entregas na Área de Cliente da Cari Tech Graphic." />
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand-deep:#025254; --brand-deep-2:#013E40; --brand-mid:#036C6F;
+      --accent:#FF7200; --accent-2:#E56500;
+      --ink:#0f1720; --muted:#5b6b73; --line:#e4ebec; --card:#ffffff; --bg:#f4f8f8;
+      --ok:#0f9d58; --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      font-family:'Manrope',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      color:var(--ink); background:
+        radial-gradient(1100px 500px at 15% -10%, rgba(3,108,111,.10), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(255,114,0,.08), transparent 55%),
+        var(--bg);
+      min-height:100vh; padding:28px 18px 60px;
+    }
+    a{color:var(--brand-mid)}
+    .wrap{max-width:680px;margin:0 auto}
+    .brandbar{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:22px}
+    .brandbar .logo{height:44px;width:auto;display:block}
+    .brandmark{
+      display:inline-flex;align-items:center;gap:10px;font-family:'Poppins',sans-serif;
+      font-weight:800;font-size:1.15rem;color:var(--brand-deep);text-decoration:none;letter-spacing:-.02em
+    }
+    .brandmark .dot{
+      width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;
+      background:linear-gradient(135deg,var(--brand-deep),var(--brand-mid));font-size:1rem
+    }
+    .card{
+      background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+      padding:26px 24px;box-shadow:0 18px 50px -30px rgba(2,82,84,.5)
+    }
+    h1{font-family:'Poppins',sans-serif;font-size:1.5rem;margin:0 0 6px;letter-spacing:-.02em}
+    .sub{color:var(--muted);margin:0 0 22px;font-size:.96rem;line-height:1.5}
+    label{display:block;font-weight:600;font-size:.9rem;margin:0 0 6px}
+    .field{margin-bottom:16px}
+    input{
+      width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;
+      font-size:1rem;font-family:inherit;background:#fff;transition:border-color .15s,box-shadow .15s
+    }
+    input:focus{outline:none;border-color:var(--brand-mid);box-shadow:0 0 0 4px rgba(3,108,111,.12)}
+    input[name=codigo]{text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+    .btn{
+      width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;
+      font-size:1rem;font-weight:700;font-family:inherit;color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      box-shadow:0 10px 24px -10px var(--accent);transition:transform .12s,filter .12s
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
+    .btn:disabled{opacity:.6;cursor:default;transform:none}
+    .msg{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:.92rem;display:none}
+    .msg.err{display:block;background:#fdecec;color:#b3261e;border:1px solid #f7c9c6}
+    .foot{text-align:center;color:var(--muted);font-size:.82rem;margin-top:22px}
+    .foot a{color:var(--muted)}
+
+    /* --- Resultado --- */
+    .result{display:none}
+    .status-pill{
+      display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+      font-weight:700;font-size:.82rem;margin-bottom:14px
+    }
+    .status-pill .d{width:9px;height:9px;border-radius:50%;background:currentColor}
+    .st-new{background:rgba(3,108,111,.12);color:var(--brand-mid)}
+    .st-contacted{background:rgba(255,114,0,.14);color:var(--accent-2)}
+    .st-won{background:rgba(15,157,88,.14);color:var(--ok)}
+    .st-lost{background:#eef1f2;color:var(--muted)}
+    .info{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;background:#fafcfc}
+    .info .row{display:flex;justify-content:space-between;gap:14px;padding:5px 0;font-size:.92rem}
+    .info .row span:first-child{color:var(--muted)}
+    .info .row span:last-child{font-weight:600;text-align:right}
+    h2{font-family:'Poppins',sans-serif;font-size:1.1rem;margin:20px 0 10px}
+    .deliver-msg{background:#fff8f1;border:1px solid #ffe0c2;border-radius:12px;padding:12px 15px;font-size:.92rem;color:#7a4a10;margin-bottom:14px;line-height:1.5}
+    .dl{
+      display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid var(--line);
+      border-radius:12px;margin-bottom:10px;text-decoration:none;color:var(--ink);
+      transition:border-color .15s,box-shadow .15s,transform .1s;background:#fff
+    }
+    .dl:hover{border-color:var(--brand-mid);box-shadow:0 8px 22px -16px rgba(2,82,84,.6);transform:translateY(-1px)}
+    .dl .ic{
+      width:40px;height:40px;flex:none;border-radius:10px;display:grid;place-items:center;font-size:1.05rem;
+      background:linear-gradient(135deg,var(--brand-deep),var(--brand-mid));color:#fff
+    }
+    .dl.link .ic{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+    .dl .tx{min-width:0}
+    .dl .tx b{display:block;font-size:.96rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dl .tx small{color:var(--muted);font-size:.82rem}
+    .dl .go{margin-left:auto;color:var(--muted);flex:none}
+    .empty{color:var(--muted);font-size:.92rem;background:#fafcfc;border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;line-height:1.5}
+    .backlink{background:none;border:none;color:var(--brand-mid);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brandbar" id="brandbar">
+      <a class="brandmark" href="index.html"><span class="dot">C</span> Cari Tech Graphic</a>
+    </div>
+
+    <div class="card">
+      <!-- Formulário de acesso -->
+      <div id="loginView">
+        <h1>Área de Cliente</h1>
+        <p class="sub">Consulte o estado do seu pedido e transfira as suas entregas. Use o <b>e-mail</b> e o <b>código</b> que recebeu no e-mail de confirmação.</p>
+        <form id="form" autocomplete="off">
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" placeholder="o.seu@email.com" required />
+          </div>
+          <div class="field">
+            <label for="codigo">Código de acesso</label>
+            <input type="text" id="codigo" name="codigo" placeholder="Ex.: 3F9A2C" maxlength="16" required />
+          </div>
+          <button class="btn" type="submit" id="submitBtn">Entrar</button>
+          <div class="msg" id="errBox"></div>
+        </form>
+      </div>
+
+      <!-- Resultado -->
+      <div id="resultView" class="result"></div>
+    </div>
+
+    <p class="foot">
+      Precisa de ajuda? <a href="index.html#contacto">Fale connosco</a> ·
+      <a href="index.html">Voltar ao site</a>
+    </p>
+  </div>
+
+  <script>
+    // Carrega o logótipo do site (se existir) para a barra de marca.
+    (function(){
+      fetch('conteudo.php').then(r=>r.json()).then(d=>{
+        var b = (d && d.branding) || {};
+        var logo = b.light || b.dark;
+        if (logo) {
+          var bar = document.getElementById('brandbar');
+          bar.innerHTML = '<a href="index.html"><img class="logo" src="'+logo+'" alt="Cari Tech Graphic"></a>';
+        }
+      }).catch(function(){});
+    })();
+
+    var iconFor = function(nome){
+      var ext = (nome.split('.').pop() || '').toLowerCase();
+      if (['png','jpg','jpeg','gif','webp','svg','bmp','tiff','ico'].indexOf(ext)>=0) return '🖼️';
+      if (['pdf'].indexOf(ext)>=0) return '📄';
+      if (['zip','rar','7z'].indexOf(ext)>=0) return '🗜️';
+      if (['mp4','mov','webm'].indexOf(ext)>=0) return '🎬';
+      if (['mp3','wav','ogg'].indexOf(ext)>=0) return '🎵';
+      if (['doc','docx','txt','rtf'].indexOf(ext)>=0) return '📝';
+      if (['xls','xlsx','csv'].indexOf(ext)>=0) return '📊';
+      if (['ppt','pptx'].indexOf(ext)>=0) return '📽️';
+      if (['ai','psd','eps','indd','cdr','sketch','fig','xd'].indexOf(ext)>=0) return '🎨';
+      return '📁';
+    };
+
+    var esc = function(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; };
+
+    var fmtData = function(iso){
+      if(!iso) return '';
+      var dt = new Date(iso);
+      if (isNaN(dt)) return '';
+      return dt.toLocaleDateString('pt-PT', {day:'2-digit',month:'2-digit',year:'numeric'});
+    };
+
+    var form = document.getElementById('form');
+    var errBox = document.getElementById('errBox');
+    var btn = document.getElementById('submitBtn');
+
+    var showErr = function(txt){ errBox.textContent = txt; errBox.className = 'msg err'; };
+    var hideErr = function(){ errBox.className = 'msg'; };
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      hideErr();
+      btn.disabled = true; btn.textContent = 'A verificar…';
+
+      var email = document.getElementById('email').value.trim();
+      var codigo = document.getElementById('codigo').value.trim();
+
+      fetch('cliente-api.php?action=deliverables', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email:email, codigo:codigo})
+      })
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(res){
+        btn.disabled = false; btn.textContent = 'Entrar';
+        if (!res.ok || !res.j.ok) {
+          showErr(res.j.message || 'Não foi possível entrar.');
+          return;
+        }
+        mostrarResultado(res.j);
+      })
+      .catch(function(){
+        btn.disabled = false; btn.textContent = 'Entrar';
+        showErr('Erro de ligação. Tente novamente.');
+      });
+    });
+
+    function mostrarResultado(d){
+      var p = d.pedido || {};
+      var entrega = d.entrega;
+      var stClass = 'st-' + (p.status || 'new');
+
+      var html = '';
+      html += '<span class="status-pill '+stClass+'"><span class="d"></span>'+esc(p.estado)+'</span>';
+      html += '<h1>Olá'+(p.nome?', '+esc(p.nome.split(' ')[0]):'')+' 👋</h1>';
+      html += '<p class="sub">Este é o resumo do seu pedido na Cari Tech Graphic.</p>';
+
+      html += '<div class="info">';
+      if (p.servico) html += '<div class="row"><span>Serviço</span><span>'+esc(p.servico)+'</span></div>';
+      if (p.data)    html += '<div class="row"><span>Data do pedido</span><span>'+esc(fmtData(p.data))+'</span></div>';
+      html += '<div class="row"><span>Estado</span><span>'+esc(p.estado)+'</span></div>';
+      html += '</div>';
+
+      html += '<h2>As suas entregas</h2>';
+      if (entrega && entrega.entregas && entrega.entregas.length) {
+        if (entrega.msg) html += '<div class="deliver-msg">'+esc(entrega.msg)+'</div>';
+        entrega.entregas.forEach(function(it){
+          var isFile = it.tipo === 'file';
+          var nome = it.nome || it.url;
+          var ic = isFile ? iconFor(nome) : '🔗';
+          html += '<a class="dl '+(isFile?'file':'link')+'" href="'+esc(it.url)+'" '+(isFile?'download':'target="_blank" rel="noopener"')+'>';
+          html += '<span class="ic">'+ic+'</span>';
+          html += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):(isFile?'Transferir ficheiro':'Abrir link'))+'</small></span>';
+          html += '<span class="go">'+(isFile?'⬇':'↗')+'</span>';
+          html += '</a>';
+        });
+      } else {
+        html += '<div class="empty">Ainda não há entregas disponíveis. Assim que o seu trabalho estiver pronto, ele aparecerá aqui — e você será notificado.</div>';
+      }
+
+      html += '<button class="backlink" onclick="location.reload()">← Consultar outro pedido</button>';
+
+      document.getElementById('loginView').style.display = 'none';
+      var rv = document.getElementById('resultView');
+      rv.innerHTML = html;
+      rv.style.display = 'block';
+    }
+
+    // Uppercase automático no código.
+    document.getElementById('codigo').addEventListener('input', function(){
+      this.value = this.value.toUpperCase();
+    });
+  </script>
+</body>
+</html>

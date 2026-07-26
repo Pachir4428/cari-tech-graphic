@@ -86,6 +86,43 @@ function guardar_imagem($file, $prefixo, $maxMB = 3) {
     return ['ok' => true, 'path' => 'uploads/' . $nome];
 }
 
+/* Guarda um ficheiro de entrega (qualquer tipo permitido); devolve
+   ['ok'=>true,'path'=>'uploads/entregas/…','nome'=>'original.ext']. */
+function guardar_ficheiro_entrega($file, $maxMB = 25) {
+    if (empty($file) || ($file['error'] ?? 1) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => 'Nenhum ficheiro recebido (ou demasiado grande para o servidor).'];
+    }
+    if ($file['size'] > $maxMB * 1024 * 1024) {
+        return ['ok' => false, 'message' => "O ficheiro não pode exceder {$maxMB} MB."];
+    }
+    $nomeOrig = (string) ($file['name'] ?? 'ficheiro');
+    $ext = strtolower(pathinfo($nomeOrig, PATHINFO_EXTENSION));
+    // Extensões permitidas para entrega de trabalhos (design, docs, media, código).
+    $permitidas = [
+        'pdf','doc','docx','xls','xlsx','ppt','pptx','txt','csv','rtf',
+        'png','jpg','jpeg','gif','webp','svg','bmp','tiff','ico',
+        'ai','psd','eps','indd','cdr','sketch','fig','xd',
+        'zip','rar','7z',
+        'mp4','mov','webm','mp3','wav','ogg',
+        'html','css','js','json',
+    ];
+    // Extensões perigosas — nunca permitidas em hospedagem partilhada.
+    $proibidas = ['php','phtml','php3','php4','php5','php7','phps','pht','htaccess','cgi','pl','py','sh','exe','asp','aspx','jsp'];
+    if ($ext === '' || in_array($ext, $proibidas, true) || !in_array($ext, $permitidas, true)) {
+        return ['ok' => false, 'message' => 'Tipo de ficheiro não permitido.'];
+    }
+    $dir = __DIR__ . '/uploads/entregas';
+    @mkdir($dir, 0755, true);
+    // Nome no disco: aleatório (evita colisões e path traversal); guarda o nome original nos metadados.
+    $slug = preg_replace('/[^a-zA-Z0-9._-]+/', '-', pathinfo($nomeOrig, PATHINFO_FILENAME));
+    $slug = trim(substr($slug, 0, 40), '-') ?: 'ficheiro';
+    $nomeDisco = $slug . '-' . bin2hex(random_bytes(5)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $nomeDisco)) {
+        return ['ok' => false, 'message' => 'Não foi possível guardar o ficheiro.'];
+    }
+    return ['ok' => true, 'path' => 'uploads/entregas/' . $nomeDisco, 'nome' => $nomeOrig];
+}
+
 /* --- Entrada --------------------------------------------------------------- */
 $action = $_GET['action'] ?? '';
 $body   = json_decode(file_get_contents('php://input'), true);
@@ -232,6 +269,54 @@ switch ($action) {
         $r = guardar_imagem($_FILES['image'] ?? null, 'img', 3);
         if (!$r['ok']) responder(false, ['message' => $r['message']], 422);
         responder(true, ['message' => 'Imagem carregada.', 'url' => $r['path']]);
+
+    case 'deliveries':
+        exigir_login();
+        responder(true, ['deliveries' => store_get_deliveries($config)]);
+
+    case 'upload-file':
+        exigir_login();
+        $r = guardar_ficheiro_entrega($_FILES['file'] ?? null, 25);
+        if (!$r['ok']) responder(false, ['message' => $r['message']], 422);
+        responder(true, ['message' => 'Ficheiro carregado.', 'url' => $r['path'], 'nome' => $r['nome']]);
+
+    case 'lead-deliver':
+        exigir_login();
+        $leadId = (string) ($body['leadId'] ?? '');
+        if ($leadId === '') responder(false, ['message' => 'Lead em falta.'], 422);
+        // Confirma que o lead existe.
+        $lead = null;
+        foreach (store_get_leads($config) as $l) { if (($l['id'] ?? '') === $leadId) { $lead = $l; break; } }
+        if (!$lead) responder(false, ['message' => 'Lead não encontrado.'], 404);
+
+        $itens = $body['entregas'] ?? [];
+        $limpos = [];
+        if (is_array($itens)) {
+            foreach ($itens as $it) {
+                $tipo = ($it['tipo'] ?? 'link') === 'file' ? 'file' : 'link';
+                $url  = trim((string) ($it['url'] ?? ''));
+                if ($url === '') continue;
+                $limpos[] = [
+                    'tipo' => $tipo,
+                    'url'  => $url,
+                    'nome' => trim((string) ($it['nome'] ?? '')) ?: $url,
+                    'note' => trim((string) ($it['note'] ?? '')),
+                ];
+            }
+        }
+        $entrega = [
+            'leadId'   => $leadId,
+            'msg'      => trim((string) ($body['msg'] ?? '')),
+            'entregas' => $limpos,
+            'entregue' => !empty($limpos),
+            'data'     => date('c'),
+        ];
+        if (!store_set_delivery($config, $leadId, $entrega)) {
+            responder(false, ['message' => 'Falha ao guardar a entrega.'], 500);
+        }
+        // Marca o lead como ganho quando há entregas.
+        if (!empty($limpos)) store_set_lead_status($config, $leadId, 'won');
+        responder(true, ['message' => 'Entrega guardada.', 'delivery' => $entrega]);
 
     case 'update-zip':
         exigir_login();

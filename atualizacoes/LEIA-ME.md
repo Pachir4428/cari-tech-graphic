@@ -4,7 +4,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 `cari-tech-graphic-1.0.0.zip`, `cari-tech-graphic-1.0.1.zip`, etc.
 **Use sempre o de número mais alto.**
 
-> Versão actual: **1.0.1** — a mesma que aparece no canto do painel de administração.
+> Versão actual: **1.0.2** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
@@ -26,6 +26,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 
 | Versão | Alterações |
 |--------|------------|
+| **1.0.2** | **Área de Cliente** (`cliente.html`) — o cliente entra com o **e-mail + código** e acompanha o estado do pedido e **transfere as entregas** (ficheiros e links). No painel, cada lead ganha a acção **“Entregar”**: carregue ficheiros ou adicione links, escreva uma mensagem e **notifique o cliente** (WhatsApp/e-mail) com o link e o código. **Recibo automático ao cliente** — quem envia um pedido recebe um e-mail de confirmação com o resumo e o acesso à Área de Cliente. **Tradução PT/EN a 100%** — todo o painel (login, formulários de edição, contactos, logótipo, pagamentos, conta, atualização e entregas) passa a mudar de idioma. |
 | **1.0.1** | Correcção definitiva do transbordo lateral no telemóvel (secções passam a clipar os elementos decorativos → logótipo deixa de ser cortado, conteúdo centrado, menu no sítio certo e visível). **Pagamentos no checkout** — configuráveis no painel (M-Pesa, e-Mola, transferência e link de pagamento online); mostrados ao cliente ao finalizar o pedido. **Tradução PT/EN** alargada a tabelas, estados, listas e formulários dos separadores. |
 | **1.0.0** | Versionamento semântico (1.0.0) e **cache-busting** (cada versão recarrega CSS/JS automaticamente). Correcções mobile: hero do site sem transbordo, conteúdo centrado, acções do cabeçalho no canto, **padding do checkout** corrigido. Painel: **notificações** — sino no topo (na linha do tema) com contador de novos pedidos, aviso do navegador e botão **“notificar cliente”** (WhatsApp/e-mail); **tradução PT/EN** da navegação, dashboard e separadores principais. |
 | (anterior) | Painel de gestão completo (leads, serviços, portfólio, testemunhos, contactos, logótipo claro/escuro, imagens, checkout de serviços), MySQL opcional, atualização por ZIP. |

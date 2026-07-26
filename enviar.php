@@ -86,6 +86,9 @@ if ($fh = @fopen($csvPath, 'a')) {
     fclose($fh);
 }
 
+/* Código de acesso do cliente (para a Área de Cliente / entregas). Curto e legível. */
+$codigo = strtoupper(bin2hex(random_bytes(3))); // 6 caracteres hex
+
 /* Grava o lead no armazenamento (MySQL se configurado, senão dados/leads.json).
    É a fonte usada pelo painel admin (com id e estado). */
 store_add_lead($config, [
@@ -98,6 +101,7 @@ store_add_lead($config, [
     'mensagem' => $mensagem,
     'ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
     'status'   => 'new',
+    'codigo'   => $codigo,
 ]);
 
 /* -------------------------------------------------------------------------- */
@@ -116,22 +120,26 @@ $corpo .= "Mensagem:\n{$mensagem}\n\n";
 $corpo .= "----------------------------------------\n";
 $corpo .= "Enviado em " . date('d/m/Y H:i') . " · IP " . ($_SERVER['REMOTE_ADDR'] ?? '?') . "\n";
 
-$enviado = false;
+/* Envia para o estúdio (dono). */
+$enviado = enviar_email($config, $config['to_email'], $assunto, $corpo, $email, $nome);
 
-if (!empty($config['smtp_enabled'])) {
-    /* Envio via SMTP (PHPMailer). Ver instruções no README. */
-    $enviado = enviar_smtp($config, $assunto, $corpo, $email, $nome);
-} else {
-    /* Envio via mail() nativo — funciona na Hostinger com From @seudominio */
-    $fromEmail = $config['from_email'] ?? ('no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-    $fromName  = $config['from_name']  ?? 'Website';
-    $headers  = 'From: ' . mb_encode_mimeheader($fromName) . " <{$fromEmail}>\r\n";
-    $headers .= "Reply-To: {$nome} <{$email}>\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
-    $assuntoMime = '=?UTF-8?B?' . base64_encode($assunto) . '?=';
-    $enviado = @mail($config['to_email'], $assuntoMime, $corpo, $headers, "-f{$fromEmail}");
+/* Recibo automático ao cliente (confirmação do pedido). Activo por omissão. */
+if (($config['send_receipt'] ?? true) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $marca = $config['from_name'] ?? 'Cari Tech Graphic';
+    $rAssunto = 'Recebemos o seu pedido — Cari Tech Graphic';
+    $rCorpo  = "Olá {$nome},\n\n";
+    $rCorpo .= "Recebemos o seu pedido" . ($servico !== '' ? " de {$servico}" : '') . " e vamos entrar em contacto em breve.\n\n";
+    $rCorpo .= "Resumo do seu pedido:\n{$mensagem}\n\n";
+    $rCorpo .= "-------------------------------------------\n";
+    $rCorpo .= "ÁREA DE CLIENTE\n";
+    $rCorpo .= "Acompanhe o seu pedido e receba as suas entregas (ficheiros e links) em:\n";
+    $rCorpo .= "  " . ($config['site_url'] ?? '') . "/cliente.html\n";
+    $rCorpo .= "  E-mail:  {$email}\n";
+    $rCorpo .= "  Código:  {$codigo}\n";
+    $rCorpo .= "-------------------------------------------\n\n";
+    $rCorpo .= "Se tiver dúvidas, responda a este e-mail ou fale connosco pelo WhatsApp " . ($config['whatsapp'] ?? '') . ".\n\n";
+    $rCorpo .= "Obrigado por escolher a Cari Tech Graphic.\n";
+    enviar_email($config, $email, $rAssunto, $rCorpo, $config['to_email'] ?? '', $marca);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -149,9 +157,36 @@ responder(true, 'Recebemos o seu pedido. Se preferir uma resposta imediata, fale
 ]);
 
 /* -------------------------------------------------------------------------- */
+/* Envio de e-mail — SMTP (se configurado) ou mail() nativo                   */
+/* -------------------------------------------------------------------------- */
+function enviar_email($config, $to, $assunto, $corpo, $replyEmail = '', $replyName = '') {
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    if (!empty($config['smtp_enabled'])) {
+        return enviar_smtp($config, $to, $assunto, $corpo, $replyEmail, $replyName);
+    }
+    /* mail() nativo (funciona na Hostinger sem SMTP) */
+    $fromEmail = $config['from_email'] ?? ('no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    $fromName  = $config['from_name']  ?? 'Cari Tech Graphic';
+
+    $headers  = 'From: ' . mb_encode_mimeheader($fromName) . " <{$fromEmail}>\r\n";
+    if ($replyEmail && filter_var($replyEmail, FILTER_VALIDATE_EMAIL)) {
+        $headers .= 'Reply-To: ' . mb_encode_mimeheader($replyName) . " <{$replyEmail}>\r\n";
+    }
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    $headers .= "Content-Transfer-Encoding: 8bit\r\n";
+    $headers .= 'X-Mailer: PHP/' . phpversion() . "\r\n";
+
+    $assuntoMime = '=?UTF-8?B?' . base64_encode($assunto) . '?=';
+    return @mail($to, $assuntoMime, $corpo, $headers, "-f{$fromEmail}");
+}
+
+/* -------------------------------------------------------------------------- */
 /* SMTP opcional (requer PHPMailer em vendor/ — ver README)                   */
 /* -------------------------------------------------------------------------- */
-function enviar_smtp($config, $assunto, $corpo, $replyEmail, $replyName) {
+function enviar_smtp($config, $to, $assunto, $corpo, $replyEmail = '', $replyName = '') {
     $autoload = __DIR__ . '/vendor/autoload.php';
     if (!file_exists($autoload)) {
         return false; // PHPMailer não instalado; cai para o CSV/WhatsApp
@@ -168,8 +203,10 @@ function enviar_smtp($config, $assunto, $corpo, $replyEmail, $replyName) {
         $mail->Port       = (int) $config['smtp_port'];
         $mail->CharSet    = 'UTF-8';
         $mail->setFrom($config['from_email'], $config['from_name']);
-        $mail->addAddress($config['to_email']);
-        $mail->addReplyTo($replyEmail, $replyName);
+        $mail->addAddress($to);
+        if ($replyEmail && filter_var($replyEmail, FILTER_VALIDATE_EMAIL)) {
+            $mail->addReplyTo($replyEmail, $replyName);
+        }
         $mail->Subject = $assunto;
         $mail->Body    = $corpo;
         $mail->send();

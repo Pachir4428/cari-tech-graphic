@@ -29,6 +29,15 @@ return [
     // resposta para oferecer continuação da conversa.
     'whatsapp'    => '258834157731',
 
+    // Endereço público do site (sem barra no fim). Usado no recibo automático
+    // para indicar ao cliente o link da Área de Cliente (cliente.html).
+    'site_url'    => 'https://caritechgraphic.com',
+
+    // Enviar recibo automático (confirmação) ao cliente quando ele faz um
+    // pedido. Deixe true para confirmar a receção e enviar o código de acesso
+    // à Área de Cliente.
+    'send_receipt' => true,
+
     // ---- Painel de administração (admin.html) ------------------------------
     // Credenciais INICIAIS de acesso. Depois de entrar, pode alterar o
     // utilizador e a palavra-passe directamente no painel (Definições → Conta),

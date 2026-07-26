@@ -48,7 +48,10 @@ function ctg_ensure_schema($pdo) {
         criado_em DATETIME NOT NULL,
         nome VARCHAR(200), email VARCHAR(200), telefone VARCHAR(80),
         servico VARCHAR(200), mensagem TEXT, ip VARCHAR(64),
+        codigo VARCHAR(16),
         status VARCHAR(20) NOT NULL DEFAULT 'new')$suf");
+    /* Coluna 'codigo' para instalações antigas (ignora erro se já existir). */
+    try { $pdo->exec("ALTER TABLE leads ADD COLUMN codigo VARCHAR(16)"); } catch (\Throwable $e) {}
     $pdo->exec("CREATE TABLE IF NOT EXISTS content_items (
         id VARCHAR(40) PRIMARY KEY,
         tipo VARCHAR(20) NOT NULL,
@@ -66,12 +69,12 @@ function store_add_lead($config, $lead) {
     $pdo = ctg_pdo($config);
     if ($pdo) {
         $st = $pdo->prepare("INSERT INTO leads
-            (id, criado_em, nome, email, telefone, servico, mensagem, ip, status)
-            VALUES (?,?,?,?,?,?,?,?,?)");
+            (id, criado_em, nome, email, telefone, servico, mensagem, ip, codigo, status)
+            VALUES (?,?,?,?,?,?,?,?,?,?)");
         return $st->execute([
             $lead['id'], date('Y-m-d H:i:s'), $lead['nome'], $lead['email'],
             $lead['telefone'], $lead['servico'], $lead['mensagem'],
-            $lead['ip'], $lead['status'] ?? 'new',
+            $lead['ip'], $lead['codigo'] ?? '', $lead['status'] ?? 'new',
         ]);
     }
     return file_add_lead($config, $lead);
@@ -87,6 +90,7 @@ function store_get_leads($config) {
                 'data' => str_replace(' ', 'T', $r['criado_em']),
                 'nome' => $r['nome'], 'email' => $r['email'], 'telefone' => $r['telefone'],
                 'servico' => $r['servico'], 'mensagem' => $r['mensagem'], 'ip' => $r['ip'],
+                'codigo' => $r['codigo'] ?? '',
                 'status' => $r['status'],
             ];
         }, $rows);
@@ -230,6 +234,25 @@ function store_set_branding($config, $b) { return _meta_set($config, 'branding',
 /* Pagamentos: métodos mostrados no checkout (público). */
 function store_get_payments($config)   { return _meta_get($config, 'payments', 'payments.json') ?: []; }
 function store_set_payments($config, $p) { return _meta_set($config, 'payments', 'payments.json', $p); }
+
+/* -------------------------------------------------------------------------- */
+/* Entregas (Área de Cliente)                                                  */
+/* Mapa { leadId: { entregas:[{tipo,url,nome,note}], msg, entregue, data } }.  */
+/* Guardado fora do conteúdo público; só é lido por quem tiver e-mail+código.  */
+/* -------------------------------------------------------------------------- */
+function store_get_deliveries($config)      { return _meta_get($config, 'entregas', 'entregas.json') ?: []; }
+function store_set_deliveries($config, $d)  { return _meta_set($config, 'entregas', 'entregas.json', $d); }
+
+/* Guarda/atualiza a entrega de um lead específico. */
+function store_set_delivery($config, $leadId, $entrega) {
+    $todas = store_get_deliveries($config);
+    $todas[$leadId] = $entrega;
+    return store_set_deliveries($config, $todas);
+}
+function store_get_delivery($config, $leadId) {
+    $todas = store_get_deliveries($config);
+    return $todas[$leadId] ?? null;
+}
 
 /* -------------------------------------------------------------------------- */
 /* Atualização do site por ZIP                                                */

@@ -348,6 +348,7 @@ function Footer({ t }) {
             <a href="#about">{t.nav.about}</a>
             <a href="#portfolio">{t.nav.portfolio}</a>
             <a href="#testimonials">{t.testimonials.eyebrow}</a>
+            <a href="cliente.html">{t.footer.clientArea || 'Área de Cliente'}</a>
           </div>
           <div className="footer-col">
             <div className="fc-title">{t.footer.services}</div>
