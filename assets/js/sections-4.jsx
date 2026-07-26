@@ -212,24 +212,37 @@ function PortfolioModal({ open, onClose, item, onRequest }) {
     <Modal open={open} onClose={onClose} size="lg">
       <div className="detail-modal">
         <div className="detail-cover detail-cover-portfolio">
-          <div className="placeholder-img">{item.tag} · {item.t}</div>
+          {item.img
+            ? <img src={item.img} alt={item.t} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <div className="placeholder-img">{item.tag} · {item.t}</div>}
         </div>
         <div className="detail-body">
           <span className="pm-tag" style={{ background: 'var(--accent)' }}>{item.tag}</span>
           <h3 className="h-section" style={{ fontSize: 32, marginTop: 8 }}>{item.t}</h3>
           <p className="lede">{item.c}</p>
-          <div className="detail-meta">
-            <div><span>Cliente</span><strong>{item.t}</strong></div>
-            <div><span>Ano</span><strong>2025</strong></div>
-            <div><span>Categoria</span><strong>{item.tag}</strong></div>
-            <div><span>Duração</span><strong>6 semanas</strong></div>
-          </div>
-          <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>
-            Estudo de caso completo: estratégia, design, desenvolvimento e resultados mensuráveis.
-            Cada projecto é construído com foco em métricas de negócio reais.
-          </p>
+          {item.url && (
+            <div className="site-preview">
+              <div className="site-preview-bar">
+                <span className="spb-dot" /><span className="spb-dot" /><span className="spb-dot" />
+                <span className="spb-url">{item.url.replace(/^https?:\/\//, '')}</span>
+              </div>
+              <iframe src={item.url} title={item.t} loading="lazy" referrerPolicy="no-referrer"
+                sandbox="allow-scripts allow-same-origin allow-popups" />
+              <div className="site-preview-note">Se a pré-visualização não abrir, o site pode bloquear a incorporação — use o botão abaixo.</div>
+            </div>
+          )}
+          {!item.url && (
+            <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>
+              Estudo de caso: estratégia, design e desenvolvimento com foco em resultados de negócio reais.
+            </p>
+          )}
           <div className="detail-actions">
-            <button className="btn btn-accent" onClick={() => { onClose(); onRequest(''); }}>
+            {item.url && (
+              <a className="btn btn-accent" href={item.url} target="_blank" rel="noreferrer noopener">
+                Visitar site<Icon.ArrowUpRight size={14} />
+              </a>
+            )}
+            <button className={item.url ? 'btn btn-ghost' : 'btn btn-accent'} onClick={() => { onClose(); onRequest(''); }}>
               Quero algo assim<Icon.Arrow size={14} />
             </button>
             <button className="btn btn-ghost" onClick={onClose}>Fechar</button>

@@ -408,16 +408,19 @@
   </footer>
 
   <script>
-    // Aplica o logótipo personalizado (se definido no painel) ao cabeçalho.
+    // Aplica o logótipo personalizado (se definido no painel) ao cabeçalho e ao ícone.
     fetch('conteudo.php', { headers: { 'Accept': 'application/json' } })
       .then((r) => (r.ok ? r.json() : {}))
       .then((d) => {
-        var logo = d && d.branding && d.branding.logo;
+        var b = (d && d.branding) || {};
+        var logo = b.light || b.dark;   // esta página tem cabeçalho claro
         if (!logo) return;
         var el = document.querySelector('.site-header .logo');
         if (el) {
           el.innerHTML = '<img src="' + logo + '" alt="Cari Tech Graphic" style="height:40px;width:auto;display:block;" />';
         }
+        var link = document.querySelector('link[rel~="icon"]') || document.createElement('link');
+        link.rel = 'icon'; link.href = logo; document.head.appendChild(link);
       })
       .catch(function () {});
   </script>

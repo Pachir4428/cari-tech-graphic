@@ -1,32 +1,30 @@
 # Atualizações do site
 
-Esta pasta guarda os pacotes de atualização do site, em `.zip`.
-A partir de agora, cada nova versão é entregue aqui como um ZIP pronto a aplicar.
+Esta pasta guarda os pacotes de atualização, um por versão: `cari-tech-graphic-v1.zip`,
+`cari-tech-graphic-v2.zip`, etc. **Use sempre o de número mais alto** (é a versão mais recente).
+
+> Versão actual: **v1** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
-1. **Baixe** o ficheiro **`site-atual.zip`** desta pasta
-   (no GitHub: abra o ficheiro → botão **Download**).
+1. **Baixe** o ZIP com o número mais alto desta pasta (no GitHub: abra o ficheiro → **Download**).
 2. Entre no painel: `https://seudominio.com/admin.html`.
 3. Vá a **Definições → Atualizar o site (ZIP)**, escolha o ZIP e clique em **Atualizar site**.
 
-Pronto — o site fica na versão nova.
+Pronto. Confirme a versão no canto do painel.
 
 ### O que é preservado (nunca se perde)
-Ao aplicar a atualização, estes são **sempre mantidos**:
 - **`config.php`** — as suas definições (e-mail, WhatsApp, base de dados)
 - **`dados/`** — os leads e todo o conteúdo do painel
-- **`uploads/`** — as imagens e o logótipo
+- **`uploads/`** — as imagens e os logótipos
 
-> Em alternativa, pode extrair o ZIP dentro de `public_html` pelo Gestor de Ficheiros da Hostinger.
-> Dica: faça um backup (hPanel → Backups) antes de atualizar, por precaução.
+> Em alternativa, extraia o ZIP dentro de `public_html` pelo Gestor de Ficheiros da Hostinger.
+> Dica: faça um backup (hPanel → Backups) antes de atualizar.
 
 ---
 
 ## Histórico de versões
 
-| Data | Versão | Alterações |
-|------|--------|------------|
-| 2026-07-26 | v1.2 | Painel redesenhado (layout tipo dashboard, cores do sistema): sidebar mais limpa com botão "Ver site", cartões arredondados com ícone, Visão geral com pedidos recentes + donut de leads por estado + estatísticas de conteúdo. Melhorias de responsividade no painel e na landing page. |
-| 2026-07-26 | v1.1 | Login: novo layout responsivo (cores do sistema), correção de acesso, remoção da dica de credenciais. Menu do painel organizado em grupos e responsivo. |
-| 2026-07-26 | v1.0 | Primeira versão: site + painel (leads, serviços, portfólio, testemunhos, contactos, logótipo), MySQL opcional, atualização por ZIP. |
+| Versão | Alterações |
+|--------|------------|
+| **v1** | Base do painel + site. Dashboard (layout tipo dashboard, cores do sistema), login responsivo, sidebar organizada, gestão de leads/serviços/portfólio/testemunhos/contactos, MySQL opcional, atualização por ZIP. Novidades: **versão visível no painel**, **logótipo claro + escuro** aplicado a todo o site (incl. ícone/favicon), **upload de imagem** em serviços/portfólio/testemunhos, **link de site externo** no portfólio com pré-visualização. |

@@ -121,9 +121,17 @@
       color: var(--ink-muted);
     }
     .kpi-num {
-      font-size: 30px; font-weight: 800;
-      letter-spacing: -0.03em; margin-top: 4px;
+      font-size: 30px; font-weight: 700;
+      letter-spacing: -0.02em; margin-top: 4px;
     }
+    .ver-chip {
+      align-self: flex-start;
+      background: var(--bg-elev); border: 1px solid var(--line);
+      border-radius: 999px; padding: 6px 12px;
+      font-size: 12px; font-weight: 600; color: var(--ink-soft);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .admin-topbar h1 { font-weight: 700; }
 
     /* ---- Dashboard (Visão geral) ---- */
     .dash-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 16px; }
@@ -132,10 +140,10 @@
     .rl-av {
       width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto;
       display: inline-flex; align-items: center; justify-content: center;
-      font-weight: 800; color: #fff; background: var(--brand-mid);
+      font-weight: 700; color: #fff; background: var(--brand-mid);
     }
     .rl-main { flex: 1; min-width: 0; }
-    .rl-name { font-weight: 700; font-size: 14px; }
+    .rl-name { font-weight: 600; font-size: 14px; }
     .rl-sub { font-size: 12px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 6px 0; }
     .donut { width: 168px; height: 168px; border-radius: 50%; position: relative; }
@@ -150,7 +158,7 @@
     .dl-val { margin-left: auto; font-weight: 700; }
     .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .mini-stat { background: var(--bg-soft); border-radius: 14px; padding: 16px; }
-    .mini-stat .n { font-size: 24px; font-weight: 800; }
+    .mini-stat .n { font-size: 24px; font-weight: 700; }
     .mini-stat .l { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
 
     .admin-panel {
@@ -339,6 +347,9 @@
       try { data = await res.json(); } catch (e) {}
       return { status: res.status, ...data };
     };
+
+    // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
+    const APP_VERSION = 'v1';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -560,6 +571,38 @@
       return <p style={{marginTop:10,fontSize:13,fontWeight:600,color: msg.ok ? 'var(--success,#30a46c)' : 'var(--danger,#e5484d)'}}>{msg.text}</p>;
     }
 
+    // Campo de upload de imagem (serviços, portfólio, testemunhos…)
+    function ImageUploadField({ label, hint, value, onChange }) {
+      const [busy, setBusy] = useState(false);
+      const [err, setErr] = useState('');
+      const ref = React.useRef(null);
+      const up = async (f) => {
+        if (!f) return;
+        setBusy(true); setErr('');
+        const fd = new FormData(); fd.append('image', f);
+        const r = await apiUpload('upload-image', fd);
+        setBusy(false);
+        if (r.ok) onChange(r.url); else setErr(r.message || 'Erro ao carregar.');
+      };
+      return (
+        <div className="field">
+          <label>{label}</label>
+          <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+            {value
+              ? <img src={value} alt="" style={{height:48,width:48,objectFit:'cover',borderRadius:10,border:'1px solid var(--line)'}} />
+              : <div style={{height:48,width:48,borderRadius:10,background:'var(--bg-soft)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}><FA name="image" s={16} /></div>}
+            <input ref={ref} type="file" accept="image/*" style={{display:'none'}} onChange={(e) => up(e.target.files[0])} />
+            <button type="button" className="btn btn-ghost" onClick={() => ref.current && ref.current.click()} disabled={busy}>
+              {busy ? 'A enviar…' : (value ? 'Trocar imagem' : 'Carregar imagem')}
+            </button>
+            {value && <button type="button" className="btn btn-ghost" onClick={() => onChange('')}>Remover</button>}
+          </div>
+          {hint && <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{hint}</div>}
+          <div className="field-error">{err}</div>
+        </div>
+      );
+    }
+
     function AccountEditor({ username, onChanged }) {
       const [cur, setCur] = useState('');
       const [nu, setNu] = useState(username || 'admin');
@@ -592,42 +635,56 @@
       );
     }
 
-    function LogoManager({ branding, onChange }) {
+    function LogoSlot({ variant, label, bg, logo, onChanged }) {
       const [busy, setBusy] = useState(false);
       const [msg, setMsg] = useState(null);
-      const fileRef = React.useRef(null);
-      const logo = branding && branding.logo;
+      const ref = React.useRef(null);
       const upload = async (file) => {
         if (!file) return;
         setBusy(true); setMsg(null);
-        const fd = new FormData(); fd.append('logo', file);
+        const fd = new FormData(); fd.append('logo', file); fd.append('variant', variant);
         const r = await apiUpload('upload-logo', fd);
         setBusy(false);
-        if (r.ok) { onChange({ logo: r.logo }); setMsg({ ok: true, text: 'Logótipo actualizado.' }); }
-        else setMsg({ ok: false, text: r.message || 'Erro.' });
+        if (r.ok) { onChanged(r.branding || {}); } else setMsg({ ok: false, text: r.message || 'Erro.' });
       };
       const remove = async () => {
         setBusy(true); setMsg(null);
-        const r = await api('remove-logo', 'POST');
+        const fd = new FormData(); fd.append('variant', variant);
+        const r = await apiUpload('remove-logo', fd);
         setBusy(false);
-        if (r.ok) { onChange({}); setMsg({ ok: true, text: 'Logótipo removido.' }); }
-        else setMsg({ ok: false, text: r.message || 'Erro.' });
+        if (r.ok) onChanged(r.branding || {}); else setMsg({ ok: false, text: r.message || 'Erro.' });
       };
       return (
-        <div className="admin-panel" style={{marginBottom:16}}>
-          <h2 style={{marginBottom:6}}>Logótipo do site</h2>
-          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Aparece no cabeçalho e no rodapé (PNG, JPG, SVG… até 2 MB). Sem logótipo, é usado o símbolo padrão.</p>
-          <div style={{display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
-            <div style={{height:56,minWidth:130,background:'var(--brand-deep)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px'}}>
-              {logo ? <img src={logo} alt="logótipo" style={{height:40,width:'auto'}} /> : <span style={{color:'#fff',fontWeight:800,fontSize:13}}>Símbolo padrão</span>}
-            </div>
-            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style={{display:'none'}} onChange={(e) => upload(e.target.files[0])} />
-            <button type="button" className="btn btn-accent" onClick={() => fileRef.current && fileRef.current.click()} disabled={busy}>
-              <FA name="image" s={13} /> {busy ? 'A enviar…' : 'Carregar logótipo'}
+        <div style={{flex:'1 1 240px'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--ink-soft)',marginBottom:8}}>{label}</div>
+          <div style={{height:64,background:bg,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px',border:'1px solid var(--line)'}}>
+            {logo ? <img src={logo} alt="logótipo" style={{height:42,width:'auto',maxWidth:'100%'}} /> : <span style={{color: bg === 'var(--brand-deep)' ? '#fff' : 'var(--ink-muted)',fontWeight:700,fontSize:12}}>Símbolo padrão</span>}
+          </div>
+          <div style={{display:'flex',gap:8,marginTop:10}}>
+            <input ref={ref} type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style={{display:'none'}} onChange={(e) => upload(e.target.files[0])} />
+            <button type="button" className="btn btn-ghost" onClick={() => ref.current && ref.current.click()} disabled={busy}>
+              <FA name="image" s={13} /> {busy ? 'A enviar…' : (logo ? 'Trocar' : 'Carregar')}
             </button>
             {logo && <button type="button" className="btn btn-ghost" onClick={remove} disabled={busy}>Remover</button>}
           </div>
           <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function LogoManager({ branding, onChange }) {
+      branding = branding || {};
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>Logótipo do site</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:18}}>
+            Carregue duas versões (PNG/SVG até 2 MB). O site escolhe automaticamente conforme o fundo,
+            e o logótipo passa também a ser o <strong>ícone (favicon)</strong> do site. Sem logótipo, é usado o símbolo padrão.
+          </p>
+          <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
+            <LogoSlot variant="light" label="Para fundo claro (cores escuras)" bg="var(--bg-soft)" logo={branding.light} onChanged={onChange} />
+            <LogoSlot variant="dark" label="Para fundo escuro (cores claras)" bg="var(--brand-deep)" logo={branding.dark} onChanged={onChange} />
+          </div>
         </div>
       );
     }
@@ -771,9 +828,9 @@
       }
 
       const NEW_ITEM = {
-        service: () => ({ id: Date.now(), t: '', d: '', category: 'design', price: '', status: 'active' }),
-        portfolio: () => ({ id: Date.now(), t: '', c: '', tag: 'web', status: 'active', year: new Date().getFullYear() }),
-        testimonial: () => ({ id: Date.now(), q: '', n: '', r: '', status: 'active' }),
+        service: () => ({ id: Date.now(), t: '', d: '', category: 'design', price: '', status: 'active', img: '' }),
+        portfolio: () => ({ id: Date.now(), t: '', c: '', tag: 'web', status: 'active', year: new Date().getFullYear(), img: '', url: '' }),
+        testimonial: () => ({ id: Date.now(), q: '', n: '', r: '', status: 'active', img: '' }),
       };
       const openNew = (type) => { setEditType(type); setEditing(NEW_ITEM[type]()); };
       const openEdit = (type, item) => { setEditType(type); setEditing({ ...item }); };
@@ -828,7 +885,7 @@
             <button className={`admin-nav-item ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}><FA name="gear" s={15} />Definições</button>
             <button className="admin-nav-item" onClick={logout}><FA name="arrow-right-from-bracket" s={15} />Terminar sessão</button>
             <div className="admin-foot">
-              Sessão activa<br/>
+              Sessão activa · <b style={{color:'rgba(255,255,255,0.6)'}}>{APP_VERSION}</b><br/>
               <a href="index.html"><FA name="arrow-left" s={11} /> Ver site público</a>
             </div>
           </aside>
@@ -839,6 +896,7 @@
                 <h1>{tab === 'overview' ? 'Olá, bem-vindo 👋' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'testimonials' ? 'Gestão de Testemunhos' : tab === 'leads' ? 'Pedidos & Leads' : tab === 'contact' ? 'Contactos' : 'Definições'}</h1>
                 <p>{tab === 'overview' ? 'Aqui está o resumo do seu site.' : 'Cari Tech Graphic · painel de gestão'}</p>
               </div>
+              <span className="ver-chip" title="Versão do painel"><FA name="code-branch" s={11} /> {APP_VERSION}</span>
             </div>
 
             <div className="kpi-row">
@@ -1070,7 +1128,7 @@
                       <div className="donut-wrap">
                         <div className="donut" style={{background: grad}}>
                           <div className="donut-center">
-                            <div style={{fontSize:28,fontWeight:800}}>{total}</div>
+                            <div style={{fontSize:28,fontWeight:700}}>{total}</div>
                             <div style={{fontSize:11,color:'var(--ink-muted)'}}>leads</div>
                           </div>
                         </div>
@@ -1125,6 +1183,7 @@
                     <>
                       <div className="field"><label>Nome do serviço</label><input value={editing.t} onChange={(e) => setEditing({...editing, t: e.target.value})} placeholder="Ex.: Design Gráfico" /><div className="field-error"/></div>
                       <div className="field"><label>Descrição (aparece no site)</label><textarea rows="3" value={editing.d} onChange={(e) => setEditing({...editing, d: e.target.value})} placeholder="Uma frase que descreve o serviço." /><div className="field-error"/></div>
+                      <ImageUploadField label="Imagem (opcional)" hint="Se definir, substitui o ícone no cartão do serviço." value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
                       <div className="field"><label>Categoria</label>
                         <select value={editing.category} onChange={(e) => setEditing({...editing, category: e.target.value})}>
                           <option value="design">Design</option><option value="web">Web</option><option value="marketing">Marketing</option>
@@ -1143,6 +1202,8 @@
                     <>
                       <div className="field"><label>Título do projecto</label><input value={editing.t} onChange={(e) => setEditing({...editing, t: e.target.value})} placeholder="Ex.: Banco Horizonte" /><div className="field-error"/></div>
                       <div className="field"><label>Descrição (aparece no site)</label><input value={editing.c} onChange={(e) => setEditing({...editing, c: e.target.value})} placeholder="Ex.: Plataforma de banking digital" /><div className="field-error"/></div>
+                      <ImageUploadField label="Imagem do projecto" hint="Aparece no cartão e na janela de detalhe. Recomendado: 16:10." value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
+                      <div className="field"><label>Link do site (opcional)</label><input value={editing.url || ''} onChange={(e) => setEditing({...editing, url: e.target.value})} placeholder="https://exemplo.com" /><div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>Se for um site ao vivo, mostra uma pré-visualização e um botão "Visitar site".</div><div className="field-error"/></div>
                       <div className="field"><label>Categoria</label>
                         <select value={editing.tag} onChange={(e) => setEditing({...editing, tag: e.target.value})}>
                           <option value="web">Web</option><option value="design">Design</option><option value="marketing">Marketing</option>
@@ -1162,6 +1223,7 @@
                       <div className="field"><label>Depoimento</label><textarea rows="4" value={editing.q} onChange={(e) => setEditing({...editing, q: e.target.value})} placeholder="O que o cliente disse sobre o vosso trabalho." /><div className="field-error"/></div>
                       <div className="field"><label>Nome do cliente</label><input value={editing.n} onChange={(e) => setEditing({...editing, n: e.target.value})} placeholder="Ex.: Aida M." /><div className="field-error"/></div>
                       <div className="field"><label>Cargo / empresa</label><input value={editing.r} onChange={(e) => setEditing({...editing, r: e.target.value})} placeholder="Ex.: CEO, Horizonte Lda." /><div className="field-error"/></div>
+                      <ImageUploadField label="Foto do cliente (opcional)" hint="Aparece no cartão do testemunho." value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
                       <div className="field"><label>Estado</label>
                         <select value={editing.status} onChange={(e) => setEditing({...editing, status: e.target.value})}>
                           <option value="active">Activo (visível no site)</option><option value="draft">Rascunho (oculto)</option>

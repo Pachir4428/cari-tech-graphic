@@ -64,6 +64,28 @@ function credenciais_validas($config, $user, $senha) {
     return $user === $padUser && $padHash && password_verify($senha, $padHash);
 }
 
+/* Valida e guarda uma imagem enviada; devolve ['ok'=>true,'path'=>'uploads/…'] */
+function guardar_imagem($file, $prefixo, $maxMB = 3) {
+    if (empty($file) || ($file['error'] ?? 1) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => 'Nenhum ficheiro recebido (ou demasiado grande para o servidor).'];
+    }
+    if ($file['size'] > $maxMB * 1024 * 1024) {
+        return ['ok' => false, 'message' => "A imagem não pode exceder {$maxMB} MB."];
+    }
+    $info = @getimagesize($file['tmp_name']);
+    $tipos = [IMAGETYPE_PNG => 'png', IMAGETYPE_JPEG => 'jpg', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp', IMAGETYPE_BMP => 'bmp'];
+    $svg = (strtolower($file['type'] ?? '') === 'image/svg+xml') || preg_match('/\.svg$/i', $file['name'] ?? '');
+    if (!$info && !$svg) return ['ok' => false, 'message' => 'Ficheiro não é uma imagem válida (PNG, JPG, GIF, WEBP ou SVG).'];
+    $ext = $svg ? 'svg' : ($tipos[$info[2]] ?? null);
+    if (!$ext) return ['ok' => false, 'message' => 'Formato de imagem não suportado.'];
+    @mkdir(__DIR__ . '/uploads', 0755, true);
+    $nome = $prefixo . '-' . bin2hex(random_bytes(5)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], __DIR__ . '/uploads/' . $nome)) {
+        return ['ok' => false, 'message' => 'Não foi possível guardar o ficheiro.'];
+    }
+    return ['ok' => true, 'path' => 'uploads/' . $nome];
+}
+
 /* --- Entrada --------------------------------------------------------------- */
 $action = $_GET['action'] ?? '';
 $body   = json_decode(file_get_contents('php://input'), true);
@@ -177,32 +199,31 @@ switch ($action) {
 
     case 'upload-logo':
         exigir_login();
-        if (empty($_FILES['logo']) || $_FILES['logo']['error'] !== UPLOAD_ERR_OK) {
-            responder(false, ['message' => 'Nenhum ficheiro recebido (ou demasiado grande).'], 422);
-        }
-        $f = $_FILES['logo'];
-        if ($f['size'] > 2 * 1024 * 1024) responder(false, ['message' => 'O logótipo não pode exceder 2 MB.'], 422);
-        $info = @getimagesize($f['tmp_name']);
-        $tipos = [IMAGETYPE_PNG => 'png', IMAGETYPE_JPEG => 'jpg', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp', IMAGETYPE_BMP => 'bmp'];
-        $svg = (strtolower($f['type']) === 'image/svg+xml') || preg_match('/\.svg$/i', $f['name']);
-        if (!$info && !$svg) responder(false, ['message' => 'Ficheiro não é uma imagem válida (PNG, JPG, GIF, WEBP ou SVG).'], 422);
-        $ext = $svg ? 'svg' : ($tipos[$info[2]] ?? null);
-        if (!$ext) responder(false, ['message' => 'Formato de imagem não suportado.'], 422);
-        @mkdir(__DIR__ . '/uploads', 0755, true);
-        // Remove logótipos anteriores para não acumular ficheiros.
-        foreach (glob(__DIR__ . '/uploads/logo-*.*') ?: [] as $antigo) @unlink($antigo);
-        $nome = 'logo-' . bin2hex(random_bytes(4)) . '.' . $ext;
-        if (!move_uploaded_file($f['tmp_name'], __DIR__ . '/uploads/' . $nome)) {
-            responder(false, ['message' => 'Não foi possível guardar o ficheiro.'], 500);
-        }
-        store_set_branding($config, ['logo' => 'uploads/' . $nome]);
-        responder(true, ['message' => 'Logótipo actualizado.', 'logo' => 'uploads/' . $nome]);
+        // variante: 'light' (fundo claro) ou 'dark' (fundo escuro)
+        $variante = ($_POST['variant'] ?? 'light') === 'dark' ? 'dark' : 'light';
+        $r = guardar_imagem($_FILES['logo'] ?? null, 'logo-' . $variante, 2);
+        if (!$r['ok']) responder(false, ['message' => $r['message']], 422);
+        // Remove o logótipo anterior desta variante.
+        $branding = store_get_branding($config);
+        if (!empty($branding[$variante])) @unlink(__DIR__ . '/' . $branding[$variante]);
+        $branding[$variante] = $r['path'];
+        store_set_branding($config, $branding);
+        responder(true, ['message' => 'Logótipo actualizado.', 'branding' => $branding]);
 
     case 'remove-logo':
         exigir_login();
-        foreach (glob(__DIR__ . '/uploads/logo-*.*') ?: [] as $antigo) @unlink($antigo);
-        store_set_branding($config, []);
-        responder(true, ['message' => 'Logótipo removido.']);
+        $variante = ($_POST['variant'] ?? 'light') === 'dark' ? 'dark' : 'light';
+        $branding = store_get_branding($config);
+        if (!empty($branding[$variante])) @unlink(__DIR__ . '/' . $branding[$variante]);
+        unset($branding[$variante]);
+        store_set_branding($config, $branding);
+        responder(true, ['message' => 'Logótipo removido.', 'branding' => $branding]);
+
+    case 'upload-image':
+        exigir_login();
+        $r = guardar_imagem($_FILES['image'] ?? null, 'img', 3);
+        if (!$r['ok']) responder(false, ['message' => $r['message']], 422);
+        responder(true, ['message' => 'Imagem carregada.', 'url' => $r['path']]);
 
     case 'update-zip':
         exigir_login();

@@ -21,7 +21,7 @@ function Portfolio({ t, onView }) {
   useEffect2(() => {
     window.loadContent().then((c) => {
       if (c.portfolio && c.portfolio.length) {
-        setManaged(c.portfolio.map((p) => ({ t: p.t || '', c: p.c || '', tag: p.tag || 'web' })));
+        setManaged(c.portfolio.map((p) => ({ t: p.t || '', c: p.c || '', tag: p.tag || 'web', img: p.img || '', url: p.url || '' })));
       }
       if (c.headings && c.headings.portfolio) setHead(c.headings.portfolio);
     });
@@ -74,7 +74,10 @@ function Portfolio({ t, onView }) {
               onClick={() => onView(p)}
             >
               <div className="portfolio-img">
-                <div className="placeholder-img">{p.tag} · {p.t.toLowerCase()}</div>
+                {p.img
+                  ? <img className="portfolio-photo" src={p.img} alt={p.t} loading="lazy" />
+                  : <div className="placeholder-img">{p.tag} · {p.t.toLowerCase()}</div>}
+                {p.url && <span className="portfolio-link-badge" title="Tem site ao vivo"><Icon.ArrowUpRight size={13} /></span>}
                 <div className="portfolio-hover">
                   <div className="ph-tag">{p.tag}</div>
                   <h3>{p.t}</h3>
