@@ -89,13 +89,43 @@
       overflow: auto;
     }
     .admin-topbar {
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex; align-items: center; gap: 14px;
       margin-bottom: 24px;
     }
+    .admin-topbar-title { min-width: 0; }
     .admin-topbar h1 {
       font-size: 28px; letter-spacing: -0.02em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .admin-topbar p { font-size: 13px; color: var(--ink-muted); margin: 4px 0 0; }
+    .admin-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+    /* Pesquisa + alternadores no topo do painel */
+    .admin-search {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-elev); border: 1px solid var(--line);
+      border-radius: 999px; padding: 8px 14px; color: var(--ink-muted);
+      min-width: 200px;
+    }
+    .admin-search input { border: none; outline: none; background: none; font-size: 13px; color: var(--ink); width: 100%; }
+    .admin-search-clear { border: none; background: none; color: var(--ink-muted); cursor: pointer; padding: 0; display: inline-flex; }
+    .admin-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-elev); border: 1px solid var(--line);
+      border-radius: 999px; padding: 8px 12px; cursor: pointer;
+      font-size: 12px; font-weight: 700; color: var(--ink-soft);
+      height: 38px;
+    }
+    .admin-toggle:hover { color: var(--ink); border-color: var(--accent); }
+
+    /* Menu lateral: hambúrguer + overlay + botão fechar (mobile) */
+    .admin-hamburger {
+      display: none; border: 1px solid var(--line); background: var(--bg-elev);
+      color: var(--ink); border-radius: 10px; width: 40px; height: 40px;
+      align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto;
+    }
+    .side-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 55; }
+    .side-close { display: none; margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; }
 
     .kpi-row {
       display: grid; grid-template-columns: repeat(4, 1fr);
@@ -302,26 +332,30 @@
       .login-form { padding: 36px 26px !important; }
     }
 
-    /* ---- Painel responsivo ---- */
+    /* ---- Painel responsivo: menu lateral vira gaveta (drawer) ---- */
     @media (max-width: 1024px) {
       .admin-shell { grid-template-columns: 1fr; }
       .admin-side {
-        flex-direction: row; align-items: center;
-        padding: 8px 10px; gap: 6px; overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        position: sticky; top: 0; z-index: 20;
+        position: fixed; top: 0; left: 0; bottom: 0; width: 264px; z-index: 60;
+        transform: translateX(-100%); transition: transform 0.28s ease;
+        overflow-y: auto;
       }
-      .admin-side::-webkit-scrollbar { height: 0; }
-      .admin-logo, .admin-foot, .admin-nav-group { display: none; }
-      .side-cta { margin: 0; padding: 9px 13px; flex: 0 0 auto; white-space: nowrap; order: 99; }
-      .admin-nav-item { flex: 0 0 auto; white-space: nowrap; padding: 9px 13px; font-size: 13px; margin: 0 !important; }
+      .admin-side.open { transform: translateX(0); box-shadow: 0 0 60px rgba(0,0,0,0.5); }
+      .side-close { display: inline-flex; }
+      .admin-hamburger { display: inline-flex; }
       .dash-grid { grid-template-columns: 1fr; }
       .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
       .admin-main { padding: 16px; }
-      .admin-topbar h1 { font-size: 22px; }
+      .admin-topbar h1 { font-size: 20px; }
+      .admin-search { min-width: 0; width: 140px; }
+    }
+    @media (max-width: 620px) {
+      .admin-topbar { flex-wrap: wrap; }
+      .admin-topbar-actions { width: 100%; order: 3; margin-left: 0; }
+      .admin-search { flex: 1; }
+      .ver-chip { display: none; }
     }
     @media (max-width: 520px) {
-      .admin-topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
       .kpi-row { grid-template-columns: 1fr 1fr; }
       .kpi-num { font-size: 26px; }
       .mini-stats { grid-template-columns: 1fr; }
@@ -349,7 +383,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = 'v1';
+    const APP_VERSION = 'v2';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -725,9 +759,19 @@
       );
     }
 
+    const ADMIN_I18N = {
+      pt: { overview:'Visão geral', leads:'Leads', services:'Serviços', portfolio:'Portfólio', testimonials:'Testemunhos', contact:'Contactos', settings:'Definições', logout:'Terminar sessão', geral:'Geral', conteudo:'Conteúdo', sistema:'Sistema', viewsite:'Ver site', search:'Pesquisar…', greeting:'Olá, bem-vindo', greetingSub:'Aqui está o resumo do seu site.', panelSub:'Cari Tech Graphic · painel de gestão' },
+      en: { overview:'Overview', leads:'Leads', services:'Services', portfolio:'Portfolio', testimonials:'Testimonials', contact:'Contacts', settings:'Settings', logout:'Log out', geral:'General', conteudo:'Content', sistema:'System', viewsite:'View site', search:'Search…', greeting:'Hi, welcome', greetingSub:'Here is your site overview.', panelSub:'Cari Tech Graphic · management panel' },
+    };
+
     function App() {
       const [authed, setAuthed] = useState(null); // null = a verificar
-      const [tab, setTab] = useState('leads');
+      const [theme, setTheme] = useState(localStorage.getItem('ctg_admin_theme') || 'light');
+      const [lang, setLang] = useState(localStorage.getItem('ctg_admin_lang') || 'pt');
+      const [sidebarOpen, setSidebarOpen] = useState(false);
+      const [search, setSearch] = useState('');
+      const T = ADMIN_I18N[lang] || ADMIN_I18N.pt;
+      const [tab, setTab] = useState('overview');
       const [services, setServices] = useState(SEED_SERVICES);
       const [portfolio, setPortfolio] = useState(SEED_PORTFOLIO);
       const [headings, setHeadings] = useState(SEED_HEADINGS);
@@ -740,6 +784,12 @@
       const [editing, setEditing] = useState(null);
       const [editType, setEditType] = useState('');
       const [saveState, setSaveState] = useState(''); // '' | 'saving' | 'saved' | 'error'
+
+      // Tema (claro/escuro) e idioma do painel — persistidos no navegador.
+      useEffect(() => { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('ctg_admin_theme', theme); }, [theme]);
+      useEffect(() => { localStorage.setItem('ctg_admin_lang', lang); }, [lang]);
+      // Fecha o menu lateral (mobile) ao mudar de separador.
+      useEffect(() => { setSidebarOpen(false); }, [tab]);
 
       const loadLeads = async () => {
         setLeadsLoading(true);
@@ -862,41 +912,67 @@
         { l: 'Projectos', v: portfolio.length, i: 'folder-open' },
       ];
 
+      // Pesquisa (filtra a lista do separador actual)
+      const q = search.trim().toLowerCase();
+      const inc = (s) => (s == null ? '' : String(s)).toLowerCase().includes(q);
+      const fLeads = q ? leads.filter((l) => inc(l.nome) || inc(l.email) || inc(l.servico) || inc(l.mensagem) || inc(l.telefone)) : leads;
+      const fServices = q ? services.filter((s) => inc(s.t) || inc(s.d) || inc(s.category) || inc(s.price)) : services;
+      const fPortfolio = q ? portfolio.filter((p) => inc(p.t) || inc(p.c) || inc(p.tag) || inc(p.url)) : portfolio;
+      const fTestimonials = q ? testimonials.filter((x) => inc(x.q) || inc(x.n) || inc(x.r)) : testimonials;
+
+      const NAV = [
+        { grp: T.geral, items: [ ['overview','gauge-high'], ['leads','inbox'] ] },
+        { grp: T.conteudo, items: [ ['services','layer-group'], ['portfolio','folder-open'], ['testimonials','quote-right'], ['contact','address-book'] ] },
+        { grp: T.sistema, items: [ ['settings','gear'] ] },
+      ];
+
       return (
         <div className="admin-shell">
-          <aside className="admin-side">
+          {sidebarOpen && <div className="side-overlay" onClick={() => setSidebarOpen(false)} />}
+          <aside className={`admin-side ${sidebarOpen ? 'open' : ''}`}>
             <div className="admin-logo">
               <div className="admin-logo-mark">C</div>
               <div>
-                <div style={{fontWeight:800,fontSize:14}}>Cari Tech</div>
-                <div style={{fontSize:10,opacity:0.6}}>Painel de gestão</div>
+                <div style={{fontWeight:700,fontSize:14}}>Cari Tech</div>
+                <div style={{fontSize:10,opacity:0.6}}>Painel</div>
               </div>
+              <button className="side-close" onClick={() => setSidebarOpen(false)} aria-label="Fechar menu"><FA name="xmark" s={16} /></button>
             </div>
-            <a className="side-cta" href="index.html" target="_blank" rel="noreferrer"><FA name="up-right-from-square" s={13} />Ver site</a>
-            <div className="admin-nav-group">Geral</div>
-            <button className={`admin-nav-item ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}><FA name="gauge-high" s={15} />Visão geral</button>
-            <button className={`admin-nav-item ${tab === 'leads' ? 'active' : ''}`} onClick={() => setTab('leads')}><FA name="inbox" s={15} />Leads</button>
-            <div className="admin-nav-group">Conteúdo</div>
-            <button className={`admin-nav-item ${tab === 'services' ? 'active' : ''}`} onClick={() => setTab('services')}><FA name="layer-group" s={15} />Serviços</button>
-            <button className={`admin-nav-item ${tab === 'portfolio' ? 'active' : ''}`} onClick={() => setTab('portfolio')}><FA name="folder-open" s={15} />Portfólio</button>
-            <button className={`admin-nav-item ${tab === 'testimonials' ? 'active' : ''}`} onClick={() => setTab('testimonials')}><FA name="quote-right" s={15} />Testemunhos</button>
-            <button className={`admin-nav-item ${tab === 'contact' ? 'active' : ''}`} onClick={() => setTab('contact')}><FA name="address-book" s={15} />Contactos</button>
-            <div className="admin-nav-group">Sistema</div>
-            <button className={`admin-nav-item ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}><FA name="gear" s={15} />Definições</button>
-            <button className="admin-nav-item" onClick={logout}><FA name="arrow-right-from-bracket" s={15} />Terminar sessão</button>
+            <a className="side-cta" href="index.html" target="_blank" rel="noreferrer"><FA name="up-right-from-square" s={13} />{T.viewsite}</a>
+            {NAV.map((g, gi) => (
+              <React.Fragment key={gi}>
+                <div className="admin-nav-group">{g.grp}</div>
+                {g.items.map(([id, ico]) => (
+                  <button key={id} className={`admin-nav-item ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}><FA name={ico} s={15} />{T[id]}</button>
+                ))}
+              </React.Fragment>
+            ))}
+            <button className="admin-nav-item" onClick={logout}><FA name="arrow-right-from-bracket" s={15} />{T.logout}</button>
             <div className="admin-foot">
               Sessão activa · <b style={{color:'rgba(255,255,255,0.6)'}}>{APP_VERSION}</b><br/>
-              <a href="index.html"><FA name="arrow-left" s={11} /> Ver site público</a>
+              <a href="index.html"><FA name="arrow-left" s={11} /> {T.viewsite}</a>
             </div>
           </aside>
 
           <main className="admin-main">
             <div className="admin-topbar">
-              <div>
-                <h1>{tab === 'overview' ? 'Olá, bem-vindo 👋' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'testimonials' ? 'Gestão de Testemunhos' : tab === 'leads' ? 'Pedidos & Leads' : tab === 'contact' ? 'Contactos' : 'Definições'}</h1>
-                <p>{tab === 'overview' ? 'Aqui está o resumo do seu site.' : 'Cari Tech Graphic · painel de gestão'}</p>
+              <button className="admin-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu"><FA name="bars" s={18} /></button>
+              <div className="admin-topbar-title">
+                <h1>{tab === 'overview' ? `${T.greeting} 👋` : T[tab] || ''}</h1>
+                <p>{tab === 'overview' ? T.greetingSub : T.panelSub}</p>
               </div>
-              <span className="ver-chip" title="Versão do painel"><FA name="code-branch" s={11} /> {APP_VERSION}</span>
+              <div className="admin-topbar-actions">
+                <label className="admin-search">
+                  <FA name="magnifying-glass" s={14} />
+                  <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={T.search} />
+                  {search && <button type="button" className="admin-search-clear" onClick={() => setSearch('')} aria-label="Limpar"><FA name="xmark" s={12} /></button>}
+                </label>
+                <button className="admin-toggle" onClick={() => setLang(lang === 'pt' ? 'en' : 'pt')} title="Idioma"><FA name="globe" s={14} /> {lang.toUpperCase()}</button>
+                <button className="admin-toggle" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} aria-label="Tema" title="Tema">
+                  <FA name={theme === 'light' ? 'moon' : 'sun'} s={15} />
+                </button>
+                <span className="ver-chip" title="Versão do painel"><FA name="code-branch" s={11} /> {APP_VERSION}</span>
+              </div>
             </div>
 
             <div className="kpi-row">
@@ -925,7 +1001,7 @@
                   <table className="admin-table">
                     <thead><tr><th>Serviço</th><th>Categoria</th><th>Preço</th><th>Estado</th><th></th></tr></thead>
                     <tbody>
-                      {services.map((s) => (
+                      {fServices.map((s) => (
                         <tr key={s.id}>
                           <td>
                             <div style={{fontWeight:600}}>{s.t}</div>
@@ -963,7 +1039,7 @@
                   <table className="admin-table">
                     <thead><tr><th>Projecto</th><th>Descrição</th><th>Categoria</th><th>Ano</th><th>Estado</th><th></th></tr></thead>
                     <tbody>
-                      {portfolio.map((p) => (
+                      {fPortfolio.map((p) => (
                         <tr key={p.id}>
                           <td style={{fontWeight:600}}>{p.t}</td>
                           <td style={{fontSize:12,color:'var(--ink-soft)',maxWidth:280}}>{p.c}</td>
@@ -999,7 +1075,7 @@
                   <table className="admin-table">
                     <thead><tr><th>Depoimento</th><th>Cliente</th><th>Cargo</th><th>Estado</th><th></th></tr></thead>
                     <tbody>
-                      {testimonials.map((it) => (
+                      {fTestimonials.map((it) => (
                         <tr key={it.id}>
                           <td style={{fontSize:12,color:'var(--ink-soft)',maxWidth:360}}>“{(it.q || '').length > 90 ? it.q.slice(0, 90) + '…' : it.q}”</td>
                           <td style={{fontWeight:600}}>{it.n}</td>
@@ -1039,7 +1115,7 @@
                     <table className="admin-table">
                       <thead><tr><th>Nome</th><th>Contacto</th><th>Serviço</th><th>Mensagem</th><th>Data</th><th>Estado</th><th></th></tr></thead>
                       <tbody>
-                        {leads.map((l) => (
+                        {fLeads.map((l) => (
                           <tr key={l.id}>
                             <td style={{fontWeight:600}}>{l.nome}</td>
                             <td style={{fontSize:12}}>

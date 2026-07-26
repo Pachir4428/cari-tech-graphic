@@ -417,4 +417,90 @@ function ChatAssistant() {
   );
 }
 
-Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant });
+// ---------- Carrinho / Checkout de serviços ----------
+function CartFab({ count, onOpen }) {
+  if (!count) return null;
+  return (
+    <button className="cart-fab" onClick={onOpen} aria-label="Ver pedido">
+      <i className="fa-solid fa-cart-shopping" style={{ fontSize: 22 }} aria-hidden="true" />
+      <span className="cart-count">{count}</span>
+    </button>
+  );
+}
+
+function CartModal({ open, onClose, items, onRemove, onClear }) {
+  const [form, setForm] = useS4({ name: '', email: '', phone: '' });
+  const [status, setStatus] = useS4('idle');
+  const [feedback, setFeedback] = useS4('');
+  useE4(() => { if (open) { setStatus('idle'); setFeedback(''); } }, [open]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setFeedback('Preencha o nome e um e-mail válido.'); return;
+    }
+    setStatus('sending'); setFeedback('');
+    const msg = 'Pedido de serviços:\n- ' + items.join('\n- ');
+    try {
+      const res = await window.sendLead({ name: form.name, email: form.email, phone: form.phone, service: items[0] || 'Vários serviços', message: msg });
+      setStatus('sent'); setFeedback(res.message || 'Pedido enviado! Entraremos em contacto em breve.');
+      onClear();
+      setTimeout(() => { onClose(); setStatus('idle'); }, 2600);
+    } catch (err) {
+      setStatus('error'); setFeedback('Não foi possível enviar agora. Continue pelo WhatsApp.');
+    }
+  };
+  const wa = () => window.open(window.buildWhatsAppLink({
+    name: form.name, email: form.email, phone: form.phone,
+    service: 'Vários serviços', message: 'Pedido de serviços: ' + items.join(', '),
+  }), '_blank', 'noopener');
+
+  return (
+    <Modal open={open} onClose={onClose} size="md">
+      <div className="cart-modal">
+        <div className="eyebrow" style={{ color: 'var(--accent)' }}>Pedido de serviços</div>
+        <h3 className="h-section" style={{ fontSize: 28, marginTop: 6 }}>Finalizar pedido</h3>
+        {items.length === 0 ? (
+          <p style={{ color: 'var(--ink-muted)', marginTop: 12 }}>
+            O seu pedido está vazio. Explore os serviços e clique em <strong>“Adicionar ao pedido”</strong>.
+          </p>
+        ) : (
+          <>
+            <ul className="cart-list">
+              {items.map((s, i) => (
+                <li key={i}>
+                  <Icon.Check size={14} /><span>{s}</span>
+                  <button type="button" onClick={() => onRemove(s)} aria-label="Remover">
+                    <i className="fa-solid fa-xmark" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {status === 'sent' ? (
+              <div className="lead-success"><div className="ls-icon"><Icon.Check size={28} /></div><h4>{feedback}</h4></div>
+            ) : (
+              <form className="cart-form" onSubmit={submit}>
+                <div className="cf-row">
+                  <div className="field"><label>Nome</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="O seu nome" /><div className="field-error" /></div>
+                  <div className="field"><label>E-mail</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" /><div className="field-error" /></div>
+                </div>
+                <div className="field"><label>Telefone (opcional)</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+258 …" /><div className="field-error" /></div>
+                {feedback && <p style={{ fontSize: 13, fontWeight: 600, color: status === 'error' ? 'var(--danger,#e5484d)' : 'var(--ink-soft)' }}>{feedback}</p>}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                  <button type="submit" className="btn btn-accent" disabled={status === 'sending'}>
+                    {status === 'sending' ? 'A enviar…' : 'Enviar pedido'}<Icon.Arrow size={14} />
+                  </button>
+                  <button type="button" className="btn" onClick={wa} style={{ background: '#25D366', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <i className="fa-brands fa-whatsapp" aria-hidden="true" /> WhatsApp
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant, CartFab, CartModal });

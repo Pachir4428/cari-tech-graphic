@@ -31,9 +31,13 @@ function App() {
   const [leadService, setLeadService] = React.useState('');
   const [serviceDetail, setServiceDetail] = React.useState(null);
   const [portfolioDetail, setPortfolioDetail] = React.useState(null);
+  const [cart, setCart] = React.useState([]);
+  const [cartOpen, setCartOpen] = React.useState(false);
   const t = window.I18N[lang];
 
   const openLead = (svc = '') => { setLeadService(svc); setLeadOpen(true); };
+  const addToCart = (svc) => { setCart((c) => (c.includes(svc) ? c : [...c, svc])); setCartOpen(true); };
+  const removeFromCart = (svc) => setCart((c) => c.filter((x) => x !== svc));
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -55,7 +59,7 @@ function App() {
         <Hero t={t} heroStyle={tweaks.hero} onStart={openLead} />
         <Stats t={t} />
         <About t={t} />
-        <Services t={t} onView={setServiceDetail} onRequest={openLead} />
+        <Services t={t} onView={setServiceDetail} onRequest={openLead} onAdd={addToCart} />
         <Partners t={t} />
         <Portfolio t={t} onView={setPortfolioDetail} />
         <Why t={t} />
@@ -94,6 +98,8 @@ function App() {
       <Footer t={t} />
       <ChatAssistant />
       <WhatsAppFab />
+      <CartFab count={cart.length} onOpen={() => setCartOpen(true)} />
+      <CartModal open={cartOpen} onClose={() => setCartOpen(false)} items={cart} onRemove={removeFromCart} onClear={() => setCart([])} />
       <LeadModal open={leadOpen} onClose={() => setLeadOpen(false)} t={t} prefilledService={leadService} />
       <ServiceModal open={!!serviceDetail} service={serviceDetail} onClose={() => setServiceDetail(null)} onRequest={openLead} t={t} />
       <PortfolioModal open={!!portfolioDetail} item={portfolioDetail} onClose={() => setPortfolioDetail(null)} onRequest={openLead} />
