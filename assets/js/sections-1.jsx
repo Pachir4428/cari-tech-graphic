@@ -294,6 +294,7 @@ function Services({ t, onView, onRequest }) {
           n: s.n || String(i + 1).padStart(2, '0'),
           t: s.t || s.name || '',
           d: s.d || '',
+          img: s.img || '',
         })));
       }
       if (c.headings && c.headings.services) setHead(c.headings.services);
@@ -320,7 +321,9 @@ function Services({ t, onView, onRequest }) {
             return (
               <article className={`card service-card reveal delay-${(i % 4) + 1}`} key={i}>
                 <div className="service-num">{s.n}</div>
-                <div className="service-icon"><Ico /></div>
+                {s.img
+                  ? <div className="service-img"><img src={s.img} alt={s.t} loading="lazy" /></div>
+                  : <div className="service-icon"><Ico /></div>}
                 <h3 className="service-title">{s.t}</h3>
                 <p className="service-desc">{s.d}</p>
                 <div className="service-card-actions">

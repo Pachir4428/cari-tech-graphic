@@ -24,7 +24,21 @@ function useBranding() {
   }, []);
   return b;
 }
-function LogoMark({ logo }) {
+// Segue o tema actual do site (claro/escuro) para escolher a versão do logótipo.
+function useThemeMode() {
+  const [mode, setMode] = useState3(document.documentElement.getAttribute('data-theme') || 'light');
+  useEffect3(() => {
+    const obs = new MutationObserver(() => setMode(document.documentElement.getAttribute('data-theme') || 'light'));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
+  return mode;
+}
+function LogoMark({ branding }) {
+  const mode = useThemeMode();
+  branding = branding || {};
+  // Em fundo escuro usa o logótipo "escuro" (claro na cor); em fundo claro o "claro".
+  const logo = mode === 'dark' ? (branding.dark || branding.light) : (branding.light || branding.dark);
   if (logo) {
     return <img src={logo} alt="Cari Tech Graphic" className="logo-img" style={{ height: 40, width: 'auto', display: 'block' }} />;
   }
@@ -75,7 +89,7 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
     <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
       <div className="container site-header-inner">
         <a href="#home" className="logo" onClick={() => setOpen(false)}>
-          <LogoMark logo={branding.logo} />
+          <LogoMark branding={branding} />
         </a>
         <nav className={`site-nav ${open ? 'open' : ''}`}>
           {links.map((l) => (
@@ -319,7 +333,7 @@ function Footer({ t }) {
         <div className="footer-grid">
           <div className="footer-brand">
             <div className="logo">
-              <LogoMark logo={branding.logo} />
+              <LogoMark branding={branding} />
             </div>
             <p>{t.footer.tagline}</p>
             <div className="socials">

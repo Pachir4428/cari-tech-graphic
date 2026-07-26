@@ -59,7 +59,7 @@ function ContainerScroll({ titleComponent, children }) {
 }
 
 // ---------- Shuffle Testimonial Card ----------
-function ShuffleTestimonialCard({ handleShuffle, testimonial, position, id, author, role }) {
+function ShuffleTestimonialCard({ handleShuffle, testimonial, position, id, author, role, img }) {
   const dragRef = React.useRef(0);
   const isFront = position === 'front';
   if (!motion) return null;
@@ -88,7 +88,9 @@ function ShuffleTestimonialCard({ handleShuffle, testimonial, position, id, auth
       transition={{ duration: 0.35 }}
       className={`shuffle-card ${isFront ? 'shuffle-card-front' : ''}`}
     >
-      <div className="shuffle-avatar">{(author || '?').charAt(0)}</div>
+      <div className="shuffle-avatar">
+        {img ? <img src={img} alt={author} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} /> : (author || '?').charAt(0)}
+      </div>
       <span className="shuffle-quote">"{testimonial}"</span>
       <span className="shuffle-author">{author}</span>
       {role && <span className="shuffle-role">{role}</span>}
@@ -114,6 +116,7 @@ function ShuffleTestimonials({ t }) {
     testimonial: it.q,
     author: it.n,
     role: it.r,
+    img: it.img || '',
   }));
   const [positions, setPositions] = React.useState(['front', 'middle', 'back']);
   const handleShuffle = () => {

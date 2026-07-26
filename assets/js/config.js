@@ -49,6 +49,14 @@ window.loadContent = function () {
       if (contact.whatsapp) window.SITE_CONFIG.whatsapp = String(contact.whatsapp).replace(/\D/g, '');
       if (contact.email) window.SITE_CONFIG.email = contact.email;
       if (contact.phone) window.SITE_CONFIG.phone = contact.phone;
+      // Logótipo definido no painel passa a ser também o ícone (favicon) do site.
+      const branding = (d && d.branding) || {};
+      const fav = branding.light || branding.dark;
+      if (fav) {
+        let link = document.querySelector('link[rel~="icon"]');
+        if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+        link.href = fav;
+      }
       return {
         services: (d && d.services) || [],
         portfolio: (d && d.portfolio) || [],

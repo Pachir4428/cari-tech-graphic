@@ -12,3 +12,7 @@ composer.phar
 .DS_Store
 Thumbs.db
 *.log
+
+# Imagens carregadas no servidor (logótipos e imagens de conteúdo)
+uploads/logo-*
+uploads/img-*
