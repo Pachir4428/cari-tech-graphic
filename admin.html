@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=100" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=100" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=100" />
   <style>
     body { background: var(--bg-soft); }
     .admin-shell {
@@ -117,6 +117,40 @@
       height: 38px;
     }
     .admin-toggle:hover { color: var(--ink); border-color: var(--accent); }
+
+    /* Notificações */
+    .notif-wrap { position: relative; }
+    .notif-btn { position: relative; }
+    .notif-badge {
+      position: absolute; top: -6px; right: -6px;
+      min-width: 18px; height: 18px; padding: 0 5px;
+      border-radius: 999px; background: var(--danger, #ef4444); color: #fff;
+      font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
+      border: 2px solid var(--bg-elev);
+    }
+    .notif-panel {
+      position: absolute; top: 46px; right: 0; z-index: 70;
+      width: 320px; max-width: 86vw;
+      background: var(--bg-elev); border: 1px solid var(--line);
+      border-radius: 16px; box-shadow: 0 20px 50px rgba(2,31,33,0.18);
+      overflow: hidden;
+    }
+    .notif-head { padding: 14px 16px; font-weight: 700; font-size: 14px; border-bottom: 1px solid var(--line); }
+    .notif-empty { padding: 22px 16px; color: var(--ink-muted); font-size: 13px; text-align: center; }
+    .notif-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+    .notif-av { width: 34px; height: 34px; border-radius: 10px; background: var(--brand-mid); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; flex: 0 0 auto; }
+    .notif-main { flex: 1; min-width: 0; }
+    .notif-name { font-weight: 600; font-size: 13px; }
+    .notif-sub { font-size: 12px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .notif-actions { display: flex; gap: 6px; }
+    .notif-actions button {
+      width: 30px; height: 30px; border-radius: 8px; border: none; cursor: pointer;
+      background: var(--bg-soft); color: var(--ink-soft);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .notif-actions button:hover { background: var(--accent); color: #fff; }
+    .notif-all { width: 100%; padding: 12px; border: none; background: var(--bg-soft); color: var(--ink); font-weight: 600; font-size: 13px; cursor: pointer; }
+    .notif-all:hover { background: var(--accent); color: #fff; }
 
     /* Menu lateral: hambúrguer + overlay + botão fechar (mobile) */
     .admin-hamburger {
@@ -383,7 +417,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = 'v2';
+    const APP_VERSION = '1.0.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -760,8 +794,32 @@
     }
 
     const ADMIN_I18N = {
-      pt: { overview:'Visão geral', leads:'Leads', services:'Serviços', portfolio:'Portfólio', testimonials:'Testemunhos', contact:'Contactos', settings:'Definições', logout:'Terminar sessão', geral:'Geral', conteudo:'Conteúdo', sistema:'Sistema', viewsite:'Ver site', search:'Pesquisar…', greeting:'Olá, bem-vindo', greetingSub:'Aqui está o resumo do seu site.', panelSub:'Cari Tech Graphic · painel de gestão' },
-      en: { overview:'Overview', leads:'Leads', services:'Services', portfolio:'Portfolio', testimonials:'Testimonials', contact:'Contacts', settings:'Settings', logout:'Log out', geral:'General', conteudo:'Content', sistema:'System', viewsite:'View site', search:'Search…', greeting:'Hi, welcome', greetingSub:'Here is your site overview.', panelSub:'Cari Tech Graphic · management panel' },
+      pt: {
+        overview:'Visão geral', leads:'Leads', services:'Serviços', portfolio:'Portfólio', testimonials:'Testemunhos', contact:'Contactos', settings:'Definições', logout:'Terminar sessão',
+        geral:'Geral', conteudo:'Conteúdo', sistema:'Sistema', viewsite:'Ver site', search:'Pesquisar…',
+        greeting:'Olá, bem-vindo', greetingSub:'Aqui está o resumo do seu site.', panelSub:'Cari Tech Graphic · painel de gestão',
+        notifications:'Notificações', newRequests:'Novos pedidos', noNew:'Sem novos pedidos.', notifyClient:'Notificar cliente', viewAllLeads:'Ver todos os leads',
+        kTotal:'Total de leads', kNew:'Leads novos', kWon:'Ganhos', kProjects:'Projectos',
+        recent:'Pedidos recentes', viewAll:'Ver todos', noRequests:'Ainda sem pedidos. Aparecem aqui quando um cliente usar o formulário do site.',
+        byStatus:'Leads por estado', leadsUnit:'leads', siteContent:'Conteúdo do site',
+        stActive:'Serviços activos', stPublished:'Projectos publicados', stTestim:'Testemunhos activos',
+        sNew:'Novos', sContacted:'Contactados', sWon:'Ganhos', sLost:'Perdidos',
+        svcTitle:'Serviços oferecidos', newSvc:'Novo serviço', portTitle:'Projectos do portfólio', newPort:'Novo projecto',
+        testTitle:'Testemunhos de clientes', newTest:'Novo testemunho', leadsTitle:'Pedidos dos clientes', refresh:'Actualizar',
+      },
+      en: {
+        overview:'Overview', leads:'Leads', services:'Services', portfolio:'Portfolio', testimonials:'Testimonials', contact:'Contacts', settings:'Settings', logout:'Log out',
+        geral:'General', conteudo:'Content', sistema:'System', viewsite:'View site', search:'Search…',
+        greeting:'Hi, welcome', greetingSub:'Here is your site overview.', panelSub:'Cari Tech Graphic · management panel',
+        notifications:'Notifications', newRequests:'New requests', noNew:'No new requests.', notifyClient:'Notify client', viewAllLeads:'View all leads',
+        kTotal:'Total leads', kNew:'New leads', kWon:'Won', kProjects:'Projects',
+        recent:'Recent requests', viewAll:'View all', noRequests:'No requests yet. They appear here when a client uses the site form.',
+        byStatus:'Leads by status', leadsUnit:'leads', siteContent:'Site content',
+        stActive:'Active services', stPublished:'Published projects', stTestim:'Active testimonials',
+        sNew:'New', sContacted:'Contacted', sWon:'Won', sLost:'Lost',
+        svcTitle:'Services offered', newSvc:'New service', portTitle:'Portfolio projects', newPort:'New project',
+        testTitle:'Client testimonials', newTest:'New testimonial', leadsTitle:'Client requests', refresh:'Refresh',
+      },
     };
 
     function App() {
@@ -770,6 +828,8 @@
       const [lang, setLang] = useState(localStorage.getItem('ctg_admin_lang') || 'pt');
       const [sidebarOpen, setSidebarOpen] = useState(false);
       const [search, setSearch] = useState('');
+      const [notifOpen, setNotifOpen] = useState(false);
+      const prevNewRef = React.useRef(-1);
       const T = ADMIN_I18N[lang] || ADMIN_I18N.pt;
       const [tab, setTab] = useState('overview');
       const [services, setServices] = useState(SEED_SERVICES);
@@ -790,6 +850,26 @@
       useEffect(() => { localStorage.setItem('ctg_admin_lang', lang); }, [lang]);
       // Fecha o menu lateral (mobile) ao mudar de separador.
       useEffect(() => { setSidebarOpen(false); }, [tab]);
+
+      // Notificações: pede permissão e verifica novos pedidos periodicamente.
+      useEffect(() => {
+        if (authed !== true) return;
+        if ('Notification' in window && Notification.permission === 'default') {
+          try { Notification.requestPermission(); } catch (e) {}
+        }
+        const id = setInterval(() => { loadLeads(); }, 45000);
+        return () => clearInterval(id);
+      }, [authed]);
+
+      // Quando o nº de leads novos aumenta, mostra uma notificação do navegador.
+      useEffect(() => {
+        const n = leads.filter((l) => (l.status || 'new') === 'new').length;
+        if (prevNewRef.current >= 0 && n > prevNewRef.current && 'Notification' in window && Notification.permission === 'granted') {
+          const latest = leads.find((l) => (l.status || 'new') === 'new');
+          try { new Notification('Novo pedido de cliente', { body: latest ? `${latest.nome} — ${latest.servico || latest.email}` : 'Recebeu um novo contacto.' }); } catch (e) {}
+        }
+        prevNewRef.current = n;
+      }, [leads]);
 
       const loadLeads = async () => {
         setLeadsLoading(true);
@@ -906,10 +986,10 @@
       };
 
       const kpis = [
-        { l: 'Total de leads', v: leads.length, i: 'inbox' },
-        { l: 'Leads novos', v: leads.filter((l) => l.status === 'new').length, i: 'star' },
-        { l: 'Ganhos', v: leads.filter((l) => l.status === 'won').length, i: 'circle-check' },
-        { l: 'Projectos', v: portfolio.length, i: 'folder-open' },
+        { l: T.kTotal, v: leads.length, i: 'inbox' },
+        { l: T.kNew, v: leads.filter((l) => l.status === 'new').length, i: 'star' },
+        { l: T.kWon, v: leads.filter((l) => l.status === 'won').length, i: 'circle-check' },
+        { l: T.kProjects, v: portfolio.length, i: 'folder-open' },
       ];
 
       // Pesquisa (filtra a lista do separador actual)
@@ -919,6 +999,12 @@
       const fServices = q ? services.filter((s) => inc(s.t) || inc(s.d) || inc(s.category) || inc(s.price)) : services;
       const fPortfolio = q ? portfolio.filter((p) => inc(p.t) || inc(p.c) || inc(p.tag) || inc(p.url)) : portfolio;
       const fTestimonials = q ? testimonials.filter((x) => inc(x.q) || inc(x.n) || inc(x.r)) : testimonials;
+
+      // Notificações: leads novos + acção "notificar cliente"
+      const newLeads = leads.filter((l) => (l.status || 'new') === 'new');
+      const msgCliente = (l) => `Olá ${l.nome || ''}! Aqui é a Cari Tech Graphic. Recebemos o seu pedido${l.servico ? ' de ' + l.servico : ''} e vamos entrar em contacto em breve. Obrigado!`;
+      const notifyClientWhats = (l) => window.open(`https://wa.me/${String(l.telefone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msgCliente(l))}`, '_blank', 'noopener');
+      const notifyClientMail = (l) => window.open(`mailto:${l.email}?subject=${encodeURIComponent('Cari Tech Graphic — recebemos o seu pedido')}&body=${encodeURIComponent(msgCliente(l))}`, '_blank');
 
       const NAV = [
         { grp: T.geral, items: [ ['overview','gauge-high'], ['leads','inbox'] ] },
@@ -967,6 +1053,33 @@
                   <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={T.search} />
                   {search && <button type="button" className="admin-search-clear" onClick={() => setSearch('')} aria-label="Limpar"><FA name="xmark" s={12} /></button>}
                 </label>
+                <div className="notif-wrap">
+                  <button className="admin-toggle notif-btn" onClick={() => setNotifOpen((o) => !o)} title={T.notifications} aria-label={T.notifications}>
+                    <FA name="bell" s={15} />
+                    {newLeads.length > 0 && <span className="notif-badge">{newLeads.length}</span>}
+                  </button>
+                  {notifOpen && (
+                    <div className="notif-panel">
+                      <div className="notif-head">{T.newRequests} ({newLeads.length})</div>
+                      {newLeads.length === 0 ? (
+                        <div className="notif-empty">{T.noNew}</div>
+                      ) : newLeads.slice(0, 6).map((l) => (
+                        <div className="notif-item" key={l.id}>
+                          <div className="notif-av">{(l.nome || '?').charAt(0).toUpperCase()}</div>
+                          <div className="notif-main">
+                            <div className="notif-name">{l.nome}</div>
+                            <div className="notif-sub">{l.servico || l.email}</div>
+                          </div>
+                          <div className="notif-actions">
+                            {l.telefone && <button type="button" title={T.notifyClient} onClick={() => notifyClientWhats(l)}><i className="fa-brands fa-whatsapp" aria-hidden="true" /></button>}
+                            <button type="button" title={T.notifyClient} onClick={() => notifyClientMail(l)}><FA name="paper-plane" s={13} /></button>
+                          </div>
+                        </div>
+                      ))}
+                      <button className="notif-all" onClick={() => { setTab('leads'); setNotifOpen(false); }}>{T.viewAllLeads}</button>
+                    </div>
+                  )}
+                </div>
                 <button className="admin-toggle" onClick={() => setLang(lang === 'pt' ? 'en' : 'pt')} title="Idioma"><FA name="globe" s={14} /> {lang.toUpperCase()}</button>
                 <button className="admin-toggle" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} aria-label="Tema" title="Tema">
                   <FA name={theme === 'light' ? 'moon' : 'sun'} s={15} />
@@ -990,10 +1103,10 @@
               <HeadingEditor heading={headings.services} onCommit={(f, v) => updateHeading('services', f, v)} />
               <div className="admin-panel">
                 <div className="admin-panel-head">
-                  <h2>Serviços oferecidos</h2>
+                  <h2>{T.svcTitle}</h2>
                   <div style={{display:'flex',alignItems:'center',gap:12}}>
                     <SaveHint state={saveState} />
-                    <button className="btn-add" onClick={() => openNew('service')}><Plus />Novo serviço</button>
+                    <button className="btn-add" onClick={() => openNew('service')}><Plus />{T.newSvc}</button>
                   </div>
                 </div>
                 <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Estes serviços aparecem no site público. As alterações são guardadas automaticamente.</p>
@@ -1028,10 +1141,10 @@
               <HeadingEditor heading={headings.portfolio} onCommit={(f, v) => updateHeading('portfolio', f, v)} />
               <div className="admin-panel">
                 <div className="admin-panel-head">
-                  <h2>Projectos do portfólio</h2>
+                  <h2>{T.portTitle}</h2>
                   <div style={{display:'flex',alignItems:'center',gap:12}}>
                     <SaveHint state={saveState} />
-                    <button className="btn-add" onClick={() => openNew('portfolio')}><Plus />Novo projecto</button>
+                    <button className="btn-add" onClick={() => openNew('portfolio')}><Plus />{T.newPort}</button>
                   </div>
                 </div>
                 <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Estes projectos aparecem no site público. As alterações são guardadas automaticamente.</p>
@@ -1064,10 +1177,10 @@
               <HeadingEditor heading={headings.testimonials} onCommit={(f, v) => updateHeading('testimonials', f, v)} />
               <div className="admin-panel">
                 <div className="admin-panel-head">
-                  <h2>Testemunhos de clientes</h2>
+                  <h2>{T.testTitle}</h2>
                   <div style={{display:'flex',alignItems:'center',gap:12}}>
                     <SaveHint state={saveState} />
-                    <button className="btn-add" onClick={() => openNew('testimonial')}><Plus />Novo testemunho</button>
+                    <button className="btn-add" onClick={() => openNew('testimonial')}><Plus />{T.newTest}</button>
                   </div>
                 </div>
                 <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Os 3 primeiros testemunhos activos aparecem no site. Guardado automaticamente.</p>
@@ -1097,9 +1210,9 @@
             {tab === 'leads' && (
               <div className="admin-panel">
                 <div className="admin-panel-head">
-                  <h2>Pedidos dos clientes</h2>
+                  <h2>{T.leadsTitle}</h2>
                   <button className="btn-add" onClick={loadLeads} style={{background:'var(--bg-soft)',color:'var(--ink)'}}>
-                    <FA name="rotate" s={13} />Actualizar
+                    <FA name="rotate" s={13} />{T.refresh}
                   </button>
                 </div>
                 {leadsLoading ? (
@@ -1161,10 +1274,10 @@
 
             {tab === 'overview' && (() => {
               const seg = [
-                { k: 'new', label: 'Novos', c: 'var(--accent)', v: leads.filter((l) => (l.status || 'new') === 'new').length },
-                { k: 'contacted', label: 'Contactados', c: '#A78BFA', v: leads.filter((l) => l.status === 'contacted').length },
-                { k: 'won', label: 'Ganhos', c: 'var(--success)', v: leads.filter((l) => l.status === 'won').length },
-                { k: 'lost', label: 'Perdidos', c: 'var(--ink-muted)', v: leads.filter((l) => l.status === 'lost').length },
+                { k: 'new', label: T.sNew, c: 'var(--accent)', v: leads.filter((l) => (l.status || 'new') === 'new').length },
+                { k: 'contacted', label: T.sContacted, c: '#A78BFA', v: leads.filter((l) => l.status === 'contacted').length },
+                { k: 'won', label: T.sWon, c: 'var(--success)', v: leads.filter((l) => l.status === 'won').length },
+                { k: 'lost', label: T.sLost, c: 'var(--ink-muted)', v: leads.filter((l) => l.status === 'lost').length },
               ];
               const total = leads.length;
               const denom = total || 1;
@@ -1177,13 +1290,13 @@
                   <div className="dash-grid">
                     <div className="admin-panel">
                       <div className="admin-panel-head">
-                        <h2>Pedidos recentes</h2>
-                        <button className="btn-add" style={{background:'var(--bg-soft)',color:'var(--ink)'}} onClick={() => setTab('leads')}>Ver todos</button>
+                        <h2>{T.recent}</h2>
+                        <button className="btn-add" style={{background:'var(--bg-soft)',color:'var(--ink)'}} onClick={() => setTab('leads')}>{T.viewAll}</button>
                       </div>
                       {recent.length === 0 ? (
                         <div style={{textAlign:'center',padding:'32px 0',color:'var(--ink-muted)'}}>
                           <FA name="inbox" s={34} style={{opacity:0.3}} />
-                          <p style={{marginTop:10,fontSize:14}}>Ainda sem pedidos. Aparecem aqui quando um cliente usar o formulário do site.</p>
+                          <p style={{marginTop:10,fontSize:14}}>{T.noRequests}</p>
                         </div>
                       ) : recent.map((l) => (
                         <div className="recent-lead" key={l.id}>
@@ -1200,12 +1313,12 @@
                       ))}
                     </div>
                     <div className="admin-panel">
-                      <h2 style={{marginBottom:4}}>Leads por estado</h2>
+                      <h2 style={{marginBottom:4}}>{T.byStatus}</h2>
                       <div className="donut-wrap">
                         <div className="donut" style={{background: grad}}>
                           <div className="donut-center">
                             <div style={{fontSize:28,fontWeight:700}}>{total}</div>
-                            <div style={{fontSize:11,color:'var(--ink-muted)'}}>leads</div>
+                            <div style={{fontSize:11,color:'var(--ink-muted)'}}>{T.leadsUnit}</div>
                           </div>
                         </div>
                         <div className="donut-legend">
@@ -1217,11 +1330,11 @@
                     </div>
                   </div>
                   <div className="admin-panel">
-                    <div className="admin-panel-head"><h2>Conteúdo do site</h2></div>
+                    <div className="admin-panel-head"><h2>{T.siteContent}</h2></div>
                     <div className="mini-stats">
-                      <div className="mini-stat"><div className="n">{services.filter((s) => s.status === 'active').length}</div><div className="l">Serviços activos</div></div>
-                      <div className="mini-stat"><div className="n">{portfolio.filter((p) => p.status === 'active').length}</div><div className="l">Projectos publicados</div></div>
-                      <div className="mini-stat"><div className="n">{testimonials.filter((t) => t.status === 'active').length}</div><div className="l">Testemunhos activos</div></div>
+                      <div className="mini-stat"><div className="n">{services.filter((s) => s.status === 'active').length}</div><div className="l">{T.stActive}</div></div>
+                      <div className="mini-stat"><div className="n">{portfolio.filter((p) => p.status === 'active').length}</div><div className="l">{T.stPublished}</div></div>
+                      <div className="mini-stat"><div className="n">{testimonials.filter((t) => t.status === 'active').length}</div><div className="l">{T.stTestim}</div></div>
                     </div>
                   </div>
                 </>

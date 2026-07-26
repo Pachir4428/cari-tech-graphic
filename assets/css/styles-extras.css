@@ -220,7 +220,8 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
   display: inline-flex; align-items: center; justify-content: center;
   border: 2px solid var(--bg-elev);
 }
-.cart-modal { padding: 4px 2px; }
+.cart-modal { padding: 34px 32px; }
+@media (max-width: 640px) { .cart-modal { padding: 26px 20px; } }
 .cart-list { list-style: none; margin: 18px 0 20px; padding: 0; display: grid; gap: 8px; }
 .cart-list li {
   display: flex; align-items: center; gap: 10px;
@@ -236,4 +237,30 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
 .cart-form { display: grid; gap: 12px; }
 @media (max-width: 640px) {
   .cart-fab { left: 16px; bottom: 84px; width: 50px; height: 50px; }
+}
+
+/* ==========================================================================
+   Correcções mobile (v1.0.0): centrar o conteúdo, sem transbordo horizontal,
+   header/menu no canto e cartões do hero contidos
+   ========================================================================== */
+html, body { overflow-x: hidden; max-width: 100%; }
+#root { overflow-x: clip; max-width: 100%; }
+
+/* As acções do cabeçalho (idioma/tema/menu) ficam sempre encostadas ao canto */
+@media (max-width: 900px) {
+  .site-actions { margin-left: auto; }
+}
+
+/* Cartões flutuantes do hero — sempre dentro do ecrã no telemóvel */
+@media (max-width: 640px) {
+  .hero-orbital, .orbital-stage { max-width: 100%; overflow: visible; }
+  .orbital-card { padding: 8px 11px; font-size: 12px; }
+  .orbital-card-1 { top: 0 !important; left: 0 !important; }
+  .orbital-card-2 { top: 40% !important; right: 0 !important; }
+  .orbital-card-2 .oc-num { font-size: 18px; }
+  .orbital-card-3 { bottom: 0 !important; left: 0 !important; }
+}
+/* Em ecrãs muito estreitos, esconder os cartões flutuantes (evita qualquer transbordo) */
+@media (max-width: 460px) {
+  .orbital-card { display: none !important; }
 }
