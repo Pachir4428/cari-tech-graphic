@@ -280,7 +280,7 @@ function About({ t }) {
 }
 
 // ---------- Services ----------
-function Services({ t, onView, onRequest }) {
+function Services({ t, onView, onRequest, onAdd }) {
   const ref = useReveal();
   const icons = [Icon.Pen, Icon.Code, Icon.Megaphone, Icon.Tag, Icon.Share, Icon.Brain];
 
@@ -327,8 +327,8 @@ function Services({ t, onView, onRequest }) {
                 <h3 className="service-title">{s.t}</h3>
                 <p className="service-desc">{s.d}</p>
                 <div className="service-card-actions">
-                  <button type="button" className="svc-btn svc-btn-primary" onClick={() => onRequest(s.t)}>
-                    Pedir Serviço<Icon.Arrow size={12} />
+                  <button type="button" className="svc-btn svc-btn-primary" onClick={() => (onAdd ? onAdd(s.t) : onRequest(s.t))}>
+                    <i className="fa-solid fa-cart-plus" aria-hidden="true" style={{ marginRight: 6 }} />Adicionar ao pedido
                   </button>
                   <button type="button" className="svc-btn svc-btn-ghost" onClick={() => onView(s)}>
                     Visualizar
