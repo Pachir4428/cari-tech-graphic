@@ -64,6 +64,14 @@
       color: rgba(255,255,255,0.4);
     }
     .admin-foot a { color: var(--accent); }
+    .admin-nav-group {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      padding: 14px 14px 6px;
+    }
+
+    .login-form { padding: 48px 44px; }
 
     .admin-main {
       padding: 24px 32px 80px;
@@ -235,17 +243,32 @@
       cursor: pointer; border: none;
     }
 
-    @media (max-width: 760px) {
-      .login-card { grid-template-columns: 1fr !important; min-height: 0 !important; }
+    /* ---- Login responsivo ---- */
+    @media (max-width: 860px) {
+      .login-card { grid-template-columns: 1fr !important; min-height: 0 !important; max-width: 440px !important; }
       .login-hero { display: none !important; }
+      .login-form { padding: 36px 26px !important; }
     }
+
+    /* ---- Painel responsivo ---- */
     @media (max-width: 1024px) {
       .admin-shell { grid-template-columns: 1fr; }
-      .admin-side { flex-direction: row; padding: 12px; gap: 4px; overflow-x: auto; }
-      .admin-logo { display: none; }
-      .admin-foot { display: none; }
-      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .admin-side {
+        flex-direction: row; align-items: center;
+        padding: 8px 10px; gap: 6px; overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        position: sticky; top: 0; z-index: 20;
+      }
+      .admin-side::-webkit-scrollbar { height: 0; }
+      .admin-logo, .admin-foot, .admin-nav-group { display: none; }
+      .admin-nav-item { flex: 0 0 auto; white-space: nowrap; padding: 9px 13px; font-size: 13px; margin: 0 !important; }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
       .admin-main { padding: 16px; }
+      .admin-topbar h1 { font-size: 22px; }
+    }
+    @media (max-width: 520px) {
+      .admin-topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .kpi-num { font-size: 26px; }
     }
   </style>
 </head>
@@ -344,7 +367,7 @@
               </div>
               <div style={{position:'relative',color:'rgba(255,255,255,0.35)',fontSize:12}}>Cari Tech Graphic · Nampula, Moçambique</div>
             </div>
-            <div style={{padding:'48px 44px',display:'flex',flexDirection:'column',justifyContent:'center',background:'#0e1416'}}>
+            <div className="login-form" style={{display:'flex',flexDirection:'column',justifyContent:'center',background:'#0e1416'}}>
               <h1 style={{color:'#fff',fontSize:30,fontWeight:800,margin:'0 0 4px'}}>Entrar<span style={{color:'var(--accent)'}}>.</span></h1>
               <p style={{color:'rgba(255,255,255,0.45)',fontSize:13,margin:'0 0 24px'}}>Acesso reservado à administração.</p>
               <form onSubmit={submit} style={{display:'grid',gap:14}}>
@@ -365,10 +388,6 @@
                   {busy ? 'A entrar…' : 'Entrar'}
                 </button>
               </form>
-              <div style={{color:'rgba(255,255,255,0.35)',fontSize:12,marginTop:20,textAlign:'center',lineHeight:1.6}}>
-                Primeiro acesso? Utilizador <b style={{color:'rgba(255,255,255,0.65)'}}>admin</b> · senha <b style={{color:'rgba(255,255,255,0.65)'}}>caritech2026</b><br/>
-                <span style={{color:'rgba(255,255,255,0.3)'}}>Mude a senha logo após entrar (Definições → Conta).</span>
-              </div>
             </div>
           </div>
         </div>
@@ -748,14 +767,17 @@
                 <div style={{fontSize:10,opacity:0.6}}>Admin Panel</div>
               </div>
             </div>
+            <div className="admin-nav-group">Geral</div>
             <button className={`admin-nav-item ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}><FA name="gauge-high" s={15} />Visão geral</button>
+            <button className={`admin-nav-item ${tab === 'leads' ? 'active' : ''}`} onClick={() => setTab('leads')}><FA name="inbox" s={15} />Leads</button>
+            <div className="admin-nav-group">Conteúdo</div>
             <button className={`admin-nav-item ${tab === 'services' ? 'active' : ''}`} onClick={() => setTab('services')}><FA name="layer-group" s={15} />Serviços</button>
             <button className={`admin-nav-item ${tab === 'portfolio' ? 'active' : ''}`} onClick={() => setTab('portfolio')}><FA name="folder-open" s={15} />Portfólio</button>
             <button className={`admin-nav-item ${tab === 'testimonials' ? 'active' : ''}`} onClick={() => setTab('testimonials')}><FA name="quote-right" s={15} />Testemunhos</button>
-            <button className={`admin-nav-item ${tab === 'leads' ? 'active' : ''}`} onClick={() => setTab('leads')}><FA name="inbox" s={15} />Leads</button>
             <button className={`admin-nav-item ${tab === 'contact' ? 'active' : ''}`} onClick={() => setTab('contact')}><FA name="address-book" s={15} />Contactos</button>
+            <div className="admin-nav-group">Sistema</div>
             <button className={`admin-nav-item ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}><FA name="gear" s={15} />Definições</button>
-            <button className="admin-nav-item" onClick={logout} style={{marginTop:8}}><FA name="arrow-right-from-bracket" s={15} />Terminar sessão</button>
+            <button className="admin-nav-item" onClick={logout}><FA name="arrow-right-from-bracket" s={15} />Terminar sessão</button>
             <div className="admin-foot">
               Sessão activa<br/>
               <a href="index.html"><FA name="arrow-left" s={11} /> Ver site público</a>
