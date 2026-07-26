@@ -15,47 +15,58 @@
     body { background: var(--bg-soft); }
     .admin-shell {
       display: grid;
-      grid-template-columns: 240px 1fr;
+      grid-template-columns: 256px 1fr;
       min-height: 100vh;
     }
     .admin-side {
       background: var(--brand-deep);
       color: #fff;
-      padding: 24px 16px;
-      display: flex; flex-direction: column; gap: 4px;
+      padding: 22px 14px;
+      display: flex; flex-direction: column; gap: 3px;
     }
     .admin-logo {
       display: flex; align-items: center; gap: 10px;
-      padding: 8px 12px 24px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      margin-bottom: 16px;
+      padding: 6px 10px 20px;
+      margin-bottom: 8px;
     }
     .admin-logo-mark {
-      width: 32px; height: 32px;
+      width: 34px; height: 34px;
       background: var(--accent);
-      border-radius: 10px;
+      border-radius: 11px;
       display: inline-flex; align-items: center; justify-content: center;
       font-weight: 800; color: #fff;
     }
+    .side-cta {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin: 0 6px 12px; padding: 12px;
+      border-radius: 12px; border: none; cursor: pointer;
+      background: var(--accent); color: #fff;
+      font-weight: 700; font-size: 13px; text-decoration: none;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .side-cta:hover { transform: translateY(-1px); filter: brightness(1.05); }
     .admin-nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px;
-      border-radius: 10px;
+      display: flex; align-items: center; gap: 11px;
+      padding: 11px 14px;
+      border-radius: 12px;
       font-size: 14px; font-weight: 500;
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,0.68);
       cursor: pointer;
       transition: background 0.15s ease, color 0.15s ease;
       border: none;
       background: transparent;
       text-align: left;
     }
+    .admin-nav-item i { width: 18px; text-align: center; opacity: 0.9; }
     .admin-nav-item:hover {
-      color: #fff; background: rgba(255,255,255,0.05);
+      color: #fff; background: rgba(255,255,255,0.06);
     }
     .admin-nav-item.active {
       background: var(--accent);
       color: #fff;
+      box-shadow: 0 8px 18px rgba(255,114,0,0.28);
     }
+    .admin-nav-item.active i { opacity: 1; }
     .admin-nav-item.active:hover { background: var(--accent); }
     .admin-foot {
       margin-top: auto;
@@ -88,33 +99,66 @@
 
     .kpi-row {
       display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 16px; margin-bottom: 28px;
+      gap: 16px; margin-bottom: 24px;
     }
     .kpi {
       background: var(--bg-elev);
-      border-radius: 16px; padding: 20px;
+      border-radius: 20px; padding: 20px 22px;
       border: 1px solid var(--line);
+      box-shadow: 0 6px 20px rgba(2,31,33,0.04);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .kpi:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(2,31,33,0.08); }
+    .kpi-ico {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255,114,0,0.12); color: var(--accent);
+      margin-bottom: 14px;
     }
     .kpi-label {
       font-size: 11px; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--ink-muted);
     }
     .kpi-num {
-      font-size: 32px; font-weight: 800;
-      letter-spacing: -0.03em; margin-top: 8px;
+      font-size: 30px; font-weight: 800;
+      letter-spacing: -0.03em; margin-top: 4px;
     }
-    .kpi-trend {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 12px; font-weight: 600;
-      color: var(--success); margin-top: 6px;
+
+    /* ---- Dashboard (Visão geral) ---- */
+    .dash-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .recent-lead { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .recent-lead:first-child { border-top: none; }
+    .rl-av {
+      width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800; color: #fff; background: var(--brand-mid);
     }
+    .rl-main { flex: 1; min-width: 0; }
+    .rl-name { font-weight: 700; font-size: 14px; }
+    .rl-sub { font-size: 12px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 6px 0; }
+    .donut { width: 168px; height: 168px; border-radius: 50%; position: relative; }
+    .donut::after {
+      content: ''; position: absolute; inset: 22px; border-radius: 50%;
+      background: var(--bg-elev);
+    }
+    .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+    .donut-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; width: 100%; }
+    .dl-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+    .dl-dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+    .dl-val { margin-left: auto; font-weight: 700; }
+    .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .mini-stat { background: var(--bg-soft); border-radius: 14px; padding: 16px; }
+    .mini-stat .n { font-size: 24px; font-weight: 800; }
+    .mini-stat .l { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
 
     .admin-panel {
       background: var(--bg-elev);
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: 20px;
       padding: 24px;
+      box-shadow: 0 6px 20px rgba(2,31,33,0.04);
     }
     .admin-panel-head {
       display: flex; justify-content: space-between; align-items: center;
@@ -261,14 +305,18 @@
       }
       .admin-side::-webkit-scrollbar { height: 0; }
       .admin-logo, .admin-foot, .admin-nav-group { display: none; }
+      .side-cta { margin: 0; padding: 9px 13px; flex: 0 0 auto; white-space: nowrap; order: 99; }
       .admin-nav-item { flex: 0 0 auto; white-space: nowrap; padding: 9px 13px; font-size: 13px; margin: 0 !important; }
+      .dash-grid { grid-template-columns: 1fr; }
       .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
       .admin-main { padding: 16px; }
       .admin-topbar h1 { font-size: 22px; }
     }
     @media (max-width: 520px) {
       .admin-topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .kpi-row { grid-template-columns: 1fr 1fr; }
       .kpi-num { font-size: 26px; }
+      .mini-stats { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -751,10 +799,10 @@
       };
 
       const kpis = [
-        { l: 'Total de leads', v: leads.length },
-        { l: 'Leads novos', v: leads.filter((l) => l.status === 'new').length },
-        { l: 'Ganhos', v: leads.filter((l) => l.status === 'won').length },
-        { l: 'Projectos', v: portfolio.length },
+        { l: 'Total de leads', v: leads.length, i: 'inbox' },
+        { l: 'Leads novos', v: leads.filter((l) => l.status === 'new').length, i: 'star' },
+        { l: 'Ganhos', v: leads.filter((l) => l.status === 'won').length, i: 'circle-check' },
+        { l: 'Projectos', v: portfolio.length, i: 'folder-open' },
       ];
 
       return (
@@ -764,9 +812,10 @@
               <div className="admin-logo-mark">C</div>
               <div>
                 <div style={{fontWeight:800,fontSize:14}}>Cari Tech</div>
-                <div style={{fontSize:10,opacity:0.6}}>Admin Panel</div>
+                <div style={{fontSize:10,opacity:0.6}}>Painel de gestão</div>
               </div>
             </div>
+            <a className="side-cta" href="index.html" target="_blank" rel="noreferrer"><FA name="up-right-from-square" s={13} />Ver site</a>
             <div className="admin-nav-group">Geral</div>
             <button className={`admin-nav-item ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}><FA name="gauge-high" s={15} />Visão geral</button>
             <button className={`admin-nav-item ${tab === 'leads' ? 'active' : ''}`} onClick={() => setTab('leads')}><FA name="inbox" s={15} />Leads</button>
@@ -787,17 +836,15 @@
           <main className="admin-main">
             <div className="admin-topbar">
               <div>
-                <h1>{tab === 'overview' ? 'Visão geral' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'testimonials' ? 'Gestão de Testemunhos' : tab === 'leads' ? 'Pedidos & Leads' : tab === 'contact' ? 'Contactos' : 'Definições'}</h1>
-                <p>Bem-vindo de volta. Aqui está o estado actual da Cari Tech.</p>
+                <h1>{tab === 'overview' ? 'Olá, bem-vindo 👋' : tab === 'services' ? 'Gestão de Serviços' : tab === 'portfolio' ? 'Gestão de Portfólio' : tab === 'testimonials' ? 'Gestão de Testemunhos' : tab === 'leads' ? 'Pedidos & Leads' : tab === 'contact' ? 'Contactos' : 'Definições'}</h1>
+                <p>{tab === 'overview' ? 'Aqui está o resumo do seu site.' : 'Cari Tech Graphic · painel de gestão'}</p>
               </div>
-              <a className="btn-add" href="index.html" target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>
-                <FA name="up-right-from-square" s={13} />Ver site
-              </a>
             </div>
 
             <div className="kpi-row">
               {kpis.map((k, i) => (
                 <div className="kpi" key={i}>
+                  <div className="kpi-ico"><FA name={k.i} s={17} /></div>
                   <div className="kpi-label">{k.l}</div>
                   <div className="kpi-num">{k.v}</div>
                 </div>
@@ -978,12 +1025,74 @@
               <ContactEditor contact={contact} onCommit={updateContact} saveState={saveState} />
             )}
 
-            {tab === 'overview' && (
-              <div className="admin-panel">
-                <h2 style={{marginBottom:16}}>Resumo da actividade</h2>
-                <p style={{color:'var(--ink-muted)',fontSize:14}}>Use a navegação à esquerda para gerir Serviços, Portfólio e Leads. Os indicadores acima mostram o estado actual em tempo real.</p>
-              </div>
-            )}
+            {tab === 'overview' && (() => {
+              const seg = [
+                { k: 'new', label: 'Novos', c: 'var(--accent)', v: leads.filter((l) => (l.status || 'new') === 'new').length },
+                { k: 'contacted', label: 'Contactados', c: '#A78BFA', v: leads.filter((l) => l.status === 'contacted').length },
+                { k: 'won', label: 'Ganhos', c: 'var(--success)', v: leads.filter((l) => l.status === 'won').length },
+                { k: 'lost', label: 'Perdidos', c: 'var(--ink-muted)', v: leads.filter((l) => l.status === 'lost').length },
+              ];
+              const total = leads.length;
+              const denom = total || 1;
+              let acc = 0; const stops = [];
+              seg.forEach((s) => { const a = (acc / denom) * 360; acc += s.v; const b = (acc / denom) * 360; if (s.v > 0) stops.push(`${s.c} ${a}deg ${b}deg`); });
+              const grad = total > 0 ? `conic-gradient(${stops.join(',')})` : 'conic-gradient(var(--line) 0deg)';
+              const recent = leads.slice(0, 6);
+              return (
+                <>
+                  <div className="dash-grid">
+                    <div className="admin-panel">
+                      <div className="admin-panel-head">
+                        <h2>Pedidos recentes</h2>
+                        <button className="btn-add" style={{background:'var(--bg-soft)',color:'var(--ink)'}} onClick={() => setTab('leads')}>Ver todos</button>
+                      </div>
+                      {recent.length === 0 ? (
+                        <div style={{textAlign:'center',padding:'32px 0',color:'var(--ink-muted)'}}>
+                          <FA name="inbox" s={34} style={{opacity:0.3}} />
+                          <p style={{marginTop:10,fontSize:14}}>Ainda sem pedidos. Aparecem aqui quando um cliente usar o formulário do site.</p>
+                        </div>
+                      ) : recent.map((l) => (
+                        <div className="recent-lead" key={l.id}>
+                          <div className="rl-av">{(l.nome || '?').charAt(0).toUpperCase()}</div>
+                          <div className="rl-main">
+                            <div className="rl-name">{l.nome}</div>
+                            <div className="rl-sub">{l.servico || l.email}</div>
+                          </div>
+                          <div style={{textAlign:'right',flex:'0 0 auto'}}>
+                            <span className={`table-tag tag-${l.status === 'won' ? 'active' : l.status === 'new' ? 'marketing' : 'design'}`}>{(LEAD_STATUS[l.status] || {}).label || l.status}</span>
+                            <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{fmtData(l.data)}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="admin-panel">
+                      <h2 style={{marginBottom:4}}>Leads por estado</h2>
+                      <div className="donut-wrap">
+                        <div className="donut" style={{background: grad}}>
+                          <div className="donut-center">
+                            <div style={{fontSize:28,fontWeight:800}}>{total}</div>
+                            <div style={{fontSize:11,color:'var(--ink-muted)'}}>leads</div>
+                          </div>
+                        </div>
+                        <div className="donut-legend">
+                          {seg.map((s) => (
+                            <div className="dl-item" key={s.k}><span className="dl-dot" style={{background:s.c}} />{s.label}<span className="dl-val">{s.v}</span></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="admin-panel">
+                    <div className="admin-panel-head"><h2>Conteúdo do site</h2></div>
+                    <div className="mini-stats">
+                      <div className="mini-stat"><div className="n">{services.filter((s) => s.status === 'active').length}</div><div className="l">Serviços activos</div></div>
+                      <div className="mini-stat"><div className="n">{portfolio.filter((p) => p.status === 'active').length}</div><div className="l">Projectos publicados</div></div>
+                      <div className="mini-stat"><div className="n">{testimonials.filter((t) => t.status === 'active').length}</div><div className="l">Testemunhos activos</div></div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
 
             {tab === 'settings' && (
               <>

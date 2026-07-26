@@ -27,5 +27,6 @@ Ao aplicar a atualização, estes são **sempre mantidos**:
 
 | Data | Versão | Alterações |
 |------|--------|------------|
+| 2026-07-26 | v1.2 | Painel redesenhado (layout tipo dashboard, cores do sistema): sidebar mais limpa com botão "Ver site", cartões arredondados com ícone, Visão geral com pedidos recentes + donut de leads por estado + estatísticas de conteúdo. Melhorias de responsividade no painel e na landing page. |
 | 2026-07-26 | v1.1 | Login: novo layout responsivo (cores do sistema), correção de acesso, remoção da dica de credenciais. Menu do painel organizado em grupos e responsivo. |
 | 2026-07-26 | v1.0 | Primeira versão: site + painel (leads, serviços, portfólio, testemunhos, contactos, logótipo), MySQL opcional, atualização por ZIP. |
