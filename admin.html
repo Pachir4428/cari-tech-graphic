@@ -235,6 +235,10 @@
       cursor: pointer; border: none;
     }
 
+    @media (max-width: 760px) {
+      .login-card { grid-template-columns: 1fr !important; min-height: 0 !important; }
+      .login-hero { display: none !important; }
+    }
     @media (max-width: 1024px) {
       .admin-shell { grid-template-columns: 1fr; }
       .admin-side { flex-direction: row; padding: 12px; gap: 4px; overflow-x: auto; }
@@ -293,44 +297,80 @@
 
     function FA({ name, s = 14, style = {} }) { return <i className={`fa-solid fa-${name}`} style={{fontSize:s,lineHeight:1,...style}} aria-hidden="true" />; }
 
-    // ---- Ecrã de login ----
+    // ---- Ecrã de login (layout split-screen, cores do sistema) ----
+    function LoginField({ icon, label, value, onChange, type = 'text', placeholder, trailing, autoFocus }) {
+      return (
+        <div style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:14,padding:'9px 14px',display:'flex',alignItems:'center',gap:12}}>
+          <FA name={icon} s={15} style={{color:'rgba(255,255,255,0.4)'}} />
+          <div style={{flex:1,minWidth:0}}>
+            <label style={{display:'block',fontSize:10,letterSpacing:'0.09em',textTransform:'uppercase',color:'rgba(255,255,255,0.45)',marginBottom:1}}>{label}</label>
+            <input
+              value={value} onChange={(e) => onChange(e.target.value)} type={type} placeholder={placeholder} autoFocus={autoFocus}
+              style={{width:'100%',background:'none',border:'none',outline:'none',color:'#fff',fontSize:14,padding:0}}
+            />
+          </div>
+          {trailing}
+        </div>
+      );
+    }
+
     function Login({ onOk }) {
-      const [user, setUser] = useState('');
+      const [user, setUser] = useState('admin');
       const [pass, setPass] = useState('');
+      const [show, setShow] = useState(false);
       const [err, setErr] = useState('');
       const [busy, setBusy] = useState(false);
       const submit = async (e) => {
         e.preventDefault();
         setBusy(true); setErr('');
-        const r = await api('login', 'POST', { username: user, password: pass });
+        const r = await api('login', 'POST', { username: user.trim(), password: pass });
         setBusy(false);
         if (r.ok) onOk();
-        else setErr(r.message || 'Falha na autenticação.');
+        else setErr(r.message || 'Não foi possível entrar. Verifique a ligação ao servidor.');
       };
       return (
-        <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'var(--brand-deep)'}}>
-          <form onSubmit={submit} style={{background:'var(--bg-elev)',borderRadius:20,padding:'40px 36px',width:'100%',maxWidth:380,boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:24}}>
-              <div style={{width:40,height:40,background:'var(--accent)',borderRadius:12,display:'inline-flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'#fff',fontSize:18}}>C</div>
-              <div>
-                <div style={{fontWeight:800,fontSize:16}}>Cari Tech</div>
-                <div style={{fontSize:11,color:'var(--ink-muted)'}}>Painel de administração</div>
+        <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,background:'var(--brand-deep)'}}>
+          <div className="login-card" style={{display:'grid',gridTemplateColumns:'1fr 1fr',width:'100%',maxWidth:900,minHeight:520,background:'#0e1416',borderRadius:24,overflow:'hidden',boxShadow:'0 30px 80px rgba(0,0,0,0.5)',border:'1px solid rgba(255,255,255,0.06)'}}>
+            <div className="login-hero" style={{position:'relative',padding:'44px 40px',display:'flex',flexDirection:'column',justifyContent:'space-between',background:'linear-gradient(160deg, var(--brand-mid), var(--brand-deep))'}}>
+              <div style={{position:'absolute',width:280,height:280,borderRadius:'50%',background:'var(--accent)',opacity:0.18,filter:'blur(70px)',top:-60,right:-60}} />
+              <div style={{position:'relative',display:'flex',alignItems:'center',gap:10,color:'#fff',fontWeight:800,fontSize:20}}>
+                <span style={{width:34,height:34,borderRadius:10,background:'var(--accent)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:16}}>C</span>
+                Cari Tech
+              </div>
+              <div style={{position:'relative'}}>
+                <div style={{color:'var(--accent)',fontWeight:700,letterSpacing:'0.14em',fontSize:11,textTransform:'uppercase',marginBottom:12}}>Painel de gestão</div>
+                <h2 style={{color:'#fff',fontSize:34,lineHeight:1.14,fontWeight:800,margin:0}}>Bem-vindo<br/><span style={{color:'var(--accent)'}}>de volta</span>.</h2>
+                <p style={{color:'rgba(255,255,255,0.6)',fontSize:14,lineHeight:1.6,marginTop:14,maxWidth:320}}>Faça login para gerir os pedidos, serviços, portfólio, testemunhos e contactos do seu site.</p>
+              </div>
+              <div style={{position:'relative',color:'rgba(255,255,255,0.35)',fontSize:12}}>Cari Tech Graphic · Nampula, Moçambique</div>
+            </div>
+            <div style={{padding:'48px 44px',display:'flex',flexDirection:'column',justifyContent:'center',background:'#0e1416'}}>
+              <h1 style={{color:'#fff',fontSize:30,fontWeight:800,margin:'0 0 4px'}}>Entrar<span style={{color:'var(--accent)'}}>.</span></h1>
+              <p style={{color:'rgba(255,255,255,0.45)',fontSize:13,margin:'0 0 24px'}}>Acesso reservado à administração.</p>
+              <form onSubmit={submit} style={{display:'grid',gap:14}}>
+                <LoginField icon="user" label="Utilizador" value={user} onChange={setUser} placeholder="admin" />
+                <LoginField
+                  icon="lock" label="Palavra-passe" value={pass} onChange={setPass} autoFocus
+                  type={show ? 'text' : 'password'} placeholder="••••••••"
+                  trailing={
+                    <button type="button" onClick={() => setShow(!show)} aria-label="Mostrar palavra-passe"
+                      style={{background:'none',border:'none',color:'rgba(255,255,255,0.45)',cursor:'pointer',padding:4}}>
+                      <FA name={show ? 'eye-slash' : 'eye'} s={15} />
+                    </button>
+                  }
+                />
+                {err && <div style={{color:'#ff6b6b',fontSize:13,fontWeight:600}}>{err}</div>}
+                <button type="submit" disabled={busy || !user || !pass}
+                  style={{marginTop:6,background:'var(--accent)',color:'#fff',border:'none',borderRadius:14,padding:'15px',fontSize:15,fontWeight:700,cursor:'pointer',opacity:(busy||!user||!pass)?0.55:1,transition:'opacity .15s'}}>
+                  {busy ? 'A entrar…' : 'Entrar'}
+                </button>
+              </form>
+              <div style={{color:'rgba(255,255,255,0.35)',fontSize:12,marginTop:20,textAlign:'center',lineHeight:1.6}}>
+                Primeiro acesso? Utilizador <b style={{color:'rgba(255,255,255,0.65)'}}>admin</b> · senha <b style={{color:'rgba(255,255,255,0.65)'}}>caritech2026</b><br/>
+                <span style={{color:'rgba(255,255,255,0.3)'}}>Mude a senha logo após entrar (Definições → Conta).</span>
               </div>
             </div>
-            <div className="field">
-              <label>Utilizador</label>
-              <input value={user} autoFocus onChange={(e) => setUser(e.target.value)} placeholder="admin" />
-              <div className="field-error"/>
-            </div>
-            <div className="field">
-              <label>Palavra-passe</label>
-              <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="••••••••" />
-              <div className="field-error">{err}</div>
-            </div>
-            <button type="submit" className="btn btn-accent" disabled={busy || !user || !pass} style={{width:'100%',justifyContent:'center',marginTop:8}}>
-              {busy ? 'A entrar…' : 'Entrar'} <FA name="arrow-right-to-bracket" s={14} />
-            </button>
-          </form>
+          </div>
         </div>
       );
     }
