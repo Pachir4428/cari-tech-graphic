@@ -111,6 +111,14 @@ Consoante as credenciais, o sistema encaminha:
 quando não há sessão — há uma só página de login, e são as **credenciais** que decidem o destino.
 Pode também entrar com **Google/Facebook** (ver [secção 7](#7-login-unificado-e-login-social-google)).
 
+**Sessão:** ao voltar (sem terminar sessão) e clicar Entrar, vai **directo à conta**; a sessão
+desliga sozinha após **15 min de inactividade** (cliente e administrador).
+
+**Painel oculto (segurança):** em **Definições → Segurança**, o administrador define/gera um
+endereço secreto. O painel passa a abrir só em **`painel.php?k=SEGREDO`** e o acesso directo a
+`admin.html` é bloqueado (`.htaccess`) — para despistar ataques automáticos. Se esquecer o segredo,
+entre sempre por `entrar.html`: o servidor encaminha-o automaticamente para o endereço certo.
+
 ---
 
 ## 5. Painel de administração (`admin.html`)

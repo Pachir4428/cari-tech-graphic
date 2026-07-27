@@ -15,9 +15,12 @@ function email_cliente_html($config, $opts) {
     $email   = htmlspecialchars($rawEmail, ENT_QUOTES);
     $whats   = preg_replace('/\D/', '', (string) ($config['whatsapp'] ?? ''));
     $helpMail= htmlspecialchars($config['to_email'] ?? '', ENT_QUOTES);
-    /* Link directo para a conta do cliente: já leva o e-mail, só falta o código. */
+    /* Link directo para a conta do cliente: leva e-mail + código → entra já
+       na Área de Cliente sem pedir nada (o código já vem no mesmo e-mail). */
     $base    = $site !== '' ? $site : '';
-    $areaUrl = ($base !== '' ? $base . '/' : '') . 'cliente.html?email=' . rawurlencode($rawEmail);
+    $rawCodigo = (string) ($opts['codigo'] ?? '');
+    $areaUrl = ($base !== '' ? $base . '/' : '') . 'cliente.html?email=' . rawurlencode($rawEmail)
+             . '&codigo=' . rawurlencode($rawCodigo);
 
     // Logótipo: usa o do site (se definido e com site_url); senão, apenas o nome.
     $logoImg = '';

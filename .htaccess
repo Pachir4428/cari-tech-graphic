@@ -18,6 +18,12 @@ DirectoryIndex index.html
   Require all denied
 </FilesMatch>
 
+# --- Ocultar o painel: o acesso ao painel faz-se por painel.php?k=SLUG ------
+# (o admin.html real deixa de ser acessível directamente, para despistar bots)
+<Files "admin.html">
+  Require all denied
+</Files>
+
 # --- Proteger a pasta de dados (leads.csv) ---------------------------------
 RedirectMatch 403 ^/dados/.*$
 

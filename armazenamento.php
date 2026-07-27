@@ -243,6 +243,21 @@ function store_set_social($config, $s) { return _meta_set($config, 'social', 'so
 function store_get_sites($config)    { $v = _meta_get($config, 'sites', 'sites.json'); return is_array($v) ? $v : []; }
 function store_set_sites($config, $s) { return _meta_set($config, 'sites', 'sites.json', array_values($s)); }
 
+/* Segurança: slug secreto do painel (ocultar admin.html). Nunca é público. */
+function store_get_seg($config)    { return _meta_get($config, 'seg', 'seg.json') ?: []; }
+function store_set_seg($config, $s) { return _meta_set($config, 'seg', 'seg.json', $s); }
+function ctg_admin_slug($config) {
+    $s = store_get_seg($config);
+    $slug = trim((string) ($s['admin_slug'] ?? ($config['admin_slug'] ?? '')));
+    /* Só letras/números/hífen, para caber num URL. */
+    return preg_replace('/[^a-zA-Z0-9_-]/', '', $slug);
+}
+/* URL do painel a que o admin deve ser encaminhado após entrar. */
+function ctg_painel_url($config) {
+    $slug = ctg_admin_slug($config);
+    return $slug !== '' ? ('painel.php?k=' . $slug) : 'painel.php';
+}
+
 /* Configuração social EFECTIVA: o que está guardado no painel tem prioridade
    sobre os valores padrão do config.php. Usada por auth.php e conteudo.php. */
 function ctg_social($config) {

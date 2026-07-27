@@ -17,14 +17,27 @@
  */
 
 /* --- Sessão segura (mesma do painel admin) -------------------------------- */
+/* Cookie persistente (7 dias) mas com inatividade máxima de 15 min imposta
+   pelo servidor — o utilizador volta directo à conta se voltar a tempo. */
+define('CTG_IDLE_MAX', 900); // 15 minutos
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_set_cookie_params([
-    'lifetime' => 0, 'path' => '/', 'httponly' => true,
+    'lifetime' => 7 * 86400, 'path' => '/', 'httponly' => true,
     'secure' => $https, 'samesite' => 'Strict',
 ]);
 session_name('CTG_ADMIN');
 session_start();
+
+/* Impõe a inatividade de 15 min: se passou muito tempo, termina a sessão. */
+if (!empty($_SESSION['ctg_admin'])) {
+    if (isset($_SESSION['ctg_last']) && (time() - $_SESSION['ctg_last']) > CTG_IDLE_MAX) {
+        $_SESSION = [];
+        session_destroy();
+    } else {
+        $_SESSION['ctg_last'] = time();
+    }
+}
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -65,12 +78,21 @@ function cliente_por_email($config, $email) {
     return $achado;
 }
 
+$action = $_GET['action'] ?? 'login';
+
+/* Estado da sessão — usado por entrar.html para ir directo à conta (GET). */
+if ($action === 'session') {
+    if (!empty($_SESSION['ctg_admin'])) {
+        responder(true, ['admin' => true, 'redirect' => ctg_painel_url($config)]);
+    }
+    responder(true, ['admin' => false]);
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     responder(false, ['message' => 'Método não permitido.'], 405);
 }
 $body = json_decode(file_get_contents('php://input'), true);
 if (!is_array($body)) $body = $_POST;
-$action = $_GET['action'] ?? 'login';
 
 /* -------------------------------------------------------------------------- */
 /* Login por credenciais (admin OU cliente)                                   */
@@ -86,7 +108,8 @@ if ($action === 'login') {
     if (admin_ok($config, $id, $secret)) {
         session_regenerate_id(true);
         $_SESSION['ctg_admin'] = true;
-        responder(true, ['role' => 'admin', 'redirect' => 'admin.html']);
+        $_SESSION['ctg_last'] = time();
+        responder(true, ['role' => 'admin', 'redirect' => ctg_painel_url($config)]);
     }
 
     /* 2) É cliente? (e-mail + código do pedido) */
@@ -108,7 +131,8 @@ function encaminhar_por_email($config, $social, $email) {
     if ($social['admin_email'] !== '' && $email === $social['admin_email']) {
         session_regenerate_id(true);
         $_SESSION['ctg_admin'] = true;
-        responder(true, ['role' => 'admin', 'redirect' => 'admin.html']);
+        $_SESSION['ctg_last'] = time();
+        responder(true, ['role' => 'admin', 'redirect' => ctg_painel_url($config)]);
     }
     $lead = cliente_por_email($config, $email);
     if ($lead) {

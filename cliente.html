@@ -156,21 +156,21 @@
   <div class="gate-wrap" id="gateWrap" style="display:none">
     <div class="gate">
       <div class="brand" id="gateBrand"><span>Cari Tech Graphic</span></div>
-      <h1>A sua Área de Cliente</h1>
+      <h1 id="gateTitle">A sua Área de Cliente</h1>
       <p class="sub" id="gateSub">Introduza o código que recebeu no e-mail de confirmação do seu pedido.</p>
       <form id="gateForm" autocomplete="off">
         <div class="field">
-          <label for="email">E-mail</label>
+          <label for="email" id="gLabEmail">E-mail</label>
           <input type="email" id="email" name="email" placeholder="o.seu@email.com" required />
         </div>
         <div class="field">
-          <label for="codigo">Código de acesso</label>
+          <label for="codigo" id="gLabCode">Código de acesso</label>
           <input type="text" id="codigo" name="codigo" placeholder="Ex.: 3F9A2C" maxlength="16" required />
         </div>
         <button class="btn" type="submit" id="gateBtn">Entrar</button>
         <div class="msg" id="msgBox"></div>
       </form>
-      <div class="foot"><a href="entrar.html"><i class="fa-solid fa-arrow-left-long"></i> Outro tipo de acesso</a> · <a href="index.html">Voltar ao site</a></div>
+      <div class="foot"><a href="entrar.html"><i class="fa-solid fa-arrow-left-long"></i> <span id="gLinkOther">Outro tipo de acesso</span></a> · <a href="index.html" id="gLinkBack">Voltar ao site</a></div>
     </div>
   </div>
 
@@ -179,14 +179,14 @@
     <aside class="side">
       <div class="brand" id="sideBrand"><span>Cari Tech Graphic</span></div>
       <nav class="side-nav">
-        <button class="item active"><i class="fa-solid fa-box-open"></i> Os meus pedidos <span class="badge" id="navCount">0</span></button>
-        <a class="item" href="index.html#services"><i class="fa-solid fa-plus"></i> Novo pedido</a>
-        <a class="item" href="index.html#contact"><i class="fa-solid fa-headset"></i> Falar connosco</a>
+        <button class="item active" id="navOrdersBtn" onclick="mostrarVista('orders')"><i class="fa-solid fa-box-open"></i> <span id="navMyOrders">Os meus pedidos</span> <span class="badge" id="navCount">0</span></button>
+        <button class="item" id="navServicesBtn" onclick="mostrarVista('services')"><i class="fa-solid fa-plus"></i> <span id="navServices">Serviços</span></button>
+        <a class="item" href="index.html#contact"><i class="fa-solid fa-headset"></i> <span id="navTalk">Falar connosco</span></a>
       </nav>
       <div class="side-foot">
-        Precisa de ajuda?<br><a href="index.html#contact">Contacte a nossa equipa</a>
+        <span id="footHelp">Precisa de ajuda?</span><br><a href="index.html#contact" id="footTeam">Contacte a nossa equipa</a>
       </div>
-      <button class="logout" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+      <button class="logout" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> <span id="logoutLabel">Sair</span></button>
     </aside>
     <main class="main">
       <div class="topbar">
@@ -196,6 +196,7 @@
         </div>
         <div class="tb-actions">
           <label class="tb-search"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Pesquisar…" /></label>
+          <button class="tb-btn" id="langBtn" title="Idioma" aria-label="Idioma" style="width:auto;padding:0 12px;font-size:12px;font-weight:700;border-radius:999px"><i class="fa-solid fa-globe" style="margin-right:5px"></i><span id="langLabel">PT</span></button>
           <button class="tb-btn" id="themeBtn" title="Tema" aria-label="Tema"><i class="fa-solid fa-moon"></i></button>
           <div class="tb-notif">
             <button class="tb-btn" id="bellBtn" title="Notificações" aria-label="Notificações"><i class="fa-solid fa-bell"></i><span class="tb-badge" id="bellBadge" style="display:none">0</span></button>
@@ -204,12 +205,69 @@
         </div>
       </div>
       <div id="grid" class="req-grid"></div>
+      <div id="servicesView" style="display:none">
+        <p class="who" id="servicesSub" style="margin:-14px 0 18px"></p>
+        <div id="servicesGrid" class="req-grid"></div>
+      </div>
     </main>
   </div>
 
   <script>
     var CRED = { email:'', codigo:'' };
     var PEDIDOS = [];
+
+    /* ---------- Idioma (PT / EN) ---------- */
+    var CI18N = {
+      pt: {
+        myOrders:'Os meus pedidos', newOrder:'Novo pedido', talkToUs:'Falar connosco', logout:'Sair',
+        needHelp:'Precisa de ajuda?', contactTeam:'Contacte a nossa equipa', searchPh:'Pesquisar…',
+        hi:'Olá', orders:'pedidos', order:'pedido',
+        deliveries:'Entregas', comments:'Comentários', noComments:'Sem comentários ainda.',
+        commentPh:'Escreva um comentário para o estúdio…', downloadAll:'Descarregar tudo',
+        transferFile:'Transferir ficheiro', openLink:'Abrir link',
+        noDeliveries:'Ainda sem entregas. Assim que este trabalho estiver pronto, aparece aqui — e será notificado.',
+        noOrders:'Ainda não encontrámos pedidos nesta conta. Faça um pedido no site e ele aparecerá aqui.',
+        noMatch:'Nenhum pedido corresponde à pesquisa.',
+        notifTitle:'Notificações', notifEmpty:'Sem novidades por agora.',
+        notifDeliveries:'Entregas disponíveis', notifReply:'Nova resposta do estúdio',
+        signout:'Sair / consultar outra conta',
+        gateTitle:'A sua Área de Cliente', gateSub:'Introduza o código que recebeu no e-mail de confirmação do seu pedido.',
+        gEmail:'E-mail', gCode:'Código de acesso', gEnter:'Entrar', gChecking:'A verificar…',
+        gOther:'Outro tipo de acesso', gBack:'Voltar ao site',
+        errLogin:'Não foi possível entrar.', errConn:'Erro de ligação. Tente novamente.',
+        stNew:'Pedido recebido', stContacted:'Em andamento', stWon:'Concluído', stLost:'Encerrado',
+        you:'Você',
+        servicesNav:'Serviços', servicesTitle:'Peça um serviço', servicesSub:'Escolha um serviço e peça sem sair da sua área.',
+        request:'Pedir', requesting:'A enviar…', requested:'Pedido!', reqSent:'Pedido enviado! Vamos entrar em contacto em breve.',
+        noServices:'Sem serviços disponíveis de momento.',
+      },
+      en: {
+        myOrders:'My orders', newOrder:'New request', talkToUs:'Contact us', logout:'Log out',
+        needHelp:'Need help?', contactTeam:'Contact our team', searchPh:'Search…',
+        hi:'Hi', orders:'orders', order:'order',
+        deliveries:'Deliveries', comments:'Comments', noComments:'No comments yet.',
+        commentPh:'Write a comment to the studio…', downloadAll:'Download all',
+        transferFile:'Download file', openLink:'Open link',
+        noDeliveries:'No deliveries yet. As soon as this work is ready, it appears here — and you will be notified.',
+        noOrders:'We haven’t found orders on this account yet. Place a request on the site and it will appear here.',
+        noMatch:'No order matches the search.',
+        notifTitle:'Notifications', notifEmpty:'Nothing new for now.',
+        notifDeliveries:'Deliveries available', notifReply:'New reply from the studio',
+        signout:'Log out / check another account',
+        gateTitle:'Your Client Area', gateSub:'Enter the code you received in your order confirmation email.',
+        gEmail:'Email', gCode:'Access code', gEnter:'Sign in', gChecking:'Checking…',
+        gOther:'Other sign-in', gBack:'Back to site',
+        errLogin:'Could not sign in.', errConn:'Connection error. Please try again.',
+        stNew:'Order received', stContacted:'In progress', stWon:'Completed', stLost:'Closed',
+        you:'You',
+        servicesNav:'Services', servicesTitle:'Request a service', servicesSub:'Pick a service and request it without leaving your area.',
+        request:'Request', requesting:'Sending…', requested:'Requested!', reqSent:'Request sent! We will get in touch soon.',
+        noServices:'No services available right now.',
+      },
+    };
+    var LANG = 'pt'; try{ LANG = localStorage.getItem('ctg_cli_lang') || 'pt'; }catch(e){}
+    function T(k){ return (CI18N[LANG]||CI18N.pt)[k] || k; }
+    function estadoDe(status){ return T('st' + (status==='contacted'?'Contacted':status==='won'?'Won':status==='lost'?'Lost':'New')); }
 
     var esc = function(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; };
     var fmtData = function(iso){ if(!iso) return ''; var dt=new Date(iso); if(isNaN(dt)) return ''; return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}); };
@@ -244,16 +302,20 @@
     function renderDashboard(d){
       var cliente = d.cliente || {};
       PEDIDOS = d.pedidos || [];
-      var primeiro = (cliente.nome||'').split(' ')[0];
-      document.getElementById('greet').textContent = 'Olá'+(primeiro?', '+primeiro:'');
-      document.getElementById('who').textContent = (cliente.email||'') + ' · ' + PEDIDOS.length + (PEDIDOS.length===1?' pedido':' pedidos');
+      window.__clienteNome = cliente.email || '';
+      window.__nomeCompleto = cliente.nome || '';
+      window.__primeiroNome = (cliente.nome||'').split(' ')[0];
+      document.getElementById('greet').textContent = T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
+      document.getElementById('who').textContent = (cliente.email||'') + ' · ' + PEDIDOS.length + ' ' + (PEDIDOS.length===1?T('order'):T('orders'));
       document.getElementById('navCount').textContent = PEDIDOS.length;
 
-      renderGrid('');
+      renderGrid(document.getElementById('search').value || '');
       atualizarNotificacoes();
 
       document.getElementById('gateWrap').style.display='none';
       document.getElementById('app').style.display='block';
+      // Limpa o URL (esconde e-mail/código da barra de endereço).
+      if(location.search){ try{ history.replaceState(null,'','cliente.html'); }catch(e){} }
     }
 
     function renderGrid(q){
@@ -264,8 +326,8 @@
         var p = PEDIDOS[i];
         return ((p.servico||'')+' '+(p.mensagem||'')+' '+(p.estado||'')).toLowerCase().indexOf(q) >= 0;
       });
-      if(!PEDIDOS.length){ grid.innerHTML = '<div class="empty">Ainda não encontrámos pedidos nesta conta. Faça um pedido no site e ele aparecerá aqui.</div>'; return; }
-      if(!idxs.length){ grid.innerHTML = '<div class="empty">Nenhum pedido corresponde à pesquisa.</div>'; return; }
+      if(!PEDIDOS.length){ grid.innerHTML = '<div class="empty">'+T('noOrders')+'</div>'; return; }
+      if(!idxs.length){ grid.innerHTML = '<div class="empty">'+T('noMatch')+'</div>'; return; }
       grid.innerHTML = idxs.map(function(i){ return cardHtml(PEDIDOS[i], i); }).join('');
     }
 
@@ -280,12 +342,12 @@
       if(novos.length){ badge.textContent = novos.length; badge.style.display='inline-flex'; }
       else badge.style.display='none';
       var panel = document.getElementById('notifPanel');
-      var html = '<div class="tb-notif-head"><i class="fa-solid fa-bell"></i> Notificações</div>';
-      if(!novos.length){ html += '<div class="tb-notif-empty">Sem novidades por agora.</div>'; }
+      var html = '<div class="tb-notif-head"><i class="fa-solid fa-bell"></i> '+T('notifTitle')+'</div>';
+      if(!novos.length){ html += '<div class="tb-notif-empty">'+T('notifEmpty')+'</div>'; }
       else {
         html += novos.slice(0,8).map(function(p){
           var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
-          var txt = temEntrega ? 'Entregas disponíveis' : 'Nova resposta do estúdio';
+          var txt = temEntrega ? T('notifDeliveries') : T('notifReply');
           return '<div class="tb-notif-item"><i class="fa-solid '+(temEntrega?'fa-box-open':'fa-comment-dots')+'"></i><div><b>'+esc(p.servico||'Pedido')+'</b><br><span style="color:var(--muted)">'+txt+'</span></div></div>';
         }).join('');
       }
@@ -300,9 +362,9 @@
       var h = '';
       h += '<div class="req-card">';
       h += ' <div class="req-top"><div><div class="req-title">'+esc(p.servico||'Pedido')+'</div><div class="req-date"><i class="fa-regular fa-calendar"></i> '+esc(fmtData(p.data))+'</div></div>';
-      h += '   <span class="pill '+st+'"><i class="fa-solid '+stIcon+'"></i> '+esc(p.estado)+'</span></div>';
+      h += '   <span class="pill '+st+'"><i class="fa-solid '+stIcon+'"></i> '+esc(estadoDe(p.status))+'</span></div>';
       if(p.mensagem) h += ' <div class="req-msg">'+esc(p.mensagem)+'</div>';
-      h += ' <div class="sec-label"><i class="fa-solid fa-box"></i> Entregas</div>';
+      h += ' <div class="sec-label"><i class="fa-solid fa-box"></i> '+T('deliveries')+'</div>';
       if(temEntrega){
         if(p.entrega.msg) h += ' <div class="deliver-msg"><i class="fa-solid fa-comment-dots"></i> '+esc(p.entrega.msg)+'</div>';
         p.entrega.entregas.forEach(function(it){
@@ -310,17 +372,17 @@
           var ic = isFile ? faFor(nome) : 'fa-arrow-up-right-from-square';
           h += '<a class="dl '+(isFile?'file':'link')+'" href="'+esc(it.url)+'" '+(isFile?'download':'target="_blank" rel="noopener"')+'>';
           h += '<span class="ic"><i class="fa-solid '+ic+'"></i></span>';
-          h += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):(isFile?'Transferir ficheiro':'Abrir link'))+'</small></span>';
+          h += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):(isFile?T('transferFile'):T('openLink')))+'</small></span>';
           h += '<span class="go"><i class="fa-solid '+(isFile?'fa-download':'fa-arrow-right')+'"></i></span></a>';
         });
-        if(files.length>1) h += '<button class="btn-all" onclick="baixarTudo('+i+')"><i class="fa-solid fa-download"></i> Descarregar tudo ('+files.length+')</button>';
+        if(files.length>1) h += '<button class="btn-all" onclick="baixarTudo('+i+')"><i class="fa-solid fa-download"></i> '+T('downloadAll')+' ('+files.length+')</button>';
       } else {
-        h += '<div class="empty">Ainda sem entregas. Assim que este trabalho estiver pronto, aparece aqui — e será notificado.</div>';
+        h += '<div class="empty">'+T('noDeliveries')+'</div>';
       }
       // Comentários
-      h += '<div class="comments"><div class="sec-label"><i class="fa-solid fa-comments"></i> Comentários</div>';
+      h += '<div class="comments"><div class="sec-label"><i class="fa-solid fa-comments"></i> '+T('comments')+'</div>';
       h += '<div id="cmts-'+i+'">'+comentariosHtml(p.comentarios||[])+'</div>';
-      h += '<div class="cmt-form"><textarea id="cmt-'+i+'" placeholder="Escreva um comentário para o estúdio…"></textarea>';
+      h += '<div class="cmt-form"><textarea id="cmt-'+i+'" placeholder="'+T('commentPh')+'"></textarea>';
       h += '<button class="cmt-send" id="cmtbtn-'+i+'" onclick="comentar('+i+')" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button></div>';
       h += '</div>';
       h += '</div>';
@@ -328,10 +390,10 @@
     }
 
     function comentariosHtml(lista){
-      if(!lista || !lista.length) return '<div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Sem comentários ainda.</div>';
+      if(!lista || !lista.length) return '<div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">'+T('noComments')+'</div>';
       return lista.map(function(c){
         var studio = c.de==='studio' || c.de==='admin';
-        var quem = studio ? 'Cari Tech' : (c.nome || 'Você');
+        var quem = studio ? 'Cari Tech' : (c.nome || T('you'));
         return '<div class="cmt '+(studio?'studio':'cliente')+'"><div class="av">'+inicial(quem)+'</div>'
           +'<div class="bd">'+esc(c.texto)+'<div class="meta">'+esc(quem)+' · '+esc(fmtDataHora(c.data))+'</div></div></div>';
       }).join('');
@@ -361,7 +423,57 @@
       }).catch(function(){ btn.disabled=false; alert('Erro de ligação.'); });
     };
 
-    window.sair = function(){ try{sessionStorage.removeItem('ctg_cli');}catch(e){}; location.href='entrar.html'; };
+    // ---------- Vistas: pedidos / serviços ----------
+    var SERVICOS = null;
+    window.mostrarVista = function(v){
+      var orders = document.getElementById('grid');
+      var sv = document.getElementById('servicesView');
+      document.getElementById('navOrdersBtn').classList.toggle('active', v==='orders');
+      document.getElementById('navServicesBtn').classList.toggle('active', v==='services');
+      if(v==='services'){
+        orders.style.display='none'; sv.style.display='block';
+        document.getElementById('greet').textContent=T('servicesTitle');
+        document.getElementById('servicesSub').textContent=T('servicesSub');
+        document.getElementById('who').textContent='';
+        if(SERVICOS===null){ carregarServicos(); } else renderServicos();
+      } else {
+        sv.style.display='none'; orders.style.display='grid';
+        document.getElementById('greet').textContent=T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
+        document.getElementById('who').textContent=(window.__clienteNome||'')+' · '+PEDIDOS.length+' '+(PEDIDOS.length===1?T('order'):T('orders'));
+      }
+    };
+    function carregarServicos(){
+      fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){
+        SERVICOS = (d && Array.isArray(d.services)) ? d.services : [];
+        renderServicos();
+      }).catch(function(){ SERVICOS=[]; renderServicos(); });
+    }
+    function renderServicos(){
+      var g=document.getElementById('servicesGrid');
+      if(!SERVICOS || !SERVICOS.length){ g.innerHTML='<div class="empty">'+T('noServices')+'</div>'; return; }
+      g.innerHTML = SERVICOS.map(function(s,i){
+        var nome = s.t || s.nome || 'Serviço';
+        var desc = s.d || s.desc || '';
+        return '<div class="req-card"><div class="req-title" style="margin-bottom:6px">'+esc(nome)+'</div>'
+          + (desc?'<div class="req-date" style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">'+esc(desc)+'</div>':'')
+          + (s.price?'<div class="pill st-new" style="align-self:flex-start;margin-bottom:12px"><i class="fa-solid fa-tag"></i> '+esc(s.price)+'</div>':'')
+          + '<button class="btn-all" id="svcbtn-'+i+'" onclick="pedirServico('+i+')" style="margin-top:auto"><i class="fa-solid fa-paper-plane"></i> '+T('request')+'</button></div>';
+      }).join('');
+    }
+    window.pedirServico = function(i){
+      var s = SERVICOS[i]; if(!s) return;
+      var nome = s.t || s.nome || 'Serviço';
+      var btn = document.getElementById('svcbtn-'+i); btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> '+T('requesting');
+      fetch('enviar.php',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ name: window.__nomeCompleto || CRED.email, email: CRED.email, service: nome,
+          message: 'Pedido de "'+nome+'" feito através da Área de Cliente.' })})
+      .then(function(r){return r.json();}).then(function(j){
+        btn.innerHTML='<i class="fa-solid fa-check"></i> '+T('requested');
+        setTimeout(function(){ carregar(CRED.email, CRED.codigo, true).then(function(){ mostrarVista('orders'); }).catch(function(){}); }, 900);
+      }).catch(function(){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> '+T('request'); alert(T('errConn')); });
+    };
+
+    window.sair = function(){ try{localStorage.removeItem('ctg_cli');}catch(e){}; location.href='entrar.html'; };
 
     // ---------- Autenticação ----------
     var msgBox=document.getElementById('msgBox'), gateBtn=document.getElementById('gateBtn');
@@ -374,14 +486,33 @@
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(res){
         if(!res.ok||!res.j.ok){
-          if(auto){ try{sessionStorage.removeItem('ctg_cli');}catch(e){} abrirPortao(email); }
+          if(auto){ try{localStorage.removeItem('ctg_cli');}catch(e){} abrirPortao(email); }
           throw res.j.message||'Credenciais incorrectas.';
         }
         CRED={email:email,codigo:codigo};
-        try{ sessionStorage.setItem('ctg_cli', JSON.stringify(CRED)); }catch(e){}
+        guardarSessao(true);
+        iniciarInatividade();
         renderDashboard(res.j);
       });
     }
+
+    // Sessão persistente com validade de 15 min de inactividade.
+    var lastSave=0;
+    function guardarSessao(force){
+      if(!CRED.email) return;
+      var now=Date.now();
+      if(!force && now-lastSave<30000) return;
+      lastSave=now;
+      try{ localStorage.setItem('ctg_cli', JSON.stringify({email:CRED.email,codigo:CRED.codigo,ts:now})); }catch(e){}
+    }
+    var idleTimer=null;
+    function iniciarInatividade(){
+      clearTimeout(idleTimer);
+      idleTimer=setTimeout(function(){ sair(); }, 15*60*1000);
+    }
+    ['click','keydown','mousemove','scroll','touchstart'].forEach(function(ev){
+      document.addEventListener(ev, function(){ if(CRED.email){ guardarSessao(false); iniciarInatividade(); } }, {passive:true});
+    });
 
     function abrirPortao(prefEmail){
       document.getElementById('app').style.display='none';
@@ -391,9 +522,34 @@
 
     document.getElementById('codigo').addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
     document.getElementById('gateForm').addEventListener('submit', function(e){
-      e.preventDefault(); hideErr(); gateBtn.disabled=true; gateBtn.textContent='A verificar…';
+      e.preventDefault(); hideErr(); gateBtn.disabled=true; gateBtn.textContent=T('gChecking');
       var email=document.getElementById('email').value.trim(), codigo=document.getElementById('codigo').value.trim();
-      carregar(email,codigo,false).catch(function(msg){ gateBtn.disabled=false; gateBtn.textContent='Entrar'; showErr(typeof msg==='string'?msg:'Erro.'); });
+      carregar(email,codigo,false).catch(function(msg){ gateBtn.disabled=false; gateBtn.textContent=T('gEnter'); showErr(typeof msg==='string'?msg:T('errLogin')); });
+    });
+
+    // ---------- Idioma: aplicar textos estáticos + alternar ----------
+    function applyStaticLang(){
+      var set=function(id,val){ var el=document.getElementById(id); if(el) el.textContent=val; };
+      set('navMyOrders',T('myOrders')); set('navServices',T('servicesNav')); set('navTalk',T('talkToUs'));
+      set('footHelp',T('needHelp')); set('footTeam',T('contactTeam')); set('logoutLabel',T('logout'));
+      set('gateTitle',T('gateTitle')); set('gateSub',T('gateSub')); set('gLabEmail',T('gEmail'));
+      set('gLabCode',T('gCode')); set('gLinkOther',T('gOther')); set('gLinkBack',T('gBack'));
+      set('langLabel', LANG.toUpperCase());
+      var s=document.getElementById('search'); if(s) s.placeholder=T('searchPh');
+      var gb=document.getElementById('gateBtn'); if(gb && !gb.disabled) gb.textContent=T('gEnter');
+      document.documentElement.setAttribute('lang', LANG);
+    }
+    applyStaticLang();
+    document.getElementById('langBtn').addEventListener('click', function(){
+      LANG = (LANG==='pt') ? 'en' : 'pt';
+      try{ localStorage.setItem('ctg_cli_lang', LANG); }catch(e){}
+      applyStaticLang();
+      if(document.getElementById('app').style.display!=='none'){
+        document.getElementById('greet').textContent = T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
+        document.getElementById('who').textContent = (window.__clienteNome||'') + ' · ' + PEDIDOS.length + ' ' + (PEDIDOS.length===1?T('order'):T('orders'));
+        renderGrid(document.getElementById('search').value||'');
+        atualizarNotificacoes();
+      }
     });
 
     // Pesquisa
@@ -430,13 +586,26 @@
     // Marca (logo)
     fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){ aplicarMarca(d&&d.branding); }).catch(function(){});
 
-    // Fluxo de entrada: sessão → auto; ?email= → portão só-código; senão → entrar.html
+    // Fluxo de entrada:
+    //  1) link do e-mail (?email=&codigo=) → entra directo
+    //  2) sessão guardada (localStorage, dentro dos 15 min) → entra directo
+    //  3) só ?email= → portão só-código
+    //  4) nada → login unificado (entrar.html)
     (function(){
       var params=new URLSearchParams(location.search);
       var emailParam=params.get('email');
-      var raw=null; try{ raw=sessionStorage.getItem('ctg_cli'); }catch(e){}
+      var codigoParam=params.get('codigo');
+      if(emailParam && codigoParam){
+        carregar(emailParam, String(codigoParam).toUpperCase(), false).catch(function(){ abrirPortao(emailParam); });
+        return;
+      }
+      var raw=null; try{ raw=localStorage.getItem('ctg_cli'); }catch(e){}
       if(raw){
-        try{ var c=JSON.parse(raw); if(c&&c.email&&c.codigo){ carregar(c.email,c.codigo,true).catch(function(){}); return; } }catch(e){}
+        try{
+          var c=JSON.parse(raw);
+          if(c&&c.email&&c.codigo&&c.ts&&(Date.now()-c.ts)<15*60*1000){ carregar(c.email,c.codigo,true).catch(function(){}); return; }
+          localStorage.removeItem('ctg_cli');
+        }catch(e){}
       }
       if(emailParam){ abrirPortao(emailParam); return; }
       location.replace('entrar.html');

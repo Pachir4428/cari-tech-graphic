@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=107" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=107" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=107" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=108" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=108" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=108" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -415,7 +415,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.2.0';
+    const APP_VERSION = '1.3.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -934,6 +934,49 @@
       );
     }
 
+    function SegEditor({ seg, onSaved }) {
+      const [slug, setSlug] = useState((seg && seg.admin_slug) || '');
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setSlug((seg && seg.admin_slug) || ''); }, [seg]);
+      const clean = (v) => (v || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40);
+      const gerar = () => setSlug(Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('seg-save', 'POST', { admin_slug: slug });
+        setBusy(false);
+        if (r.ok) { setSlug(r.admin_slug || ''); setMsg({ ok: true, text: AT('segSaved') }); onSaved && onSaved({ admin_slug: r.admin_slug || '' }); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      const link = slug ? `painel.php?k=${slug}` : 'painel.php';
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}><FA name="shield-halved" s={15} /> {AT('segTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('segNote')}</p>
+          <div style={{display:'grid',gap:10,maxWidth:520}}>
+            <div className="field">
+              <label>{AT('segSlug')}</label>
+              <div style={{display:'flex',gap:8}}>
+                <input value={slug} onChange={(e) => setSlug(clean(e.target.value))} placeholder="ex.: g7x2k9" style={{flex:1}} />
+                <button type="button" className="btn btn-ghost" onClick={gerar}><FA name="dice" s={13} /> {AT('segGenerate')}</button>
+              </div>
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{slug ? '' : AT('segEmpty')}</div>
+            </div>
+            <div style={{background:'var(--bg-soft)',border:'1px solid var(--line)',borderRadius:10,padding:'12px 14px'}}>
+              <div style={{fontSize:12,color:'var(--ink-muted)',marginBottom:4}}>{AT('segLinkLabel')}</div>
+              <code style={{fontSize:13,fontWeight:700,color:'var(--brand-mid)',wordBreak:'break-all'}}>{link}</code>
+              <div style={{marginTop:8}}><a className="btn btn-ghost" href={link} target="_blank" rel="noreferrer"><FA name="up-right-from-square" s={12} /> {AT('segOpen')}</a></div>
+            </div>
+            <div style={{background:'#fff8e6',border:'1px solid #ffe08a',borderRadius:10,padding:'10px 14px',fontSize:12.5,color:'#7a5b00'}}>
+              <FA name="triangle-exclamation" s={12} /> {AT('segWarn')}
+            </div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveSeg')}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
     const ADMIN_I18N = {
       pt: {
         overview:'Visão geral', leads:'Leads', services:'Serviços', portfolio:'Portfólio', testimonials:'Testemunhos', contact:'Contactos', settings:'Definições', logout:'Terminar sessão',
@@ -1022,6 +1065,14 @@
         sitesName:'Nome', sitesUrl:'Link (URL)', sitesDesc:'Descrição (opcional)',
         sitesAdd:'Adicionar site', btnSaveSites:'Guardar sites', sitesSaved:'Sites guardados.',
         sitesEmpty:'Ainda sem sites. Clique em "Adicionar site".', sitesDraft:'Rascunho', sitesActive:'Activo',
+        // Segurança (endereço secreto do painel)
+        segTitle:'Segurança — endereço secreto do painel',
+        segNote:'Oculte o endereço do painel para despistar ataques automáticos. Defina uma palavra secreta (ou gere uma) e o painel passa a abrir só nesse endereço. O acesso directo a admin.html deixa de funcionar.',
+        segSlug:'Palavra secreta (só letras/números)', segGenerate:'Gerar',
+        segLinkLabel:'O seu painel fica em:', segOpen:'Abrir painel',
+        btnSaveSeg:'Guardar segurança', segSaved:'Segurança guardada.',
+        segWarn:'Guarde este endereço num sítio seguro. Se o esquecer, entre sempre por entrar.html — será encaminhado automaticamente.',
+        segEmpty:'(vazio = painel aberto em painel.php, sem segredo)',
         // Login
         loginPanelTag:'Painel de gestão', loginWelcome1:'Bem-vindo', loginWelcome2:'de volta',
         loginHeroSub:'Faça login para gerir os pedidos, serviços, portfólio, testemunhos e contactos do seu site.',
@@ -1136,6 +1187,14 @@
         sitesName:'Name', sitesUrl:'Link (URL)', sitesDesc:'Description (optional)',
         sitesAdd:'Add site', btnSaveSites:'Save sites', sitesSaved:'Sites saved.',
         sitesEmpty:'No sites yet. Click "Add site".', sitesDraft:'Draft', sitesActive:'Active',
+        // Security (secret panel address)
+        segTitle:'Security — secret panel address',
+        segNote:'Hide the panel address to throw off automated attacks. Set a secret word (or generate one) and the panel opens only at that address. Direct access to admin.html stops working.',
+        segSlug:'Secret word (letters/numbers only)', segGenerate:'Generate',
+        segLinkLabel:'Your panel is at:', segOpen:'Open panel',
+        btnSaveSeg:'Save security', segSaved:'Security saved.',
+        segWarn:'Keep this address somewhere safe. If you forget it, always sign in via entrar.html — you will be redirected automatically.',
+        segEmpty:'(empty = panel open at painel.php, no secret)',
         // Login
         loginPanelTag:'Management panel', loginWelcome1:'Welcome', loginWelcome2:'back',
         loginHeroSub:'Sign in to manage your site’s requests, services, portfolio, testimonials and contacts.',
@@ -1189,6 +1248,7 @@
       const [payments, setPayments] = useState({});
       const [social, setSocial] = useState({});
       const [sites, setSites] = useState([]);
+      const [seg, setSeg] = useState({});
       const [username, setUsername] = useState('admin');
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
@@ -1259,6 +1319,7 @@
           if (r.payments) setPayments(r.payments);
           if (r.social) setSocial(r.social);
           if (Array.isArray(r.sites)) setSites(r.sites);
+          if (r.seg) setSeg(r.seg);
           if (r.username) setUsername(r.username);
         }
       };
@@ -1667,6 +1728,18 @@
                             </td>
                             <td>
                               <div className="row-actions">
+                                {(() => {
+                                  const cs = (deliveries[l.id] && deliveries[l.id].comentarios) || [];
+                                  const nCli = cs.filter((c) => c.de === 'cliente').length;
+                                  if (!nCli) return null;
+                                  return (
+                                    <button className="ra-btn" title={T.dlvComments} onClick={() => openDeliver(l)}
+                                      style={{color:'var(--accent)',position:'relative',fontWeight:700}}>
+                                      <FA name="comment-dots" s={13} />
+                                      <span style={{position:'absolute',top:-4,right:-4,background:'var(--accent)',color:'#fff',fontSize:9,fontWeight:700,borderRadius:999,minWidth:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'0 3px'}}>{nCli}</span>
+                                    </button>
+                                  );
+                                })()}
                                 <button className="ra-btn" title={T.actDeliver} onClick={() => openDeliver(l)}
                                   style={deliveries[l.id] && deliveries[l.id].entregue ? {color:'var(--success,#30a46c)'} : {}}>
                                   <FA name={deliveries[l.id] && deliveries[l.id].entregue ? 'box-open' : 'box'} s={13} />
@@ -1768,6 +1841,7 @@
                 <PaymentsEditor payments={payments} onSaved={setPayments} />
                 <SitesEditor sites={sites} onSaved={setSites} />
                 <SocialEditor social={social} onSaved={setSocial} />
+                <SegEditor seg={seg} onSaved={setSeg} />
                 <SiteUpdater />
                 <div className="admin-panel">
                   <h2 style={{marginBottom:12}}>{T.aboutTitle}</h2>

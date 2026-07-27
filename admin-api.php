@@ -14,10 +14,12 @@
  */
 
 /* --- Sessão segura --------------------------------------------------------- */
+/* Cookie persistente (7 dias) com inatividade máxima de 15 min. */
+define('CTG_IDLE_MAX', 900);
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_set_cookie_params([
-    'lifetime' => 0,
+    'lifetime' => 7 * 86400,
     'path'     => '/',
     'httponly' => true,
     'secure'   => $https,
@@ -25,6 +27,16 @@ session_set_cookie_params([
 ]);
 session_name('CTG_ADMIN');
 session_start();
+
+/* Termina a sessão após 15 min de inatividade; senão, renova a marca. */
+if (!empty($_SESSION['ctg_admin'])) {
+    if (isset($_SESSION['ctg_last']) && (time() - $_SESSION['ctg_last']) > CTG_IDLE_MAX) {
+        $_SESSION = [];
+        session_destroy();
+    } else {
+        $_SESSION['ctg_last'] = time();
+    }
+}
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -136,6 +148,7 @@ switch ($action) {
         if (credenciais_validas($config, $user, $senha)) {
             session_regenerate_id(true);
             $_SESSION['ctg_admin'] = true;
+            $_SESSION['ctg_last'] = time();
             responder(true, ['message' => 'Autenticado.']);
         }
         usleep(600000); // atrasa tentativas de força bruta
@@ -202,6 +215,7 @@ switch ($action) {
             'payments'     => store_get_payments($config),
             'social'       => ctg_social($config),
             'sites'        => store_get_sites($config),
+            'seg'          => ['admin_slug' => ctg_admin_slug($config)],
             'username'     => ctg_admin_user($config),
         ]);
 
@@ -211,6 +225,13 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         store_set_payments($config, $p);
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'seg-save':
+        exigir_login();
+        $slug = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($body['admin_slug'] ?? ''));
+        $slug = substr($slug, 0, 40);
+        store_set_seg($config, ['admin_slug' => $slug]);
+        responder(true, ['message' => 'Segurança guardada.', 'admin_slug' => $slug, 'painel' => ctg_painel_url($config)]);
 
     case 'sites-save':
         exigir_login();

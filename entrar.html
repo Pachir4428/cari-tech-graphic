@@ -151,11 +151,28 @@
 
     function routeTo(res){
       if (res.role === 'client') {
-        // Passa o e-mail + código para a Área de Cliente (auto-login).
-        try { sessionStorage.setItem('ctg_cli', JSON.stringify({ email: res.email, codigo: res.codigo })); } catch (e) {}
+        // Guarda a sessão do cliente (persistente, com validade de 15 min de inactividade).
+        try { localStorage.setItem('ctg_cli', JSON.stringify({ email: res.email, codigo: res.codigo, ts: Date.now() })); } catch (e) {}
       }
       window.location.href = res.redirect || 'index.html';
     }
+
+    // Já com sessão activa? Entra directo na conta (sem voltar a autenticar).
+    (function(){
+      try {
+        var raw = localStorage.getItem('ctg_cli');
+        if (raw) {
+          var c = JSON.parse(raw);
+          if (c && c.email && c.codigo && c.ts && (Date.now() - c.ts) < 15*60*1000) { location.replace('cliente.html'); return; }
+          localStorage.removeItem('ctg_cli');
+        }
+      } catch (e) {}
+      // Admin com sessão no servidor → vai directo ao painel (URL secreto).
+      fetch('auth.php?action=session', { credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(j){ if (j && j.admin && j.redirect) location.replace(j.redirect); })
+        .catch(function(){});
+    })();
 
     document.getElementById('form').addEventListener('submit', function(e){
       e.preventDefault();
