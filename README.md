@@ -107,7 +107,9 @@ Consoante as credenciais, o sistema encaminha:
 - Administrador padrão: **`admin`** / **`caritech2026`** — **mude assim que entrar**.
 - O cliente recebe o **código** no e-mail de confirmação (recibo automático) de cada pedido.
 
-O painel `admin.html` continua a funcionar directamente; `entrar.html` é apenas o acesso unificado.
+**Login único:** `admin.html` e `cliente.html` reencaminham automaticamente para `entrar.html`
+quando não há sessão — há uma só página de login, e são as **credenciais** que decidem o destino.
+Pode também entrar com **Google/Facebook** (ver [secção 7](#7-login-unificado-e-login-social-google)).
 
 ---
 
@@ -150,20 +152,21 @@ Cada pedido recebe um **código de acesso** automático, incluído no recibo env
 `entrar.html` tem um formulário único (**e-mail/utilizador** + **palavra-passe/código**) que chama
 `auth.php`, que tenta primeiro admin e depois cliente, e devolve para onde encaminhar.
 
-**Login com Google (opcional).** Aparece um botão "Continuar com Google" **apenas se** configurar
-um *Client ID*:
+### Login social (Google e Facebook) — gerido no painel
 
-1. [Google Cloud Console](https://console.cloud.google.com) → **APIs e Serviços → Credenciais**.
-2. **Criar credenciais → ID de cliente OAuth → Aplicação Web.**
-3. Em **Origens JavaScript autorizadas**, ponha `https://seudominio.com`.
-4. Copie o **ID de cliente** para `config.php`:
-   ```php
-   'google_client_id' => 'XXXX.apps.googleusercontent.com',
-   'admin_email'      => 'voce@gmail.com',  // opcional: entra como admin com esta conta Google
-   ```
+Configura-se em **Definições → Login social** no painel (também aceita valores em `config.php` como
+recuperação). Os botões aparecem em `entrar.html` **assim que existir um ID** — pronto a activar:
 
-Com Google, o cliente entra se o e-mail da conta **coincidir com um pedido** existente. A validação
-do token é feita no servidor junto da Google.
+- **Google** — só precisa do *Client ID*:
+  [Google Cloud Console](https://console.cloud.google.com) → **APIs e Serviços → Credenciais →
+  ID de cliente OAuth → Aplicação Web** → em *Origens JavaScript autorizadas* ponha `https://seudominio.com`.
+- **Facebook** — precisa de *App ID* + *App Secret*:
+  [developers.facebook.com](https://developers.facebook.com) → criar app → adicionar **Facebook Login**.
+  O *App Secret* fica **só no servidor** (nunca é exposto ao público).
+- **E-mail de administrador** (opcional): se entrar com uma conta social com esse e-mail, vai para o
+  **painel**; caso contrário, o cliente entra se o e-mail **coincidir com um pedido** existente.
+
+Os tokens são **validados no servidor** (Google `tokeninfo`; Facebook `debug_token` + `appsecret_proof`).
 
 ---
 

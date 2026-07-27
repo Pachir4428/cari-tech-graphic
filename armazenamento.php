@@ -235,6 +235,23 @@ function store_set_branding($config, $b) { return _meta_set($config, 'branding',
 function store_get_payments($config)   { return _meta_get($config, 'payments', 'payments.json') ?: []; }
 function store_set_payments($config, $p) { return _meta_set($config, 'payments', 'payments.json', $p); }
 
+/* Login social: IDs/segredos do Google e Facebook, geridos no painel. */
+function store_get_social($config)    { return _meta_get($config, 'social', 'social.json') ?: []; }
+function store_set_social($config, $s) { return _meta_set($config, 'social', 'social.json', $s); }
+
+/* Configuração social EFECTIVA: o que está guardado no painel tem prioridade
+   sobre os valores padrão do config.php. Usada por auth.php e conteudo.php. */
+function ctg_social($config) {
+    $s = store_get_social($config);
+    return [
+        'enabled'             => array_key_exists('enabled', $s) ? (bool) $s['enabled'] : true,
+        'google_client_id'    => trim((string) ($s['google_client_id']    ?? ($config['google_client_id']    ?? ''))),
+        'facebook_app_id'     => trim((string) ($s['facebook_app_id']      ?? ($config['facebook_app_id']     ?? ''))),
+        'facebook_app_secret' => trim((string) ($s['facebook_app_secret']  ?? ($config['facebook_app_secret'] ?? ''))),
+        'admin_email'         => strtolower(trim((string) ($s['admin_email'] ?? ($config['admin_email'] ?? '')))),
+    ];
+}
+
 /* -------------------------------------------------------------------------- */
 /* Entregas (Área de Cliente)                                                  */
 /* Mapa { leadId: { entregas:[{tipo,url,nome,note}], msg, entregue, data } }.  */

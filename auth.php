@@ -102,44 +102,14 @@ if ($action === 'login') {
     responder(false, ['message' => 'Credenciais incorrectas. Use o seu utilizador/palavra-passe (admin) ou o e-mail + código do pedido (cliente).'], 401);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Login social — Google Identity Services                                    */
-/* O botão só aparece se 'google_client_id' estiver definido no config.       */
-/* -------------------------------------------------------------------------- */
-if ($action === 'google') {
-    $clientId = $config['google_client_id'] ?? '';
-    if ($clientId === '') {
-        responder(false, ['message' => 'Login com Google não está configurado.'], 400);
-    }
-    $credential = (string) ($body['credential'] ?? '');
-    if ($credential === '') {
-        responder(false, ['message' => 'Credencial em falta.'], 422);
-    }
-
-    /* Valida o id_token junto da Google (verifica assinatura, emissor e validade). */
-    $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($credential);
-    $resp = @file_get_contents($url);
-    $info = $resp ? json_decode($resp, true) : null;
-    if (!is_array($info) || empty($info['email'])) {
-        responder(false, ['message' => 'Não foi possível validar a conta Google.'], 401);
-    }
-    /* Confere que o token foi emitido para ESTA aplicação e está verificado. */
-    $aud = $info['aud'] ?? '';
-    $emailVerificado = ($info['email_verified'] ?? 'false');
-    if ($aud !== $clientId || ($emailVerificado !== true && $emailVerificado !== 'true')) {
-        responder(false, ['message' => 'Conta Google inválida para esta aplicação.'], 401);
-    }
-    $email = strtolower(trim($info['email']));
-
-    /* É o administrador? (se tiver definido admin_email no config) */
-    $adminEmail = strtolower(trim((string) ($config['admin_email'] ?? '')));
-    if ($adminEmail !== '' && $email === $adminEmail) {
+/* Encaminha um e-mail verificado (de login social) para admin ou cliente. */
+function encaminhar_por_email($config, $social, $email) {
+    $email = strtolower(trim($email));
+    if ($social['admin_email'] !== '' && $email === $social['admin_email']) {
         session_regenerate_id(true);
         $_SESSION['ctg_admin'] = true;
         responder(true, ['role' => 'admin', 'redirect' => 'admin.html']);
     }
-
-    /* É cliente? (tem pedidos com este e-mail) */
     $lead = cliente_por_email($config, $email);
     if ($lead) {
         responder(true, [
@@ -147,8 +117,66 @@ if ($action === 'google') {
             'email' => $lead['email'] ?? '', 'codigo' => $lead['codigo'] ?? '',
         ]);
     }
-
     responder(false, ['message' => 'Ainda não há pedidos associados a este e-mail. Faça primeiro um pedido no site.'], 404);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Login social — Google Identity Services                                    */
+/* Activa-se definindo o Client ID no painel (Definições → Login social).     */
+/* -------------------------------------------------------------------------- */
+if ($action === 'google') {
+    $social = ctg_social($config);
+    if (!$social['enabled'] || $social['google_client_id'] === '') {
+        responder(false, ['message' => 'Login com Google não está configurado.'], 400);
+    }
+    $credential = (string) ($body['credential'] ?? '');
+    if ($credential === '') {
+        responder(false, ['message' => 'Credencial em falta.'], 422);
+    }
+    /* Valida o id_token junto da Google (assinatura, emissor e validade). */
+    $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($credential);
+    $resp = @file_get_contents($url);
+    $info = $resp ? json_decode($resp, true) : null;
+    if (!is_array($info) || empty($info['email'])) {
+        responder(false, ['message' => 'Não foi possível validar a conta Google.'], 401);
+    }
+    $emailVerificado = ($info['email_verified'] ?? 'false');
+    if (($info['aud'] ?? '') !== $social['google_client_id'] || ($emailVerificado !== true && $emailVerificado !== 'true')) {
+        responder(false, ['message' => 'Conta Google inválida para esta aplicação.'], 401);
+    }
+    encaminhar_por_email($config, $social, $info['email']);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Login social — Facebook Login                                              */
+/* Activa-se definindo App ID + App Secret no painel.                         */
+/* -------------------------------------------------------------------------- */
+if ($action === 'facebook') {
+    $social = ctg_social($config);
+    if (!$social['enabled'] || $social['facebook_app_id'] === '' || $social['facebook_app_secret'] === '') {
+        responder(false, ['message' => 'Login com Facebook não está configurado.'], 400);
+    }
+    $token = (string) ($body['accessToken'] ?? '');
+    if ($token === '') {
+        responder(false, ['message' => 'Token em falta.'], 422);
+    }
+    /* 1) Valida o token (debug_token) — confirma que foi emitido para ESTA app. */
+    $appToken = $social['facebook_app_id'] . '|' . $social['facebook_app_secret'];
+    $dbgUrl = 'https://graph.facebook.com/debug_token?input_token=' . urlencode($token) . '&access_token=' . urlencode($appToken);
+    $dbg = @file_get_contents($dbgUrl);
+    $dbgData = $dbg ? (json_decode($dbg, true)['data'] ?? null) : null;
+    if (!is_array($dbgData) || empty($dbgData['is_valid']) || ($dbgData['app_id'] ?? '') !== $social['facebook_app_id']) {
+        responder(false, ['message' => 'Não foi possível validar a conta Facebook.'], 401);
+    }
+    /* 2) Obtém o e-mail (com appsecret_proof para segurança). */
+    $proof = hash_hmac('sha256', $token, $social['facebook_app_secret']);
+    $meUrl = 'https://graph.facebook.com/me?fields=email&access_token=' . urlencode($token) . '&appsecret_proof=' . $proof;
+    $me = @file_get_contents($meUrl);
+    $meData = $me ? json_decode($me, true) : null;
+    if (!is_array($meData) || empty($meData['email'])) {
+        responder(false, ['message' => 'A conta Facebook não partilhou um e-mail. Use o login por código.'], 401);
+    }
+    encaminhar_por_email($config, $social, $meData['email']);
 }
 
 responder(false, ['message' => 'Acção desconhecida.'], 400);

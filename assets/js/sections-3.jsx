@@ -86,7 +86,8 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
   ];
 
   return (
-    <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
+    <header className={`site-header ${scrolled ? 'scrolled' : ''} ${open ? 'nav-open' : ''}`}>
+      {open && <div className="nav-scrim" onClick={() => setOpen(false)} aria-hidden="true" />}
       <div className="container site-header-inner">
         <a href="#home" className="logo" onClick={() => setOpen(false)}>
           <LogoMark branding={branding} />

@@ -303,6 +303,18 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 .nav-login:hover { background: var(--accent-2); }
 
+/* Scrim (fundo escurecido) por trás do menu do telemóvel — fecha ao tocar fora
+   e garante que o menu, ao fechar, não deixa nada sobreposto ao site. */
+.nav-scrim { display: none; }
+@media (max-width: 1024px) {
+  .nav-scrim {
+    display: block; position: fixed; inset: 0; z-index: 180;
+    background: rgba(2, 31, 33, 0.45); backdrop-filter: blur(2px);
+    animation: navscrim-in 0.2s ease;
+  }
+}
+@keyframes navscrim-in { from { opacity: 0; } to { opacity: 1; } }
+
 /* Header defensivo: garante que o logótipo e as acções nunca são cortados
    no telemóvel, mesmo com conteúdo decorativo à volta. */
 @media (max-width: 900px) {

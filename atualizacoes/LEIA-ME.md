@@ -4,7 +4,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 `cari-tech-graphic-1.0.0.zip`, `cari-tech-graphic-1.0.1.zip`, etc.
 **Use sempre o de número mais alto.**
 
-> Versão actual: **1.0.3** — a mesma que aparece no canto do painel de administração.
+> Versão actual: **1.0.4** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
@@ -26,6 +26,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 
 | Versão | Alterações |
 |--------|------------|
+| **1.0.4** | **Menu do telemóvel corrigido em definitivo** — o menu, ao fechar, fica totalmente inerte (`visibility`/`pointer-events`), deixa de se sobrepor ao site, e ganha um fundo escurecido que fecha ao tocar fora. **Login social gerido no painel** (Definições → Login social) — **Google e Facebook**: basta colar os IDs e os botões aparecem no login; o App Secret do Facebook fica só no servidor. **Login verdadeiramente único** — `admin.html` e `cliente.html` reencaminham para `entrar.html`; são as credenciais que decidem se vai para o painel ou para a Área de Cliente. |
 | **1.0.3** | **Login unificado** (`entrar.html`) — um único acesso que, pelas credenciais, encaminha para o painel (admin: utilizador+palavra-passe) ou para a Área de Cliente (cliente: e-mail+código). **Botão "Entrar" no menu** do site (desktop e telemóvel). **Login social com Google** (opcional) — activa-se pondo o `google_client_id` no `config.php`. **Header do telemóvel** reforçado (logótipo e acções nunca cortados). **README reorganizado** e atualizado. |
 | **1.0.2** | **Área de Cliente** (`cliente.html`) — o cliente entra com o **e-mail + código** e acompanha o estado do pedido e **transfere as entregas** (ficheiros e links). No painel, cada lead ganha a acção **“Entregar”**: carregue ficheiros ou adicione links, escreva uma mensagem e **notifique o cliente** (WhatsApp/e-mail) com o link e o código. **Recibo automático ao cliente** — quem envia um pedido recebe um e-mail de confirmação com o resumo e o acesso à Área de Cliente. **Tradução PT/EN a 100%** — todo o painel (login, formulários de edição, contactos, logótipo, pagamentos, conta, atualização e entregas) passa a mudar de idioma. |
 | **1.0.1** | Correcção definitiva do transbordo lateral no telemóvel (secções passam a clipar os elementos decorativos → logótipo deixa de ser cortado, conteúdo centrado, menu no sítio certo e visível). **Pagamentos no checkout** — configuráveis no painel (M-Pesa, e-Mola, transferência e link de pagamento online); mostrados ao cliente ao finalizar o pedido. **Tradução PT/EN** alargada a tabelas, estados, listas e formulários dos separadores. |

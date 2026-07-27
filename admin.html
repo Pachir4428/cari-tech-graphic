@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=103" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=103" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=103" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=104" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=104" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=104" />
   <style>
     body { background: var(--bg-soft); }
     .admin-shell {
@@ -417,7 +417,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.0.3';
+    const APP_VERSION = '1.0.4';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -824,6 +824,54 @@
       );
     }
 
+    function SocialEditor({ social, onSaved }) {
+      const [s, setS] = useState(social || {});
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setS(social || {}); }, [social]);
+      const f = (k, v) => setS((x) => ({ ...x, [k]: v }));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('social-save', 'POST', { social: s });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: AT('socialSaved') }); onSaved && onSaved(r.social || s); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>{AT('socialTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('socialNote')}</p>
+          <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,fontWeight:600,fontSize:14,cursor:'pointer'}}>
+            <input type="checkbox" checked={!!s.enabled} onChange={(e) => f('enabled', e.target.checked)} style={{width:18,height:18,accentColor:'var(--accent)'}} />
+            {AT('socialEnable')}
+          </label>
+          <div style={{display:'grid',gap:14,maxWidth:560}}>
+            <div className="field">
+              <label><i className="fa-brands fa-google" aria-hidden="true" style={{marginRight:8,color:'#EA4335'}} />{AT('socialGoogleId')}</label>
+              <input value={s.google_client_id || ''} onChange={(e) => f('google_client_id', e.target.value)} placeholder="XXXX.apps.googleusercontent.com" />
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{AT('socialGoogleHint')}</div>
+            </div>
+            <div className="field">
+              <label><i className="fa-brands fa-facebook" aria-hidden="true" style={{marginRight:8,color:'#1877F2'}} />{AT('socialFbId')}</label>
+              <input value={s.facebook_app_id || ''} onChange={(e) => f('facebook_app_id', e.target.value)} placeholder="1234567890" />
+            </div>
+            <div className="field">
+              <label><i className="fa-brands fa-facebook" aria-hidden="true" style={{marginRight:8,color:'#1877F2'}} />{AT('socialFbSecret')}</label>
+              <input type="password" value={s.facebook_app_secret || ''} onChange={(e) => f('facebook_app_secret', e.target.value)} placeholder="••••••••••••••••" />
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{AT('socialFbHint')}</div>
+            </div>
+            <div className="field">
+              <label><FA name="user-shield" s={13} style={{marginRight:8}} />{AT('socialAdminEmail')}</label>
+              <input value={s.admin_email || ''} onChange={(e) => f('admin_email', e.target.value)} placeholder="voce@gmail.com" />
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{AT('socialAdminHint')}</div>
+            </div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveSocial')}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
     const ADMIN_I18N = {
       pt: {
         overview:'Visão geral', leads:'Leads', services:'Serviços', portfolio:'Portfólio', testimonials:'Testemunhos', contact:'Contactos', settings:'Definições', logout:'Terminar sessão',
@@ -892,6 +940,18 @@
         payMpesa:'M-Pesa (número / nome)', payEmola:'e-Mola (número / nome)', payBank:'Transferência bancária',
         payOnline:'Link de pagamento online (opcional)', payNoteField:'Nota (opcional)', phPayNote:'Ex.: Envie o comprovativo por WhatsApp.',
         btnSavePay:'Guardar pagamentos', paySaved:'Pagamentos guardados.',
+        // Login social
+        socialTitle:'Login social (Google / Facebook)',
+        socialNote:'Deixe os clientes entrarem na Área de Cliente com a conta Google ou Facebook. Os botões aparecem na página de entrada assim que preencher os IDs abaixo. O cliente entra se o e-mail da conta coincidir com um pedido.',
+        socialEnable:'Activar login social na página de entrada',
+        socialGoogleId:'Google — Client ID',
+        socialGoogleHint:'console.cloud.google.com → APIs e Serviços → Credenciais → “ID de cliente OAuth” (Aplicação Web). Em Origens autorizadas ponha o endereço do seu site.',
+        socialFbId:'Facebook — App ID',
+        socialFbSecret:'Facebook — App Secret',
+        socialFbHint:'developers.facebook.com → crie uma app → adicione “Facebook Login”. O App Secret fica só no servidor (nunca é mostrado no site).',
+        socialAdminEmail:'E-mail de administrador (opcional)',
+        socialAdminHint:'Se entrar com uma conta social com este e-mail, acede ao painel de administração em vez da Área de Cliente.',
+        btnSaveSocial:'Guardar login social', socialSaved:'Login social guardado.',
         // Login
         loginPanelTag:'Painel de gestão', loginWelcome1:'Bem-vindo', loginWelcome2:'de volta',
         loginHeroSub:'Faça login para gerir os pedidos, serviços, portfólio, testemunhos e contactos do seu site.',
@@ -985,6 +1045,18 @@
         payMpesa:'M-Pesa (number / name)', payEmola:'e-Mola (number / name)', payBank:'Bank transfer',
         payOnline:'Online payment link (optional)', payNoteField:'Note (optional)', phPayNote:'e.g. Send the receipt via WhatsApp.',
         btnSavePay:'Save payments', paySaved:'Payments saved.',
+        // Social login
+        socialTitle:'Social login (Google / Facebook)',
+        socialNote:'Let clients sign in to the Client Area with their Google or Facebook account. The buttons appear on the login page once you fill in the IDs below. A client signs in if their account email matches an order.',
+        socialEnable:'Enable social login on the sign-in page',
+        socialGoogleId:'Google — Client ID',
+        socialGoogleHint:'console.cloud.google.com → APIs & Services → Credentials → “OAuth client ID” (Web application). Add your site address to Authorized origins.',
+        socialFbId:'Facebook — App ID',
+        socialFbSecret:'Facebook — App Secret',
+        socialFbHint:'developers.facebook.com → create an app → add “Facebook Login”. The App Secret stays on the server only (never shown on the site).',
+        socialAdminEmail:'Administrator email (optional)',
+        socialAdminHint:'If you sign in with a social account using this email, you reach the admin panel instead of the Client Area.',
+        btnSaveSocial:'Save social login', socialSaved:'Social login saved.',
         // Login
         loginPanelTag:'Management panel', loginWelcome1:'Welcome', loginWelcome2:'back',
         loginHeroSub:'Sign in to manage your site’s requests, services, portfolio, testimonials and contacts.',
@@ -1035,6 +1107,7 @@
       const [testimonials, setTestimonials] = useState(SEED_TESTIMONIALS);
       const [branding, setBranding] = useState({});
       const [payments, setPayments] = useState({});
+      const [social, setSocial] = useState({});
       const [username, setUsername] = useState('admin');
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
@@ -1102,6 +1175,7 @@
           }
           if (r.branding) setBranding(r.branding);
           if (r.payments) setPayments(r.payments);
+          if (r.social) setSocial(r.social);
           if (r.username) setUsername(r.username);
         }
       };
@@ -1199,7 +1273,9 @@
         return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}>{T.loading}</div>;
       }
       if (!authed) {
-        return <Login onOk={() => { setAuthed(true); loadLeads(); loadContent(); loadDeliveries(); }} />;
+        // Login unificado: o acesso ao painel faz-se sempre por entrar.html.
+        window.location.replace('entrar.html');
+        return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}>{T.loading}</div>;
       }
 
       const NEW_ITEM = {
@@ -1595,6 +1671,7 @@
                 <AccountEditor username={username} onChanged={setUsername} />
                 <LogoManager branding={branding} onChange={setBranding} />
                 <PaymentsEditor payments={payments} onSaved={setPayments} />
+                <SocialEditor social={social} onSaved={setSocial} />
                 <SiteUpdater />
                 <div className="admin-panel">
                   <h2 style={{marginBottom:12}}>{T.aboutTitle}</h2>

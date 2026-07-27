@@ -36,6 +36,13 @@ echo json_encode([
     'contact'      => $obj($dados['contact']),
     'branding'     => $obj($branding),
     'payments'     => $obj($payments),
-    // ID de cliente do Google (público, não é segredo) — activa o botão social.
-    'google_client_id' => (string) ($config['google_client_id'] ?? ''),
+    // Login social (só IDs públicos; o App Secret do Facebook NUNCA é exposto).
+    'social'       => (function () use ($config) {
+        $s = ctg_social($config);
+        return [
+            'enabled'          => $s['enabled'],
+            'google_client_id' => $s['enabled'] ? $s['google_client_id'] : '',
+            'facebook_app_id'  => $s['enabled'] ? $s['facebook_app_id']  : '',
+        ];
+    })(),
 ], JSON_UNESCAPED_UNICODE);

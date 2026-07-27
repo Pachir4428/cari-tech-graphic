@@ -200,6 +200,7 @@ switch ($action) {
             'contact'      => $c['contact']      ?? null,
             'branding'     => store_get_branding($config),
             'payments'     => store_get_payments($config),
+            'social'       => ctg_social($config),
             'username'     => ctg_admin_user($config),
         ]);
 
@@ -209,6 +210,19 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         store_set_payments($config, $p);
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'social-save':
+        exigir_login();
+        $s = $body['social'] ?? null;
+        if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        store_set_social($config, [
+            'enabled'             => !empty($s['enabled']),
+            'google_client_id'    => trim((string) ($s['google_client_id']    ?? '')),
+            'facebook_app_id'     => trim((string) ($s['facebook_app_id']      ?? '')),
+            'facebook_app_secret' => trim((string) ($s['facebook_app_secret']  ?? '')),
+            'admin_email'         => trim((string) ($s['admin_email']          ?? '')),
+        ]);
+        responder(true, ['message' => 'Login social guardado.', 'social' => ctg_social($config)]);
 
     case 'content-save':
         exigir_login();

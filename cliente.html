@@ -108,8 +108,8 @@
     </div>
 
     <div class="card">
-      <!-- Formulário de acesso -->
-      <div id="loginView">
+      <!-- Formulário de acesso (oculto: o login é feito em entrar.html) -->
+      <div id="loginView" style="display:none">
         <h1>Área de Cliente</h1>
         <p class="sub">Consulte o estado do seu pedido e transfira as suas entregas. Use o <b>e-mail</b> e o <b>código</b> que recebeu no e-mail de confirmação.</p>
         <form id="form" autocomplete="off">
@@ -196,6 +196,8 @@
       .then(function(res){
         btn.disabled = false; btn.textContent = 'Entrar';
         if (!res.ok || !res.j.ok) {
+          // Credenciais inválidas/expiradas: volta ao login unificado.
+          if (window.__autoMode) { try { sessionStorage.removeItem('ctg_cli'); } catch(e){} location.replace('entrar.html'); return; }
           showErr(res.j.message || 'Não foi possível entrar.');
           return;
         }
@@ -203,6 +205,7 @@
       })
       .catch(function(){
         btn.disabled = false; btn.textContent = 'Entrar';
+        if (window.__autoMode) { location.replace('entrar.html'); return; }
         showErr('Erro de ligação. Tente novamente.');
       });
     });
@@ -240,7 +243,7 @@
         html += '<div class="empty">Ainda não há entregas disponíveis. Assim que o seu trabalho estiver pronto, ele aparecerá aqui — e você será notificado.</div>';
       }
 
-      html += '<button class="backlink" onclick="location.reload()">← Consultar outro pedido</button>';
+      html += '<button class="backlink" onclick="try{sessionStorage.removeItem(\'ctg_cli\')}catch(e){};location.href=\'entrar.html\'">← Consultar outro pedido</button>';
 
       document.getElementById('loginView').style.display = 'none';
       var rv = document.getElementById('resultView');
@@ -253,19 +256,21 @@
       this.value = this.value.toUpperCase();
     });
 
-    // Auto-login vindo da página de entrada unificada (entrar.html).
+    // Login unificado: o acesso faz-se sempre por entrar.html, que guarda o
+    // e-mail + código em sessionStorage. Sem esses dados, volta ao login.
     (function(){
+      var raw = null;
+      try { raw = sessionStorage.getItem('ctg_cli'); } catch (e) {}
+      if (!raw) { location.replace('entrar.html'); return; }
       try {
-        var raw = sessionStorage.getItem('ctg_cli');
-        if (!raw) return;
-        sessionStorage.removeItem('ctg_cli');
         var c = JSON.parse(raw);
         if (c && c.email && c.codigo) {
+          window.__autoMode = true;                 // mantém as credenciais para refrescar
           document.getElementById('email').value = c.email;
           document.getElementById('codigo').value = String(c.codigo).toUpperCase();
           form.dispatchEvent(new Event('submit'));
-        }
-      } catch (e) {}
+        } else { location.replace('entrar.html'); }
+      } catch (e) { location.replace('entrar.html'); }
     })();
   </script>
 </body>
