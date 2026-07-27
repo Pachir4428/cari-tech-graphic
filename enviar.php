@@ -15,6 +15,7 @@ $config = require __DIR__ . '/config.php';
 require_once __DIR__ . '/armazenamento.php';
 require_once __DIR__ . '/email-enviar.php';
 require_once __DIR__ . '/email-template.php';
+$config = ctg_apply_smtp($config); // definições SMTP do painel (se existirem)
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */

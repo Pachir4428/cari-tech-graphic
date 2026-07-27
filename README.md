@@ -123,8 +123,10 @@ entre sempre por `entrar.html`: o servidor encaminha-o automaticamente para o en
 
 ## 5. Painel de administração (`admin.html`)
 
-- **Leads:** lista os pedidos, muda o estado (Novo → Contactado → Ganho / Perdido), responde por
-  **WhatsApp/e-mail** e permite **Entregar** (ver [secção 6](#6-área-de-cliente-e-entregas)).
+- **Leads:** lista os pedidos, muda o estado, responde por **WhatsApp/e-mail**, **Entregar**
+  (ver [secção 6](#6-área-de-cliente-e-entregas)) e **descarregar relatório** (CSV para Excel/Sheets).
+- **Serviços:** cada serviço mostra quantos **pedidos** teve (adesão).
+- **Finanças:** módulo interno (só admin) para registar entradas/saídas e ver o **saldo**.
 - **Serviços / Portfólio / Testemunhos:** adicione, edite, remova e defina os cabeçalhos de cada
   secção. "Activo/Publicado" aparece no site; "Rascunho" fica oculto. Guardado automaticamente.
 - **Contactos:** e-mail, telefone, WhatsApp, morada e horário mostrados no site.
@@ -204,13 +206,15 @@ secção `'db'` do `config.php` e ponha `'enabled' => true`. As tabelas criam-se
 ## 9. E-mail e SMTP
 
 `enviar.php` usa a função `mail()` do PHP (funciona na Hostinger). Para melhor entregabilidade,
-active **SMTP**:
+active **SMTP** — agora directamente no painel em **Definições → E-mail (SMTP)**:
 
-1. Instale o PHPMailer (via SSH): `composer require phpmailer/phpmailer`
-2. Em `config.php`: `'smtp_enabled' => true` e preencha `smtp_host`, `smtp_user`, `smtp_pass`
-   (dados da caixa Hostinger — porta 465/SSL).
+1. hPanel → **E-mails → Contas de E-mail** → crie/abra `no-reply@seudominio.com`.
+2. No painel, active **SMTP** e preencha: host `smtp.hostinger.com`, porta `465` (SSL),
+   utilizador = o e-mail completo, palavra-passe = a **palavra-passe dessa caixa**.
+3. (Opcional, para SMTP: instale o PHPMailer via SSH — `composer require phpmailer/phpmailer`.)
 
-O **recibo automático** ao cliente pode ligar/desligar com `'send_receipt' => true`.
+As definições do painel têm prioridade sobre o `config.php`. O **recibo** e as **notificações**
+ao cliente ligam/desligam com `'send_receipt'` e `'notify_client'` no `config.php`.
 
 ---
 

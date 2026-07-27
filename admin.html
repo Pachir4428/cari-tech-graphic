@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=109" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=109" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=109" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=110" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=110" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=110" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -415,7 +415,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.3.1';
+    const APP_VERSION = '1.4.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -977,6 +977,119 @@
       );
     }
 
+    function SmtpEditor({ smtp, onSaved }) {
+      const [s, setS] = useState(smtp || {});
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setS(smtp || {}); }, [smtp]);
+      const f = (k, v) => setS((x) => ({ ...x, [k]: v }));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('smtp-save', 'POST', { smtp: s });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: AT('smtpSaved') }); onSaved && onSaved(s); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}><FA name="envelope" s={15} /> {AT('smtpTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:14}}>{AT('smtpNote')}</p>
+          <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,fontWeight:600,fontSize:14,cursor:'pointer'}}>
+            <input type="checkbox" checked={!!s.smtp_enabled} onChange={(e) => f('smtp_enabled', e.target.checked)} style={{width:18,height:18,accentColor:'var(--accent)'}} />
+            {AT('smtpEnable')}
+          </label>
+          <div style={{display:'grid',gap:12,maxWidth:520}}>
+            <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+              <div className="field" style={{flex:'2 1 220px'}}><label>{AT('smtpHost')}</label><input value={s.smtp_host || ''} onChange={(e) => f('smtp_host', e.target.value)} placeholder="smtp.hostinger.com" /></div>
+              <div className="field" style={{flex:'1 1 90px'}}><label>{AT('smtpPort')}</label><input value={s.smtp_port || ''} onChange={(e) => f('smtp_port', e.target.value)} placeholder="465" /></div>
+              <div className="field" style={{flex:'1 1 90px'}}><label>{AT('smtpSecure')}</label>
+                <select value={s.smtp_secure || 'ssl'} onChange={(e) => f('smtp_secure', e.target.value)}><option value="ssl">SSL (465)</option><option value="tls">TLS (587)</option></select>
+              </div>
+            </div>
+            <div className="field"><label>{AT('smtpUser')}</label><input value={s.smtp_user || ''} onChange={(e) => f('smtp_user', e.target.value)} placeholder="no-reply@seudominio.com" /></div>
+            <div className="field"><label>{AT('smtpPass')}</label><input type="password" value={s.smtp_pass || ''} onChange={(e) => f('smtp_pass', e.target.value)} placeholder="••••••••••••" /></div>
+            <div className="field"><label>{AT('smtpFrom')}</label><input value={s.from_email || ''} onChange={(e) => f('from_email', e.target.value)} placeholder="no-reply@seudominio.com" /></div>
+            <div style={{background:'#eef7f7',border:'1px solid var(--line)',borderRadius:10,padding:'10px 14px',fontSize:12.5,color:'var(--ink-soft)',lineHeight:1.55}}>
+              <FA name="circle-info" s={12} /> {AT('smtpGuide')}
+            </div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveSmtp')}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function FinancasView() {
+      const [list, setList] = useState(null);
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { api('financas').then((r) => { if (r.ok) setList(r.financas || []); else setList([]); }); }, []);
+      const L = list || [];
+      const totais = L.reduce((a, m) => {
+        const v = parseFloat(String(m.valor).replace(',', '.')) || 0;
+        if (m.tipo === 'saida') a.saidas += v; else a.entradas += v;
+        return a;
+      }, { entradas: 0, saidas: 0 });
+      const saldo = totais.entradas - totais.saidas;
+      const fmt = (n) => (n || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MZN';
+      const upd = (i, k, v) => setList((x) => x.map((m, idx) => idx === i ? { ...m, [k]: v } : m));
+      const add = () => setList((x) => [{ id: 'n' + Date.now(), data: new Date().toISOString().slice(0, 10), desc: '', tipo: 'entrada', valor: '', categoria: '' }, ...(x || [])]);
+      const del = (i) => setList((x) => x.filter((_, idx) => idx !== i));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('financas-save', 'POST', { financas: L });
+        setBusy(false);
+        if (r.ok) { setList(r.financas || []); setMsg({ ok: true, text: AT('finSaved') }); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      if (list === null) return <div className="admin-panel"><p style={{color:'var(--ink-muted)'}}>{T_loading()}</p></div>;
+      return (
+        <>
+          <div className="kpi-row" style={{marginBottom:16}}>
+            <div className="kpi"><div className="kpi-ico" style={{color:'var(--success)'}}><FA name="arrow-trend-up" s={17} /></div><div className="kpi-label">{AT('finIncome')}</div><div className="kpi-num" style={{fontSize:22}}>{fmt(totais.entradas)}</div></div>
+            <div className="kpi"><div className="kpi-ico" style={{color:'var(--danger,#e5484d)'}}><FA name="arrow-trend-down" s={17} /></div><div className="kpi-label">{AT('finExpense')}</div><div className="kpi-num" style={{fontSize:22}}>{fmt(totais.saidas)}</div></div>
+            <div className="kpi"><div className="kpi-ico"><FA name="scale-balanced" s={17} /></div><div className="kpi-label">{AT('finBalance')}</div><div className="kpi-num" style={{fontSize:22,color: saldo < 0 ? 'var(--danger,#e5484d)' : 'var(--success)'}}>{fmt(saldo)}</div></div>
+          </div>
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <h2>{AT('financeTitle')}</h2>
+              <button className="btn-add" onClick={add}><Plus />{AT('finAdd')}</button>
+            </div>
+            <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('financeNote')}</p>
+            {L.length === 0 ? (
+              <div style={{border:'1px dashed var(--line)',borderRadius:12,padding:'22px',textAlign:'center',color:'var(--ink-muted)',fontSize:13}}>{AT('finEmpty')}</div>
+            ) : (
+              <div style={{overflowX:'auto'}}>
+                <table className="admin-table">
+                  <thead><tr><th>{AT('finDate')}</th><th>{AT('finDesc')}</th><th>{AT('finCategory')}</th><th>{AT('finType')}</th><th>{AT('finAmount')}</th><th></th></tr></thead>
+                  <tbody>
+                    {L.map((m, i) => (
+                      <tr key={m.id || i}>
+                        <td><input type="date" value={m.data || ''} onChange={(e) => upd(i, 'data', e.target.value)} style={fInput} /></td>
+                        <td><input value={m.desc || ''} onChange={(e) => upd(i, 'desc', e.target.value)} placeholder="—" style={{...fInput, minWidth:160}} /></td>
+                        <td><input value={m.categoria || ''} onChange={(e) => upd(i, 'categoria', e.target.value)} placeholder="—" style={{...fInput, width:120}} /></td>
+                        <td>
+                          <select value={m.tipo || 'entrada'} onChange={(e) => upd(i, 'tipo', e.target.value)} style={{...fInput, fontWeight:600, color: m.tipo === 'saida' ? 'var(--danger,#e5484d)' : 'var(--success)'}}>
+                            <option value="entrada">{AT('finIncomeOpt')}</option><option value="saida">{AT('finExpenseOpt')}</option>
+                          </select>
+                        </td>
+                        <td><input value={m.valor} onChange={(e) => upd(i, 'valor', e.target.value)} placeholder="0.00" style={{...fInput, width:110, textAlign:'right'}} /></td>
+                        <td><button className="ra-btn danger" onClick={() => del(i)}><Trash s={12} /></button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{marginTop:16}}>{busy ? AT('saving') : AT('btnSaveFin')}</button>
+            <Aviso msg={msg} />
+          </div>
+        </>
+      );
+    }
+    const fInput = { padding:'7px 9px', border:'1px solid var(--line)', borderRadius:8, fontSize:13, background:'var(--card,#fff)', color:'var(--ink)', fontFamily:'inherit' };
+    function T_loading() { return (ADMIN_I18N[ADMIN_LANG] || ADMIN_I18N.pt).loading; }
+
     const ADMIN_I18N = {
       pt: {
         overview:'Visão geral', leads:'Leads', services:'Serviços', portfolio:'Portfólio', testimonials:'Testemunhos', contact:'Contactos', settings:'Definições', logout:'Terminar sessão',
@@ -1073,6 +1186,21 @@
         btnSaveSeg:'Guardar segurança', segSaved:'Segurança guardada.',
         segWarn:'Guarde este endereço num sítio seguro. Se o esquecer, entre sempre por entrar.html — será encaminhado automaticamente.',
         segEmpty:'(vazio = painel aberto em painel.php, sem segredo)',
+        // E-mail / SMTP
+        smtpTitle:'E-mail (SMTP) — melhor entrega',
+        smtpNote:'Active o SMTP para os e-mails (recibos, entregas, respostas) chegarem à caixa de entrada e não ao spam. Use a sua caixa @seudominio.com da Hostinger.',
+        smtpEnable:'Activar envio por SMTP', smtpHost:'Servidor (host)', smtpPort:'Porta', smtpSecure:'Segurança',
+        smtpUser:'Utilizador (e-mail completo)', smtpPass:'Palavra-passe da caixa de e-mail', smtpFrom:'Remetente (from)',
+        btnSaveSmtp:'Guardar e-mail', smtpSaved:'Definições de e-mail guardadas.',
+        smtpGuide:'Como obter a palavra-passe: hPanel → E-mails → Contas de E-mail → crie/abra a caixa (ex.: no-reply@seudominio.com) → a palavra-passe é a dessa caixa. Servidor: smtp.hostinger.com · Porta 465 (SSL).',
+        // Finanças
+        finance:'Finanças', financeTitle:'Finanças internas', financeNote:'Controlo interno de valores (só o administrador vê). Registe entradas e saídas para acompanhar o saldo.',
+        finIncome:'Entradas', finExpense:'Saídas', finBalance:'Saldo',
+        finDate:'Data', finDesc:'Descrição', finType:'Tipo', finAmount:'Valor (MZN)', finCategory:'Categoria',
+        finAdd:'Adicionar movimento', finIncomeOpt:'Entrada', finExpenseOpt:'Saída',
+        btnSaveFin:'Guardar finanças', finSaved:'Finanças guardadas.', finEmpty:'Sem movimentos. Clique em "Adicionar movimento".',
+        // Relatórios
+        downloadReport:'Descarregar relatório', thRequests:'Pedidos', svcReport:'Pedidos por serviço',
         // Login
         loginPanelTag:'Painel de gestão', loginWelcome1:'Bem-vindo', loginWelcome2:'de volta',
         loginHeroSub:'Faça login para gerir os pedidos, serviços, portfólio, testemunhos e contactos do seu site.',
@@ -1195,6 +1323,21 @@
         btnSaveSeg:'Save security', segSaved:'Security saved.',
         segWarn:'Keep this address somewhere safe. If you forget it, always sign in via entrar.html — you will be redirected automatically.',
         segEmpty:'(empty = panel open at painel.php, no secret)',
+        // Email / SMTP
+        smtpTitle:'Email (SMTP) — better delivery',
+        smtpNote:'Enable SMTP so emails (receipts, deliveries, replies) reach the inbox and not spam. Use your Hostinger @yourdomain.com mailbox.',
+        smtpEnable:'Enable SMTP sending', smtpHost:'Server (host)', smtpPort:'Port', smtpSecure:'Security',
+        smtpUser:'Username (full email)', smtpPass:'Mailbox password', smtpFrom:'Sender (from)',
+        btnSaveSmtp:'Save email', smtpSaved:'Email settings saved.',
+        smtpGuide:'How to get the password: hPanel → Emails → Email Accounts → create/open the mailbox (e.g. no-reply@yourdomain.com) → the password is that mailbox’s. Server: smtp.hostinger.com · Port 465 (SSL).',
+        // Finance
+        finance:'Finance', financeTitle:'Internal finance', financeNote:'Internal control of values (admin only). Record income and expenses to track the balance.',
+        finIncome:'Income', finExpense:'Expenses', finBalance:'Balance',
+        finDate:'Date', finDesc:'Description', finType:'Type', finAmount:'Amount (MZN)', finCategory:'Category',
+        finAdd:'Add entry', finIncomeOpt:'Income', finExpenseOpt:'Expense',
+        btnSaveFin:'Save finance', finSaved:'Finance saved.', finEmpty:'No entries. Click "Add entry".',
+        // Reports
+        downloadReport:'Download report', thRequests:'Requests', svcReport:'Requests per service',
         // Login
         loginPanelTag:'Management panel', loginWelcome1:'Welcome', loginWelcome2:'back',
         loginHeroSub:'Sign in to manage your site’s requests, services, portfolio, testimonials and contacts.',
@@ -1249,6 +1392,7 @@
       const [social, setSocial] = useState({});
       const [sites, setSites] = useState([]);
       const [seg, setSeg] = useState({});
+      const [smtp, setSmtp] = useState({});
       const [username, setUsername] = useState('admin');
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
@@ -1320,6 +1464,7 @@
           if (r.social) setSocial(r.social);
           if (Array.isArray(r.sites)) setSites(r.sites);
           if (r.seg) setSeg(r.seg);
+          if (r.smtp) setSmtp(r.smtp);
           if (r.username) setUsername(r.username);
         }
       };
@@ -1369,6 +1514,22 @@
         const r = await api('lead-status', 'POST', { id, status });
         if (!r.ok) loadLeads();
       };
+      // Relatório de leads em CSV (abre no Excel/Sheets).
+      const downloadLeadsCSV = () => {
+        const rows = [['Data','Nome','E-mail','Telefone','Serviço','Estado','Código','Mensagem']];
+        const estados = { new: T.sNew, contacted: T.sContacted, won: T.sWon, lost: T.sLost };
+        leads.forEach((l) => rows.push([
+          fmtData(l.data), l.nome || '', l.email || '', l.telefone || '', l.servico || '',
+          estados[l.status || 'new'] || (l.status || ''), l.codigo || '', (l.mensagem || '').replace(/\s+/g, ' ').trim(),
+        ]));
+        const csv = '﻿' + rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `leads-cari-tech-${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a); a.click(); a.remove();
+      };
+
       const deleteLead = async (id) => {
         if (!window.confirm(T.confirmDelLead)) return;
         setLeads((ls) => ls.filter((l) => l.id !== id));
@@ -1486,7 +1647,7 @@
       const NAV = [
         { grp: T.geral, items: [ ['overview','gauge-high'], ['leads','inbox'] ] },
         { grp: T.conteudo, items: [ ['services','layer-group'], ['portfolio','folder-open'], ['testimonials','quote-right'], ['contact','address-book'] ] },
-        { grp: T.sistema, items: [ ['settings','gear'] ] },
+        { grp: T.sistema, items: [ ['finance','wallet'], ['settings','gear'] ] },
       ];
 
       return (
@@ -1589,9 +1750,11 @@
                 <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{T.svcNote}</p>
                 <div style={{overflowX:'auto'}}>
                   <table className="admin-table">
-                    <thead><tr><th>{T.thService}</th><th>{T.thCategory}</th><th>{T.thPrice}</th><th>{T.thState}</th><th></th></tr></thead>
+                    <thead><tr><th>{T.thService}</th><th>{T.thCategory}</th><th>{T.thPrice}</th><th style={{textAlign:'center'}}>{T.thRequests}</th><th>{T.thState}</th><th></th></tr></thead>
                     <tbody>
-                      {fServices.map((s) => (
+                      {fServices.map((s) => {
+                        const nPed = leads.filter((l) => (l.servico || '').trim().toLowerCase() === (s.t || '').trim().toLowerCase()).length;
+                        return (
                         <tr key={s.id}>
                           <td>
                             <div style={{fontWeight:600}}>{s.t}</div>
@@ -1599,13 +1762,14 @@
                           </td>
                           <td><span className={`table-tag tag-${s.category}`}>{s.category}</span></td>
                           <td style={{whiteSpace:'nowrap'}}>{s.price}</td>
+                          <td style={{textAlign:'center'}}><span className="table-tag" style={{background: nPed ? 'var(--accent)' : 'var(--bg-soft)', color: nPed ? '#fff' : 'var(--ink-muted)', fontWeight:700}}>{nPed}</span></td>
                           <td><span className={`table-tag tag-${s.status}`}>{s.status === 'active' ? T.stActiveT : T.stDraftT}</span></td>
                           <td><div className="row-actions">
                             <button className="ra-btn" onClick={() => openEdit('service', s)}><Pencil /></button>
                             <button className="ra-btn danger" onClick={() => remove('service', s.id)}><Trash /></button>
                           </div></td>
                         </tr>
-                      ))}
+                      );})}
                     </tbody>
                   </table>
                 </div>
@@ -1688,9 +1852,14 @@
               <div className="admin-panel">
                 <div className="admin-panel-head">
                   <h2>{T.leadsTitle}</h2>
-                  <button className="btn-add" onClick={loadLeads} style={{background:'var(--bg-soft)',color:'var(--ink)'}}>
-                    <FA name="rotate" s={13} />{T.refresh}
-                  </button>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                    <button className="btn-add" onClick={downloadLeadsCSV} disabled={!leads.length}>
+                      <FA name="file-arrow-down" s={13} />{T.downloadReport}
+                    </button>
+                    <button className="btn-add" onClick={loadLeads} style={{background:'var(--bg-soft)',color:'var(--ink)'}}>
+                      <FA name="rotate" s={13} />{T.refresh}
+                    </button>
+                  </div>
                 </div>
                 {leadsLoading ? (
                   <p style={{color:'var(--ink-muted)',fontSize:14,padding:'20px 0'}}>{T.loadingReq}</p>
@@ -1764,6 +1933,8 @@
             {tab === 'contact' && (
               <ContactEditor contact={contact} onCommit={updateContact} saveState={saveState} />
             )}
+
+            {tab === 'finance' && <FinancasView />}
 
             {tab === 'overview' && (() => {
               const seg = [
@@ -1841,6 +2012,7 @@
                 <PaymentsEditor payments={payments} onSaved={setPayments} />
                 <SitesEditor sites={sites} onSaved={setSites} />
                 <SocialEditor social={social} onSaved={setSocial} />
+                <SmtpEditor smtp={smtp} onSaved={setSmtp} />
                 <SegEditor seg={seg} onSaved={setSeg} />
                 <SiteUpdater />
                 <div className="admin-panel">

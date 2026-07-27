@@ -246,6 +246,25 @@ function store_set_sites($config, $s) { return _meta_set($config, 'sites', 'site
 /* Segurança: slug secreto do painel (ocultar admin.html). Nunca é público. */
 function store_get_seg($config)    { return _meta_get($config, 'seg', 'seg.json') ?: []; }
 function store_set_seg($config, $s) { return _meta_set($config, 'seg', 'seg.json', $s); }
+
+/* Finanças internas (só admin). Lista de movimentos {id,data,desc,tipo,valor,categoria}. */
+function store_get_financas($config)    { $v = _meta_get($config, 'financas', 'financas.json'); return is_array($v) ? $v : []; }
+function store_set_financas($config, $f) { return _meta_set($config, 'financas', 'financas.json', array_values($f)); }
+
+/* SMTP gerido no painel (sobrepõe o config.php). Contém a palavra-passe → nunca público. */
+function store_get_smtp($config)    { return _meta_get($config, 'smtp', 'smtp.json') ?: []; }
+function store_set_smtp($config, $s) { return _meta_set($config, 'smtp', 'smtp.json', $s); }
+/* Devolve o $config com as definições SMTP do painel aplicadas por cima. */
+function ctg_apply_smtp($config) {
+    $s = store_get_smtp($config);
+    if (!empty($s) && is_array($s)) {
+        foreach (['smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass', 'from_email', 'from_name'] as $k) {
+            if (array_key_exists($k, $s) && $s[$k] !== '') $config[$k] = $s[$k];
+        }
+        if (array_key_exists('smtp_enabled', $s)) $config['smtp_enabled'] = !empty($s['smtp_enabled']);
+    }
+    return $config;
+}
 function ctg_admin_slug($config) {
     $s = store_get_seg($config);
     $slug = trim((string) ($s['admin_slug'] ?? ($config['admin_slug'] ?? '')));

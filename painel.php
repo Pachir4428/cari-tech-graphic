@@ -20,12 +20,12 @@ $slug = ctg_admin_slug($config);
 $k = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($_GET['k'] ?? ''));
 
 if ($slug !== '' && !hash_equals($slug, $k)) {
-    /* Página 404 genérica — não revela que aqui existe um painel. */
+    /* Página 404 estilizada — não revela que aqui existe um painel. */
     http_response_code(404);
     header('Content-Type: text/html; charset=utf-8');
-    echo "<!doctype html><html><head><meta charset=\"utf-8\"><title>404 Not Found</title></head>"
-       . "<body style=\"font-family:sans-serif;text-align:center;padding:60px\"><h1>404</h1>"
-       . "<p>A página que procura não existe.</p><p><a href=\"index.html\">Voltar ao início</a></p></body></html>";
+    $erro = __DIR__ . '/erro.html';
+    if (is_file($erro)) { readfile($erro); }
+    else { echo '<!doctype html><title>404</title><h1>404 — Página não encontrada</h1>'; }
     exit;
 }
 

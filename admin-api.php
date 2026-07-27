@@ -59,6 +59,7 @@ function exigir_login() {
 require_once __DIR__ . '/armazenamento.php';
 require_once __DIR__ . '/email-enviar.php';
 require_once __DIR__ . '/email-template.php';
+$config = ctg_apply_smtp($config); // definições SMTP do painel (se existirem)
 
 /* Utilizador em vigor: o guardado no painel, ou o padrão do config. */
 function ctg_admin_user($config) {
@@ -256,6 +257,18 @@ switch ($action) {
             'social'       => ctg_social($config),
             'sites'        => store_get_sites($config),
             'seg'          => ['admin_slug' => ctg_admin_slug($config)],
+            'smtp'         => (function () use ($config) {
+                $s = store_get_smtp($config);
+                return [
+                    'smtp_enabled' => array_key_exists('smtp_enabled', $s) ? !empty($s['smtp_enabled']) : !empty($config['smtp_enabled']),
+                    'smtp_host'    => $s['smtp_host']   ?? ($config['smtp_host']   ?? 'smtp.hostinger.com'),
+                    'smtp_port'    => $s['smtp_port']   ?? ($config['smtp_port']   ?? 465),
+                    'smtp_secure'  => $s['smtp_secure'] ?? ($config['smtp_secure'] ?? 'ssl'),
+                    'smtp_user'    => $s['smtp_user']   ?? ($config['smtp_user']   ?? ($config['from_email'] ?? '')),
+                    'smtp_pass'    => $s['smtp_pass']   ?? '',
+                    'from_email'   => $s['from_email']  ?? ($config['from_email']  ?? ''),
+                ];
+            })(),
             'username'     => ctg_admin_user($config),
         ]);
 
@@ -265,6 +278,54 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         store_set_payments($config, $p);
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'smtp-save':
+        exigir_login();
+        $s = $body['smtp'] ?? null;
+        if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        store_set_smtp($config, [
+            'smtp_enabled' => !empty($s['smtp_enabled']),
+            'smtp_host'    => trim((string) ($s['smtp_host']   ?? '')),
+            'smtp_port'    => (int) ($s['smtp_port'] ?? 465),
+            'smtp_secure'  => (($s['smtp_secure'] ?? 'ssl') === 'tls') ? 'tls' : 'ssl',
+            'smtp_user'    => trim((string) ($s['smtp_user']   ?? '')),
+            'smtp_pass'    => (string) ($s['smtp_pass'] ?? ''),
+            'from_email'   => trim((string) ($s['from_email']  ?? ($s['smtp_user'] ?? ''))),
+        ]);
+        responder(true, ['message' => 'E-mail (SMTP) guardado.']);
+
+    case 'financas':
+        exigir_login();
+        $lista = store_get_financas($config);
+        $entradas = 0; $saidas = 0;
+        foreach ($lista as $m) {
+            $v = (float) ($m['valor'] ?? 0);
+            if (($m['tipo'] ?? 'entrada') === 'saida') $saidas += $v; else $entradas += $v;
+        }
+        responder(true, ['financas' => $lista, 'totais' => [
+            'entradas' => round($entradas, 2), 'saidas' => round($saidas, 2), 'saldo' => round($entradas - $saidas, 2),
+        ]]);
+
+    case 'financas-save':
+        exigir_login();
+        $itens = $body['financas'] ?? null;
+        if (!is_array($itens)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        $limpos = [];
+        foreach ($itens as $m) {
+            $valor = (float) str_replace([' ', ','], ['', '.'], (string) ($m['valor'] ?? 0));
+            $desc = trim((string) ($m['desc'] ?? ''));
+            if ($desc === '' && $valor == 0) continue;
+            $limpos[] = [
+                'id'        => (string) ($m['id'] ?? uniqid()),
+                'data'      => trim((string) ($m['data'] ?? date('Y-m-d'))),
+                'desc'      => $desc,
+                'tipo'      => (($m['tipo'] ?? 'entrada') === 'saida') ? 'saida' : 'entrada',
+                'valor'     => round($valor, 2),
+                'categoria' => trim((string) ($m['categoria'] ?? '')),
+            ];
+        }
+        store_set_financas($config, $limpos);
+        responder(true, ['message' => 'Finanças guardadas.', 'financas' => $limpos]);
 
     case 'seg-save':
         exigir_login();

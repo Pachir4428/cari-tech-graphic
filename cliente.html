@@ -126,6 +126,9 @@
     .gate .btn:disabled{opacity:.6}
     .msg{margin-top:12px;padding:11px 13px;border-radius:10px;font-size:13px;display:none}
     .msg.err{display:block;background:#fdecec;color:#b3261e;border:1px solid #f7c9c6}
+    .msg.ok{display:block;background:#e7f5ee;color:#166c46;border:1px solid #b6e6cf}
+    .svc-thumb{border-radius:11px;overflow:hidden;aspect-ratio:16/10;background:var(--brand-soft);margin-bottom:12px}
+    .svc-thumb img{width:100%;height:100%;object-fit:cover;display:block}
     .gate .foot{text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)}
 
     /* ---------- Mobile ---------- */
@@ -181,7 +184,7 @@
       <nav class="side-nav">
         <button class="item active" id="navOrdersBtn" onclick="mostrarVista('orders')"><i class="fa-solid fa-box-open"></i> <span id="navMyOrders">Os meus pedidos</span> <span class="badge" id="navCount">0</span></button>
         <button class="item" id="navServicesBtn" onclick="mostrarVista('services')"><i class="fa-solid fa-plus"></i> <span id="navServices">Serviços</span></button>
-        <a class="item" href="index.html#contact"><i class="fa-solid fa-headset"></i> <span id="navTalk">Falar connosco</span></a>
+        <button class="item" id="navContactBtn" onclick="mostrarVista('contact')"><i class="fa-solid fa-headset"></i> <span id="navTalk">Falar connosco</span></button>
       </nav>
       <div class="side-foot">
         <span id="footHelp">Precisa de ajuda?</span><br><a href="index.html#contact" id="footTeam">Contacte a nossa equipa</a>
@@ -208,6 +211,14 @@
       <div id="servicesView" style="display:none">
         <p class="who" id="servicesSub" style="margin:-14px 0 18px"></p>
         <div id="servicesGrid" class="req-grid"></div>
+      </div>
+      <div id="contactView" style="display:none;max-width:560px">
+        <p class="who" id="contactSub" style="margin:-14px 0 18px"></p>
+        <div class="req-card">
+          <textarea id="contactMsg" rows="5" style="width:100%;resize:vertical;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff"></textarea>
+          <button class="btn-all" id="contactBtn" onclick="enviarContacto()" style="margin-top:12px"><i class="fa-solid fa-paper-plane"></i> <span id="contactBtnLabel">Enviar mensagem</span></button>
+          <div id="contactMsgBox" class="msg" style="margin-top:12px"></div>
+        </div>
       </div>
     </main>
   </div>
@@ -240,6 +251,8 @@
         servicesNav:'Serviços', servicesTitle:'Peça um serviço', servicesSub:'Escolha um serviço e peça sem sair da sua área.',
         request:'Pedir', requesting:'A enviar…', requested:'Pedido!', reqSent:'Pedido enviado! Vamos entrar em contacto em breve.',
         noServices:'Sem serviços disponíveis de momento.',
+        contactTitle:'Falar connosco', contactSub:'Envie-nos uma mensagem — respondemos por e-mail e aqui na sua área.',
+        contactMsgPh:'Escreva a sua mensagem…', contactSend:'Enviar mensagem', contactSending:'A enviar…', contactSent:'Mensagem enviada! Entraremos em contacto.',
       },
       en: {
         myOrders:'My orders', newOrder:'New request', talkToUs:'Contact us', logout:'Log out',
@@ -263,6 +276,8 @@
         servicesNav:'Services', servicesTitle:'Request a service', servicesSub:'Pick a service and request it without leaving your area.',
         request:'Request', requesting:'Sending…', requested:'Requested!', reqSent:'Request sent! We will get in touch soon.',
         noServices:'No services available right now.',
+        contactTitle:'Contact us', contactSub:'Send us a message — we reply by email and here in your area.',
+        contactMsgPh:'Write your message…', contactSend:'Send message', contactSending:'Sending…', contactSent:'Message sent! We will get in touch.',
       },
     };
     var LANG = 'pt'; try{ LANG = localStorage.getItem('ctg_cli_lang') || 'pt'; }catch(e){}
@@ -426,21 +441,44 @@
     // ---------- Vistas: pedidos / serviços ----------
     var SERVICOS = null;
     window.mostrarVista = function(v){
-      var orders = document.getElementById('grid');
-      var sv = document.getElementById('servicesView');
+      window.__view = v;
+      var orders=document.getElementById('grid'), sv=document.getElementById('servicesView'), cv=document.getElementById('contactView');
+      orders.style.display='none'; sv.style.display='none'; cv.style.display='none';
       document.getElementById('navOrdersBtn').classList.toggle('active', v==='orders');
       document.getElementById('navServicesBtn').classList.toggle('active', v==='services');
+      document.getElementById('navContactBtn').classList.toggle('active', v==='contact');
       if(v==='services'){
-        orders.style.display='none'; sv.style.display='block';
+        sv.style.display='block';
         document.getElementById('greet').textContent=T('servicesTitle');
         document.getElementById('servicesSub').textContent=T('servicesSub');
         document.getElementById('who').textContent='';
         if(SERVICOS===null){ carregarServicos(); } else renderServicos();
+      } else if(v==='contact'){
+        cv.style.display='block';
+        document.getElementById('greet').textContent=T('contactTitle');
+        document.getElementById('contactSub').textContent=T('contactSub');
+        document.getElementById('contactMsg').placeholder=T('contactMsgPh');
+        document.getElementById('contactBtnLabel').textContent=T('contactSend');
+        document.getElementById('who').textContent='';
       } else {
-        sv.style.display='none'; orders.style.display='grid';
+        orders.style.display='grid';
         document.getElementById('greet').textContent=T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
         document.getElementById('who').textContent=(window.__clienteNome||'')+' · '+PEDIDOS.length+' '+(PEDIDOS.length===1?T('order'):T('orders'));
       }
+    };
+    window.enviarContacto = function(){
+      var ta=document.getElementById('contactMsg'), texto=(ta.value||'').trim();
+      var box=document.getElementById('contactMsgBox');
+      if(texto.length<10){ box.textContent=T('commentPh'); box.className='msg err'; return; }
+      var btn=document.getElementById('contactBtn'); btn.disabled=true;
+      document.getElementById('contactBtnLabel').textContent=T('contactSending');
+      box.className='msg';
+      fetch('enviar.php',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ name: window.__nomeCompleto||CRED.email, email: CRED.email, service:'Contacto (Área de Cliente)', message: texto })})
+      .then(function(r){return r.json();}).then(function(){
+        btn.disabled=false; document.getElementById('contactBtnLabel').textContent=T('contactSend');
+        ta.value=''; box.textContent=T('contactSent'); box.className='msg ok';
+      }).catch(function(){ btn.disabled=false; document.getElementById('contactBtnLabel').textContent=T('contactSend'); box.textContent=T('errConn'); box.className='msg err'; });
     };
     function carregarServicos(){
       fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){
@@ -454,7 +492,10 @@
       g.innerHTML = SERVICOS.map(function(s,i){
         var nome = s.t || s.nome || 'Serviço';
         var desc = s.d || s.desc || '';
-        return '<div class="req-card"><div class="req-title" style="margin-bottom:6px">'+esc(nome)+'</div>'
+        var img = s.img || '';
+        return '<div class="req-card">'
+          + (img?'<div class="svc-thumb"><img src="'+esc(img)+'" alt="'+esc(nome)+'"></div>':'')
+          + '<div class="req-title" style="margin-bottom:6px">'+esc(nome)+'</div>'
           + (desc?'<div class="req-date" style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">'+esc(desc)+'</div>':'')
           + (s.price?'<div class="pill st-new" style="align-self:flex-start;margin-bottom:12px"><i class="fa-solid fa-tag"></i> '+esc(s.price)+'</div>':'')
           + '<button class="btn-all" id="svcbtn-'+i+'" onclick="pedirServico('+i+')" style="margin-top:auto"><i class="fa-solid fa-paper-plane"></i> '+T('request')+'</button></div>';
@@ -545,10 +586,9 @@
       try{ localStorage.setItem('ctg_cli_lang', LANG); }catch(e){}
       applyStaticLang();
       if(document.getElementById('app').style.display!=='none'){
-        document.getElementById('greet').textContent = T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
-        document.getElementById('who').textContent = (window.__clienteNome||'') + ' · ' + PEDIDOS.length + ' ' + (PEDIDOS.length===1?T('order'):T('orders'));
         renderGrid(document.getElementById('search').value||'');
         atualizarNotificacoes();
+        mostrarVista(window.__view||'orders');
       }
     });
 
