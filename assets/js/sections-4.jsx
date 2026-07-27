@@ -419,11 +419,12 @@ function ChatAssistant() {
 
 // ---------- Carrinho / Checkout de serviços ----------
 function CartFab({ count, onOpen }) {
-  if (!count) return null;
+  // Sempre visível para o cliente encontrar o pedido/checkout facilmente.
   return (
-    <button className="cart-fab" onClick={onOpen} aria-label="Ver pedido">
-      <i className="fa-solid fa-cart-shopping" style={{ fontSize: 22 }} aria-hidden="true" />
-      <span className="cart-count">{count}</span>
+    <button className={`cart-fab ${count ? 'has-items' : ''}`} onClick={onOpen} aria-label="Ver pedido">
+      <i className="fa-solid fa-cart-shopping" style={{ fontSize: 20 }} aria-hidden="true" />
+      <span className="cart-fab-label">Pedido</span>
+      {count > 0 && <span className="cart-count">{count}</span>}
     </button>
   );
 }

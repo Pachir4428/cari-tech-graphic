@@ -132,10 +132,14 @@ Pode também entrar com **Google/Facebook** (ver [secção 7](#7-login-unificado
 
 ## 6. Área de Cliente e entregas
 
-O cliente acede em **`cliente.html`** (ou pelo login unificado) com **e-mail + código** e vê:
+O cliente acede pelo login unificado (`entrar.html`) com **e-mail + código** (ou conta social) e vê
+**todos os seus pedidos** de uma vez — cada um com:
 
-- o **estado** do pedido (recebido, em andamento, concluído);
-- as **entregas**: ficheiros para transferir e/ou links (Google Drive, Figma…), com a sua mensagem.
+- o **estado** (recebido, em andamento, concluído);
+- as **entregas**: ficheiros para transferir e/ou links (Google Drive, Figma…), com a mensagem do estúdio.
+
+Basta **um** código válido (enviado por e-mail) para provar que o e-mail é seu e ver a lista completa.
+O **e-mail de confirmação** de cada pedido é enviado em HTML com o visual da marca (logo, botão de acesso e código).
 
 **Como entregar (no painel):** aba **Leads → botão Entregar** de um pedido:
 1. **Carregue ficheiros** (`uploads/entregas/`) e/ou **adicione links**.

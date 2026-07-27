@@ -46,18 +46,21 @@ if ($email === '' || $codigo === '') {
     responder(false, ['message' => 'Indique o e-mail e o código de acesso.'], 422);
 }
 
-/* Procura um lead com este e-mail + código. */
-$encontrado = null;
+/* Recolhe TODOS os pedidos deste e-mail e confirma que o código pertence a
+   pelo menos um deles (prova de posse do e-mail — o código foi enviado para lá). */
+$doCliente = [];
+$codigoValido = false;
+$nomeCliente = '';
 foreach (store_get_leads($config) as $l) {
-    if (strtolower(trim((string) ($l['email'] ?? ''))) === $email
-        && strtoupper(trim((string) ($l['codigo'] ?? ''))) === $codigo
-        && $codigo !== '') {
-        $encontrado = $l;
-        break;
+    if (strtolower(trim((string) ($l['email'] ?? ''))) !== $email) continue;
+    $doCliente[] = $l;
+    if ($nomeCliente === '' && !empty($l['nome'])) $nomeCliente = $l['nome'];
+    if (strtoupper(trim((string) ($l['codigo'] ?? ''))) === $codigo && $codigo !== '') {
+        $codigoValido = true;
     }
 }
 
-if (!$encontrado) {
+if (!$doCliente || !$codigoValido) {
     usleep(600000); // atrasa tentativas por força bruta
     responder(false, ['message' => 'E-mail ou código incorrectos. Confirme os dados do e-mail de confirmação.'], 401);
 }
@@ -69,29 +72,45 @@ $estados = [
     'won'       => 'Concluído',
     'lost'      => 'Encerrado',
 ];
-$status = $encontrado['status'] ?? 'new';
 
-$entrega = store_get_delivery($config, $encontrado['id'] ?? '');
+/* Monta a lista de todos os pedidos (mais recente primeiro) com as entregas. */
+$pedidos = array_map(function ($l) use ($config, $estados) {
+    $status = $l['status'] ?? 'new';
+    $entrega = store_get_delivery($config, $l['id'] ?? '');
+    return [
+        'id'       => $l['id'] ?? '',
+        'servico'  => $l['servico'] ?? '',
+        'mensagem' => $l['mensagem'] ?? '',
+        'data'     => $l['data'] ?? '',
+        'codigo'   => $l['codigo'] ?? '',
+        'status'   => $status,
+        'estado'   => $estados[$status] ?? 'Pedido recebido',
+        'entrega'  => $entrega ? [
+            'msg'      => $entrega['msg'] ?? '',
+            'entregas' => array_map(function ($e) {
+                return [
+                    'tipo' => $e['tipo'] ?? 'link',
+                    'url'  => $e['url'] ?? '',
+                    'nome' => $e['nome'] ?? ($e['url'] ?? ''),
+                    'note' => $e['note'] ?? '',
+                ];
+            }, $entrega['entregas'] ?? []),
+            'data'     => $entrega['data'] ?? '',
+        ] : null,
+    ];
+}, $doCliente);
 
 responder(true, [
-    'pedido' => [
-        'nome'    => $encontrado['nome'] ?? '',
-        'servico' => $encontrado['servico'] ?? '',
-        'mensagem'=> $encontrado['mensagem'] ?? '',
-        'data'    => $encontrado['data'] ?? '',
-        'status'  => $status,
-        'estado'  => $estados[$status] ?? 'Pedido recebido',
+    'cliente' => ['nome' => $nomeCliente, 'email' => $email],
+    'pedidos' => $pedidos,
+    /* Compatibilidade: primeiro pedido também em 'pedido'/'entrega'. */
+    'pedido'  => [
+        'nome'    => $nomeCliente,
+        'servico' => $pedidos[0]['servico'] ?? '',
+        'mensagem'=> $pedidos[0]['mensagem'] ?? '',
+        'data'    => $pedidos[0]['data'] ?? '',
+        'status'  => $pedidos[0]['status'] ?? 'new',
+        'estado'  => $pedidos[0]['estado'] ?? 'Pedido recebido',
     ],
-    'entrega' => $entrega ? [
-        'msg'      => $entrega['msg'] ?? '',
-        'entregas' => array_map(function ($e) {
-            return [
-                'tipo' => $e['tipo'] ?? 'link',
-                'url'  => $e['url'] ?? '',
-                'nome' => $e['nome'] ?? ($e['url'] ?? ''),
-                'note' => $e['note'] ?? '',
-            ];
-        }, $entrega['entregas'] ?? []),
-        'data'     => $entrega['data'] ?? '',
-    ] : null,
+    'entrega' => $pedidos[0]['entrega'] ?? null,
 ]);

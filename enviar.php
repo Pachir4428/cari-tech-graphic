@@ -13,6 +13,7 @@ header('X-Content-Type-Options: nosniff');
 
 $config = require __DIR__ . '/config.php';
 require_once __DIR__ . '/armazenamento.php';
+require_once __DIR__ . '/email-template.php';
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -127,19 +128,30 @@ $enviado = enviar_email($config, $config['to_email'], $assunto, $corpo, $email, 
 if (($config['send_receipt'] ?? true) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $marca = $config['from_name'] ?? 'Cari Tech Graphic';
     $rAssunto = 'Recebemos o seu pedido — Cari Tech Graphic';
+
+    /* Versão texto (fallback) */
     $rCorpo  = "Olá {$nome},\n\n";
     $rCorpo .= "Recebemos o seu pedido" . ($servico !== '' ? " de {$servico}" : '') . " e vamos entrar em contacto em breve.\n\n";
     $rCorpo .= "Resumo do seu pedido:\n{$mensagem}\n\n";
     $rCorpo .= "-------------------------------------------\n";
     $rCorpo .= "ÁREA DE CLIENTE\n";
     $rCorpo .= "Acompanhe o seu pedido e receba as suas entregas (ficheiros e links) em:\n";
-    $rCorpo .= "  " . ($config['site_url'] ?? '') . "/cliente.html\n";
+    $rCorpo .= "  " . ($config['site_url'] ?? '') . "/entrar.html\n";
     $rCorpo .= "  E-mail:  {$email}\n";
     $rCorpo .= "  Código:  {$codigo}\n";
     $rCorpo .= "-------------------------------------------\n\n";
     $rCorpo .= "Se tiver dúvidas, responda a este e-mail ou fale connosco pelo WhatsApp " . ($config['whatsapp'] ?? '') . ".\n\n";
     $rCorpo .= "Obrigado por escolher a Cari Tech Graphic.\n";
-    enviar_email($config, $email, $rAssunto, $rCorpo, $config['to_email'] ?? '', $marca);
+
+    /* Versão HTML (design tipo cartão, cores da marca) */
+    $branding = function_exists('store_get_branding') ? store_get_branding($config) : [];
+    $rHtml = email_cliente_html($config, [
+        'nome' => $nome, 'servico' => $servico, 'mensagem' => $mensagem,
+        'codigo' => $codigo, 'email' => $email,
+        'logo' => $branding['light'] ?? ($branding['dark'] ?? ''),
+    ]);
+
+    enviar_email($config, $email, $rAssunto, $rCorpo, $config['to_email'] ?? '', $marca, $rHtml);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -159,12 +171,12 @@ responder(true, 'Recebemos o seu pedido. Se preferir uma resposta imediata, fale
 /* -------------------------------------------------------------------------- */
 /* Envio de e-mail — SMTP (se configurado) ou mail() nativo                   */
 /* -------------------------------------------------------------------------- */
-function enviar_email($config, $to, $assunto, $corpo, $replyEmail = '', $replyName = '') {
+function enviar_email($config, $to, $assunto, $corpo, $replyEmail = '', $replyName = '', $html = null) {
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
         return false;
     }
     if (!empty($config['smtp_enabled'])) {
-        return enviar_smtp($config, $to, $assunto, $corpo, $replyEmail, $replyName);
+        return enviar_smtp($config, $to, $assunto, $corpo, $replyEmail, $replyName, $html);
     }
     /* mail() nativo (funciona na Hostinger sem SMTP) */
     $fromEmail = $config['from_email'] ?? ('no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
@@ -175,18 +187,32 @@ function enviar_email($config, $to, $assunto, $corpo, $replyEmail = '', $replyNa
         $headers .= 'Reply-To: ' . mb_encode_mimeheader($replyName) . " <{$replyEmail}>\r\n";
     }
     $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    $headers .= "Content-Transfer-Encoding: 8bit\r\n";
     $headers .= 'X-Mailer: PHP/' . phpversion() . "\r\n";
 
     $assuntoMime = '=?UTF-8?B?' . base64_encode($assunto) . '?=';
+
+    if ($html !== null && $html !== '') {
+        /* multipart/alternative: versão texto + versão HTML (o cliente escolhe). */
+        $bound = 'ctg_' . bin2hex(random_bytes(8));
+        $headers .= "Content-Type: multipart/alternative; boundary=\"{$bound}\"\r\n";
+        $msg  = "--{$bound}\r\n";
+        $msg .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n";
+        $msg .= $corpo . "\r\n\r\n";
+        $msg .= "--{$bound}\r\n";
+        $msg .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n";
+        $msg .= $html . "\r\n\r\n";
+        $msg .= "--{$bound}--";
+        return @mail($to, $assuntoMime, $msg, $headers, "-f{$fromEmail}");
+    }
+
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n";
     return @mail($to, $assuntoMime, $corpo, $headers, "-f{$fromEmail}");
 }
 
 /* -------------------------------------------------------------------------- */
 /* SMTP opcional (requer PHPMailer em vendor/ — ver README)                   */
 /* -------------------------------------------------------------------------- */
-function enviar_smtp($config, $to, $assunto, $corpo, $replyEmail = '', $replyName = '') {
+function enviar_smtp($config, $to, $assunto, $corpo, $replyEmail = '', $replyName = '', $html = null) {
     $autoload = __DIR__ . '/vendor/autoload.php';
     if (!file_exists($autoload)) {
         return false; // PHPMailer não instalado; cai para o CSV/WhatsApp
@@ -208,10 +234,17 @@ function enviar_smtp($config, $to, $assunto, $corpo, $replyEmail = '', $replyNam
             $mail->addReplyTo($replyEmail, $replyName);
         }
         $mail->Subject = $assunto;
-        $mail->Body    = $corpo;
+        if ($html !== null && $html !== '') {
+            $mail->isHTML(true);
+            $mail->Body    = $html;
+            $mail->AltBody = $corpo;
+        } else {
+            $mail->Body    = $corpo;
+        }
         $mail->send();
         return true;
     } catch (\Throwable $e) {
         return false;
     }
 }
+

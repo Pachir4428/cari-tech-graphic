@@ -97,8 +97,17 @@
     .dl .tx b{display:block;font-size:.96rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .dl .tx small{color:var(--muted);font-size:.82rem}
     .dl .go{margin-left:auto;color:var(--muted);flex:none}
-    .empty{color:var(--muted);font-size:.92rem;background:#fafcfc;border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;line-height:1.5}
-    .backlink{background:none;border:none;color:var(--brand-mid);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-top:6px}
+    .empty{color:var(--muted);font-size:.92rem;background:#fafcfc;border:1px dashed var(--line);border-radius:12px;padding:16px;text-align:center;line-height:1.5}
+    .backlink{background:none;border:none;color:var(--brand-mid);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-top:14px}
+    /* Cartões de pedido (lista de requisições) */
+    .req-card{border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;margin-bottom:14px;background:#fff}
+    .req-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .req-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:1.05rem}
+    .req-meta{font-size:.8rem;color:var(--muted);margin-top:2px}
+    .req-msg{font-size:.9rem;color:var(--ink);background:#fafcfc;border-left:3px solid var(--accent);border-radius:8px;padding:9px 12px;margin:11px 0;line-height:1.5}
+    .req-deliveries{margin-top:6px}
+    .req-deliveries .dl{margin-bottom:8px}
+    .req-deliveries .empty{padding:12px;font-size:.85rem}
   </style>
 </head>
 <body>
@@ -210,23 +219,8 @@
       });
     });
 
-    function mostrarResultado(d){
-      var p = d.pedido || {};
-      var entrega = d.entrega;
-      var stClass = 'st-' + (p.status || 'new');
-
+    function entregasHtml(entrega){
       var html = '';
-      html += '<span class="status-pill '+stClass+'"><span class="d"></span>'+esc(p.estado)+'</span>';
-      html += '<h1>Olá'+(p.nome?', '+esc(p.nome.split(' ')[0]):'')+' 👋</h1>';
-      html += '<p class="sub">Este é o resumo do seu pedido na Cari Tech Graphic.</p>';
-
-      html += '<div class="info">';
-      if (p.servico) html += '<div class="row"><span>Serviço</span><span>'+esc(p.servico)+'</span></div>';
-      if (p.data)    html += '<div class="row"><span>Data do pedido</span><span>'+esc(fmtData(p.data))+'</span></div>';
-      html += '<div class="row"><span>Estado</span><span>'+esc(p.estado)+'</span></div>';
-      html += '</div>';
-
-      html += '<h2>As suas entregas</h2>';
       if (entrega && entrega.entregas && entrega.entregas.length) {
         if (entrega.msg) html += '<div class="deliver-msg">'+esc(entrega.msg)+'</div>';
         entrega.entregas.forEach(function(it){
@@ -240,10 +234,45 @@
           html += '</a>';
         });
       } else {
-        html += '<div class="empty">Ainda não há entregas disponíveis. Assim que o seu trabalho estiver pronto, ele aparecerá aqui — e você será notificado.</div>';
+        html += '<div class="empty">Ainda sem entregas. Assim que este trabalho estiver pronto, aparece aqui — e será notificado.</div>';
+      }
+      return html;
+    }
+
+    function mostrarResultado(d){
+      // Compatível com resposta antiga (um pedido) e nova (lista de pedidos).
+      var pedidos = d.pedidos || (d.pedido ? [{
+        servico:d.pedido.servico, mensagem:d.pedido.mensagem, data:d.pedido.data,
+        status:d.pedido.status, estado:d.pedido.estado, entrega:d.entrega
+      }] : []);
+      var cliente = d.cliente || d.pedido || {};
+      var primeiroNome = (cliente.nome || '').split(' ')[0];
+
+      var html = '';
+      html += '<h1>Olá'+(primeiroNome?', '+esc(primeiroNome):'')+' 👋</h1>';
+      html += '<p class="sub">'+(pedidos.length>1
+        ? 'Aqui estão os seus '+pedidos.length+' pedidos na Cari Tech Graphic.'
+        : 'Este é o resumo do seu pedido na Cari Tech Graphic.')+'</p>';
+
+      if (!pedidos.length) {
+        html += '<div class="empty">Ainda não encontrámos pedidos associados a esta conta.</div>';
       }
 
-      html += '<button class="backlink" onclick="try{sessionStorage.removeItem(\'ctg_cli\')}catch(e){};location.href=\'entrar.html\'">← Consultar outro pedido</button>';
+      pedidos.forEach(function(p, i){
+        var stClass = 'st-' + (p.status || 'new');
+        var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
+        html += '<div class="req-card">';
+        html += '  <div class="req-head">';
+        html += '    <div class="req-title">'+esc(p.servico || 'Pedido')+'</div>';
+        html += '    <span class="status-pill '+stClass+'"><span class="d"></span>'+esc(p.estado)+'</span>';
+        html += '  </div>';
+        html += '  <div class="req-meta">'+(p.data?esc(fmtData(p.data)):'')+(temEntrega?' · <b style="color:var(--ok)">entregue</b>':'')+'</div>';
+        if (p.mensagem) html += '  <div class="req-msg">'+esc(p.mensagem)+'</div>';
+        html += '  <div class="req-deliveries">'+entregasHtml(p.entrega)+'</div>';
+        html += '</div>';
+      });
+
+      html += '<button class="backlink" onclick="try{sessionStorage.removeItem(\'ctg_cli\')}catch(e){};location.href=\'entrar.html\'">← Sair / consultar outra conta</button>';
 
       document.getElementById('loginView').style.display = 'none';
       var rv = document.getElementById('resultView');
