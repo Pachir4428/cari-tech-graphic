@@ -52,6 +52,14 @@ if ($email === '' || $codigo === '') {
     responder(false, ['message' => 'Indique o e-mail e o código de acesso.'], 422);
 }
 
+/* Anti-força-bruta: limita tentativas de código por IP (10 em 15 min). */
+$rlChave = 'cliente:' . ctg_client_ip();
+$rl = store_rate_status($config, $rlChave, 10, 900);
+if ($rl['bloqueado']) {
+    $min = (int) ceil($rl['restam'] / 60);
+    responder(false, ['message' => "Demasiadas tentativas. Tente novamente dentro de {$min} min."], 429);
+}
+
 /* Recolhe TODOS os pedidos deste e-mail e confirma que o código pertence a
    pelo menos um deles (prova de posse do e-mail — o código foi enviado para lá). */
 $doCliente = [];
@@ -67,9 +75,12 @@ foreach (store_get_leads($config) as $l) {
 }
 
 if (!$doCliente || !$codigoValido) {
+    store_rate_falha($config, $rlChave, 900);
     usleep(600000);
     responder(false, ['message' => 'E-mail ou código incorrectos. Confirme os dados do e-mail de confirmação.'], 401);
 }
+/* Sucesso: limpa o contador deste IP. */
+store_rate_limpar($config, $rlChave);
 
 /* -------------------------------------------------------------------------- */
 /* Comentário do cliente numa entrega/pedido                                  */

@@ -123,17 +123,33 @@ function email_notificacao_html($config, $opts) {
     $codigo  = htmlspecialchars($opts['codigo'] ?? '', ENT_QUOTES);
     $rawEmail= (string) ($opts['email'] ?? '');
     $email   = htmlspecialchars($rawEmail, ENT_QUOTES);
-    $isEntrega = ($opts['tipo'] ?? 'entrega') === 'entrega';
+    $tipo      = $opts['tipo'] ?? 'entrega';
+    $isEntrega = $tipo === 'entrega';
+    $isPago    = $tipo === 'pago';
     $helpMail= htmlspecialchars($config['to_email'] ?? '', ENT_QUOTES);
 
     $areaUrl = ($site !== '' ? $site . '/' : '') . 'cliente.html?email=' . rawurlencode($rawEmail)
              . '&codigo=' . rawurlencode((string) ($opts['codigo'] ?? ''));
-    $titulo  = $isEntrega ? 'Tem uma nova entrega' : 'Nova resposta do estúdio';
-    $icone   = $isEntrega ? '&#9660;' : '&#9993;'; // seta p/ baixo / envelope
-    $intro   = $isEntrega
-        ? ('O seu pedido' . ($servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '') . ' tem uma nova entrega disponível na sua Área de Cliente.')
-        : ('A equipa da ' . $marca . ' respondeu ao seu pedido' . ($servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '') . '.');
-    $rotuloTexto = $isEntrega ? 'Mensagem do estúdio' : 'Resposta';
+    if ($isPago) {
+        $titulo = 'Pagamento confirmado';
+        $icone  = '&#10003;'; // visto
+        $intro  = 'O pagamento do seu pedido' . ($servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '')
+                . ' foi confirmado. Os seus ficheiros já estão <strong>disponíveis para descarregar</strong> (sem marca de água) na Área de Cliente.';
+        $rotuloTexto = 'Mensagem do estúdio';
+        $btnLabel = 'Descarregar os meus ficheiros';
+    } elseif ($isEntrega) {
+        $titulo = 'Tem uma nova entrega';
+        $icone  = '&#9660;'; // seta p/ baixo
+        $intro  = 'O seu pedido' . ($servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '') . ' tem uma nova entrega disponível na sua Área de Cliente.';
+        $rotuloTexto = 'Mensagem do estúdio';
+        $btnLabel = 'Ver a minha entrega';
+    } else {
+        $titulo = 'Nova resposta do estúdio';
+        $icone  = '&#9993;'; // envelope
+        $intro  = 'A equipa da ' . $marca . ' respondeu ao seu pedido' . ($servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '') . '.';
+        $rotuloTexto = 'Resposta';
+        $btnLabel = 'Ver e responder';
+    }
 
     $logoImg = '';
     if ($site !== '' && !empty($opts['logo'])) {
@@ -173,7 +189,7 @@ function email_notificacao_html($config, $opts) {
     <tr><td align="center" style="padding:26px 30px 6px;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
         <td align="center" style="border-radius:999px;background:#e8792f;">
-          <a href="<?= $areaUrl ?>" style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;"><?= $isEntrega ? 'Ver a minha entrega' : 'Ver e responder' ?></a>
+          <a href="<?= $areaUrl ?>" style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;"><?= $btnLabel ?></a>
         </td>
       </tr></table>
     </td></tr>

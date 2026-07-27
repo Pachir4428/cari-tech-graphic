@@ -347,6 +347,59 @@ function store_add_update_log($config, $entry) {
     return $log;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Limitação de tentativas (anti-força-bruta) para os logins.                 */
+/* Guarda, por chave (ex.: "login:IP"), as datas das últimas falhas dentro de */
+/* uma janela de tempo. Ao exceder o máximo, o acesso fica bloqueado até que  */
+/* a janela expire. Em sucesso, a chave é limpa.                              */
+/* -------------------------------------------------------------------------- */
+function ctg_client_ip() {
+    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $k) {
+        if (!empty($_SERVER[$k])) {
+            $ip = trim(explode(',', $_SERVER[$k])[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+        }
+    }
+    return '0.0.0.0';
+}
+function _rate_all($config)          { $v = _meta_get($config, 'ratelimit', 'ratelimit.json'); return is_array($v) ? $v : []; }
+function _rate_key($chave)           { return substr(hash('sha256', $chave), 0, 24); }
+/* Estado actual: ['bloqueado'=>bool, 'restam'=>seg, 'tentativas'=>int]. */
+function store_rate_status($config, $chave, $max = 8, $janela = 900) {
+    $todas = _rate_all($config);
+    $k = _rate_key($chave);
+    $agora = time();
+    $marcas = array_values(array_filter($todas[$k] ?? [], fn($t) => ($agora - (int) $t) < $janela));
+    $tentativas = count($marcas);
+    if ($tentativas >= $max) {
+        $restam = $janela - ($agora - (int) min($marcas));
+        return ['bloqueado' => true, 'restam' => max(1, $restam), 'tentativas' => $tentativas];
+    }
+    return ['bloqueado' => false, 'restam' => 0, 'tentativas' => $tentativas];
+}
+/* Regista uma falha (e limpa entradas antigas/outras chaves expiradas). */
+function store_rate_falha($config, $chave, $janela = 900) {
+    $todas = _rate_all($config);
+    $k = _rate_key($chave);
+    $agora = time();
+    $marcas = array_values(array_filter($todas[$k] ?? [], fn($t) => ($agora - (int) $t) < $janela));
+    $marcas[] = $agora;
+    if (count($marcas) > 50) $marcas = array_slice($marcas, -50);
+    $todas[$k] = $marcas;
+    /* Poda chaves totalmente expiradas para o ficheiro não crescer sem limite. */
+    foreach ($todas as $kk => $lista) {
+        $vivos = array_filter($lista, fn($t) => ($agora - (int) $t) < $janela);
+        if (!$vivos) unset($todas[$kk]); else $todas[$kk] = array_values($vivos);
+    }
+    _meta_set($config, 'ratelimit', 'ratelimit.json', $todas);
+}
+/* Limpa a chave após um sucesso. */
+function store_rate_limpar($config, $chave) {
+    $todas = _rate_all($config);
+    $k = _rate_key($chave);
+    if (isset($todas[$k])) { unset($todas[$k]); _meta_set($config, 'ratelimit', 'ratelimit.json', $todas); }
+}
+
 /* Adiciona um comentário a um pedido (cliente ou estúdio). Cria a entrada de
    entrega se ainda não existir. Devolve a lista actualizada de comentários. */
 function store_add_comment($config, $leadId, $comentario) {

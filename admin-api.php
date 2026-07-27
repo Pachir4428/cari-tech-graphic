@@ -87,7 +87,10 @@ function ctg_notificar_cliente($config, $lead, $tipo, $texto) {
     $nome    = (string) ($lead['nome'] ?? '');
     $site    = rtrim((string) ($config['site_url'] ?? ''), '/');
 
-    if ($tipo === 'entrega') {
+    if ($tipo === 'pago') {
+        $assunto = 'Pagamento confirmado — ficheiros disponíveis — Cari Tech Graphic';
+        $corpo  = "Olá {$nome},\n\nO pagamento do seu pedido" . ($servico !== '' ? " de {$servico}" : '') . " foi confirmado. Os seus ficheiros já estão disponíveis para descarregar (sem marca de água) na Área de Cliente.\n";
+    } elseif ($tipo === 'entrega') {
         $assunto = 'Nova entrega disponível — Cari Tech Graphic';
         $corpo  = "Olá {$nome},\n\nO seu pedido" . ($servico !== '' ? " de {$servico}" : '') . " tem uma nova entrega disponível.\n";
     } else {
@@ -451,8 +454,16 @@ switch ($action) {
         $leadId = (string) ($body['leadId'] ?? '');
         $estado = (string) ($body['pago'] ?? 'nao');
         if ($leadId === '') responder(false, ['message' => 'Lead em falta.'], 422);
+        $anterior = store_get_delivery($config, $leadId);
+        $estadoAnt = $anterior['pago'] ?? 'nao';
         $novo = store_set_pagamento($config, $leadId, $estado);
-        responder(true, ['message' => 'Pagamento actualizado.', 'pago' => $novo]);
+        // Ao passar para "pago" (e só na transição), avisa o cliente que já pode descarregar.
+        $notificado = false;
+        if ($novo === 'pago' && $estadoAnt !== 'pago') {
+            $leadP = ctg_lead_por_id($config, $leadId);
+            if ($leadP) $notificado = ctg_notificar_cliente($config, $leadP, 'pago', '');
+        }
+        responder(true, ['message' => 'Pagamento actualizado.', 'pago' => $novo, 'notified' => $notificado]);
 
     case 'upload-file':
         exigir_login();

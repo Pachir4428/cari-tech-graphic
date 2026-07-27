@@ -49,10 +49,17 @@ foreach (store_get_leads($config) as $l) {
     $doCliente[$l['id'] ?? ''] = $l;
     if (strtoupper(trim((string) ($l['codigo'] ?? ''))) === $codigo && $codigo !== '') $codigoValido = true;
 }
+$rlChave = 'demo:' . ctg_client_ip();
+$rl = store_rate_status($config, $rlChave, 15, 900);
+if ($rl['bloqueado']) {
+    _demo_fim(429, 'Demasiadas tentativas. Tente novamente mais tarde.');
+}
 if (!$codigoValido || !isset($doCliente[$leadId])) {
+    store_rate_falha($config, $rlChave, 900);
     usleep(500000);
     _demo_fim(403, 'Acesso negado.');
 }
+store_rate_limpar($config, $rlChave);
 
 /* O ficheiro tem mesmo de pertencer à entrega deste pedido. */
 $entrega = store_get_delivery($config, $leadId);

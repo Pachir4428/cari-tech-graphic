@@ -4,7 +4,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 `cari-tech-graphic-1.0.0.zip`, `cari-tech-graphic-1.0.1.zip`, etc.
 **Use sempre o de número mais alto.**
 
-> Versão actual: **1.5.0** — a mesma que aparece no canto do painel de administração.
+> Versão actual: **1.5.1** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
@@ -26,6 +26,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 
 | Versão | Alterações |
 |--------|------------|
+| **1.5.1** | **E-mail automático ao confirmar pagamento:** ao marcar um pedido como **Pago** no painel, o cliente recebe um e-mail (com o visual da marca) a avisar que os ficheiros já estão disponíveis para descarregar, com botão directo para a Área de Cliente. **Proteção anti-força-bruta nos logins:** o acesso fica temporariamente bloqueado (por IP) após demasiadas tentativas falhadas — no login unificado (8 tentativas/15 min), na Área de Cliente e no acesso às demos. |
 | **1.5.0** | **Demos com marca de água + desbloqueio por pagamento:** os ficheiros de entrega deixam de ser públicos e passam a ser servidos só por `demo.php` (com verificação de dono). Enquanto o pedido não estiver **Pago**, as **imagens** aparecem ao cliente como pré-visualização com **marca de água** (não descarregáveis) e os outros ficheiros ficam **bloqueados**; ao marcar **Pago** no painel (Entregar → Estado de pagamento: Por pagar / Parcial / Pago) a descarga é habilitada. **Upload pelo cliente:** em cada pedido, o cliente pode **enviar ficheiros** (brief/referências, até 15 MB) que o estúdio vê na janela de Entrega. **Finanças com filtro por período** (Tudo / este mês / últimos 3 meses / este ano / personalizado) **e por quantidade** (últimos N movimentos), com contador "a mostrar X de Y". **Histórico de atualizações do site** (Definições → Atualizar o site): fica registada a data, o nome do ZIP e o nº de ficheiros de cada actualização. |
 | **1.4.1** | Módulo de **Finanças** ganha **gráfico** de Entradas vs Saídas por mês e **exportação em CSV** dos movimentos. |
 | **1.4.0** | **Módulo de Finanças** (só admin) — registe entradas/saídas e veja o saldo. **Relatório de leads** em CSV (Excel/Sheets) e **contagem de pedidos por serviço**. **Página de erro 404** nova e bonita. **SMTP no painel** (Definições → E-mail) com guia de como obter a palavra-passe no hPanel. Na **Área de Cliente**: formulário de **contacto** interno (sem sair do painel) e os **serviços ilustrados** com imagem. |

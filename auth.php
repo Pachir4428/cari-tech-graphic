@@ -104,8 +104,17 @@ if ($action === 'login') {
         responder(false, ['message' => 'Preencha os dois campos.'], 422);
     }
 
+    /* Anti-força-bruta: bloqueia após 8 tentativas falhadas por IP em 15 min. */
+    $rlChave = 'login:' . ctg_client_ip();
+    $rl = store_rate_status($config, $rlChave, 8, 900);
+    if ($rl['bloqueado']) {
+        $min = (int) ceil($rl['restam'] / 60);
+        responder(false, ['message' => "Demasiadas tentativas. Tente novamente dentro de {$min} min."], 429);
+    }
+
     /* 1) É administrador? (utilizador + palavra-passe) */
     if (admin_ok($config, $id, $secret)) {
+        store_rate_limpar($config, $rlChave);
         session_regenerate_id(true);
         $_SESSION['ctg_admin'] = true;
         $_SESSION['ctg_last'] = time();
@@ -115,12 +124,14 @@ if ($action === 'login') {
     /* 2) É cliente? (e-mail + código do pedido) */
     $lead = cliente_por_email($config, $id);
     if ($lead && strtoupper(trim((string) ($lead['codigo'] ?? ''))) === strtoupper(trim($secret)) && trim($secret) !== '') {
+        store_rate_limpar($config, $rlChave);
         responder(true, [
             'role' => 'client', 'redirect' => 'cliente.html',
             'email' => $lead['email'] ?? '', 'codigo' => $lead['codigo'] ?? '',
         ]);
     }
 
+    store_rate_falha($config, $rlChave, 900);
     usleep(600000);
     responder(false, ['message' => 'Credenciais incorrectas. Use o seu utilizador/palavra-passe (admin) ou o e-mail + código do pedido (cliente).'], 401);
 }
