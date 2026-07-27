@@ -446,6 +446,14 @@ switch ($action) {
         $notificado = $leadC ? ctg_notificar_cliente($config, $leadC, 'resposta', $texto) : false;
         responder(true, ['message' => 'Comentário enviado.', 'comentarios' => $comentarios, 'notified' => $notificado]);
 
+    case 'lead-pago':
+        exigir_login();
+        $leadId = (string) ($body['leadId'] ?? '');
+        $estado = (string) ($body['pago'] ?? 'nao');
+        if ($leadId === '') responder(false, ['message' => 'Lead em falta.'], 422);
+        $novo = store_set_pagamento($config, $leadId, $estado);
+        responder(true, ['message' => 'Pagamento actualizado.', 'pago' => $novo]);
+
     case 'upload-file':
         exigir_login();
         $r = guardar_ficheiro_entrega($_FILES['file'] ?? null, 25);
@@ -477,13 +485,16 @@ switch ($action) {
             }
         }
         $anterior = store_get_delivery($config, $leadId);
+        $pagoIn = (string) ($body['pago'] ?? ($anterior['pago'] ?? 'nao'));
         $entrega = [
             'leadId'      => $leadId,
             'msg'         => trim((string) ($body['msg'] ?? '')),
             'entregas'    => $limpos,
             'entregue'    => !empty($limpos),
             'data'        => date('c'),
+            'pago'        => in_array($pagoIn, ['nao', 'parcial', 'pago'], true) ? $pagoIn : 'nao',
             'comentarios' => ($anterior && !empty($anterior['comentarios'])) ? $anterior['comentarios'] : [],
+            'cliente_ficheiros' => ($anterior && !empty($anterior['cliente_ficheiros'])) ? $anterior['cliente_ficheiros'] : [],
         ];
         if (!store_set_delivery($config, $leadId, $entrega)) {
             responder(false, ['message' => 'Falha ao guardar a entrega.'], 500);
@@ -510,7 +521,16 @@ switch ($action) {
         }
         $resultado = atualizar_por_zip(__DIR__, $_FILES['zip']['tmp_name']);
         if (!$resultado['ok']) responder(false, ['message' => $resultado['message']], 500);
+        store_add_update_log($config, [
+            'data'    => date('c'),
+            'count'   => (int) $resultado['count'],
+            'ficheiro'=> (string) ($_FILES['zip']['name'] ?? ''),
+        ]);
         responder(true, ['message' => "Site actualizado. {$resultado['count']} ficheiro(s) actualizado(s).", 'count' => $resultado['count']]);
+
+    case 'update-log':
+        exigir_login();
+        responder(true, ['log' => store_get_update_log($config)]);
 
     default:
         responder(false, ['message' => 'Acção desconhecida.'], 400);

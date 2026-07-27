@@ -309,6 +309,44 @@ function store_get_delivery($config, $leadId) {
     return $todas[$leadId] ?? null;
 }
 
+/* Garante que existe a entrada de entrega de um lead e devolve todas. */
+function _entrega_slot(&$todas, $leadId) {
+    if (!isset($todas[$leadId]) || !is_array($todas[$leadId])) {
+        $todas[$leadId] = ['leadId' => $leadId, 'entregas' => [], 'msg' => '', 'entregue' => false];
+    }
+}
+
+/* Ficheiro carregado pelo CLIENTE num pedido (brief, referências…). */
+function store_add_cliente_ficheiro($config, $leadId, $ficheiro) {
+    $todas = store_get_deliveries($config);
+    _entrega_slot($todas, $leadId);
+    if (empty($todas[$leadId]['cliente_ficheiros']) || !is_array($todas[$leadId]['cliente_ficheiros'])) {
+        $todas[$leadId]['cliente_ficheiros'] = [];
+    }
+    $todas[$leadId]['cliente_ficheiros'][] = $ficheiro;
+    store_set_deliveries($config, $todas);
+    return $todas[$leadId]['cliente_ficheiros'];
+}
+
+/* Estado de pagamento de um pedido: 'nao' | 'parcial' | 'pago'. */
+function store_set_pagamento($config, $leadId, $estado) {
+    $todas = store_get_deliveries($config);
+    _entrega_slot($todas, $leadId);
+    $todas[$leadId]['pago'] = in_array($estado, ['nao', 'parcial', 'pago'], true) ? $estado : 'nao';
+    store_set_deliveries($config, $todas);
+    return $todas[$leadId]['pago'];
+}
+
+/* Registo (log) das actualizações do site por ZIP. */
+function store_get_update_log($config)    { $v = _meta_get($config, 'update_log', 'update_log.json'); return is_array($v) ? $v : []; }
+function store_add_update_log($config, $entry) {
+    $log = store_get_update_log($config);
+    array_unshift($log, $entry);
+    if (count($log) > 50) $log = array_slice($log, 0, 50);
+    _meta_set($config, 'update_log', 'update_log.json', $log);
+    return $log;
+}
+
 /* Adiciona um comentário a um pedido (cliente ou estúdio). Cria a entrada de
    entrega se ainda não existir. Devolve a lista actualizada de comentários. */
 function store_add_comment($config, $leadId, $comentario) {

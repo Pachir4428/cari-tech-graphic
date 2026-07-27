@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=111" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=111" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=111" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=112" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=112" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=112" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -415,7 +415,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.4.1';
+    const APP_VERSION = '1.5.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -771,6 +771,9 @@
       const [busy, setBusy] = useState(false);
       const [msg, setMsg] = useState(null);
       const [file, setFile] = useState(null);
+      const [log, setLog] = useState(null);
+      const loadLog = () => api('update-log').then((r) => { if (r.ok) setLog(r.log || []); else setLog([]); });
+      useEffect(() => { loadLog(); }, []);
       const submit = async () => {
         if (!file) return;
         if (!window.confirm(AT('updConfirm'))) return;
@@ -779,7 +782,7 @@
         const r = await apiUpload('update-zip', fd);
         setBusy(false);
         setMsg(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.message || AT('updError') });
-        if (r.ok) setFile(null);
+        if (r.ok) { setFile(null); loadLog(); }
       };
       return (
         <div className="admin-panel" style={{marginBottom:16}}>
@@ -796,6 +799,30 @@
           <Aviso msg={msg} />
           <div style={{marginTop:12,background:'#fff8e6',border:'1px solid #ffe08a',borderRadius:10,padding:'10px 14px',fontSize:12.5,color:'#7a5b00'}}>
             {AT('updTip')}
+          </div>
+          <div style={{marginTop:16,borderTop:'1px solid var(--line)',paddingTop:14}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+              <h3 style={{margin:0,fontSize:14,display:'flex',alignItems:'center',gap:8}}><FA name="clock-rotate-left" s={13} /> {AT('updLogTitle')}</h3>
+              {log && log.length > 0 && <span style={{fontSize:12,color:'var(--ink-muted)'}}>{log.length}</span>}
+            </div>
+            {log === null ? (
+              <p style={{color:'var(--ink-muted)',fontSize:13}}>{AT('loading')}</p>
+            ) : log.length === 0 ? (
+              <div style={{border:'1px dashed var(--line)',borderRadius:10,padding:'16px',textAlign:'center',color:'var(--ink-muted)',fontSize:13}}>{AT('updLogEmpty')}</div>
+            ) : (
+              <div style={{display:'grid',gap:8}}>
+                {log.map((e, i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:11,padding:'9px 12px',border:'1px solid var(--line)',borderRadius:10,fontSize:13}}>
+                    <span style={{width:32,height:32,flex:'none',borderRadius:8,display:'grid',placeItems:'center',background:'var(--bg-soft)',color:'var(--accent)'}}><FA name="box-open" s={13} /></span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{e.ficheiro || 'ZIP'}</div>
+                      <div style={{fontSize:11.5,color:'var(--ink-muted)'}}>{fmtData(e.data)}</div>
+                    </div>
+                    <span style={{fontSize:12,fontWeight:700,color:'var(--success)',whiteSpace:'nowrap'}}>{(e.count || 0)} {AT('updLogFiles')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       );
@@ -1023,8 +1050,31 @@
       const [list, setList] = useState(null);
       const [busy, setBusy] = useState(false);
       const [msg, setMsg] = useState(null);
-      useEffect(() => { api('financas').then((r) => { if (r.ok) setList(r.financas || []); else setList([]); }); }, []);
-      const L = list || [];
+      const [periodo, setPeriodo] = useState('all'); // all | mes | 3meses | ano | custom
+      const [de, setDe] = useState('');
+      const [ate, setAte] = useState('');
+      const [limite, setLimite] = useState(0);        // 0 = todos; N = últimos N movimentos
+      useEffect(() => {
+        api('financas').then((r) => {
+          const arr = (r.ok ? (r.financas || []) : []).map((m, i) => (m.id ? m : { ...m, id: 'f' + i + '-' + Date.now() }));
+          setList(arr);
+        });
+      }, []);
+      // Filtro por período (e por quantidade) aplicado a KPIs, gráfico, exportação e tabela.
+      const noPeriodo = (m) => {
+        const d = (m.data || '');
+        if (periodo === 'custom') { if (de && d < de) return false; if (ate && d > ate) return false; return true; }
+        if (periodo === 'all') return true;
+        if (!/^\d{4}-\d{2}/.test(d)) return false;
+        const hoje = new Date();
+        if (periodo === 'mes') return d.slice(0, 7) === hoje.toISOString().slice(0, 7);
+        if (periodo === 'ano') return d.slice(0, 4) === String(hoje.getFullYear());
+        if (periodo === '3meses') { const lim = new Date(hoje); lim.setMonth(lim.getMonth() - 3); return new Date(d) >= lim; }
+        return true;
+      };
+      let L = (list || []).filter(noPeriodo);
+      if (limite > 0) L = [...L].sort((a, b) => String(b.data).localeCompare(String(a.data))).slice(0, limite);
+      const totalRaw = (list || []).length;
       const totais = L.reduce((a, m) => {
         const v = parseFloat(String(m.valor).replace(',', '.')) || 0;
         if (m.tipo === 'saida') a.saidas += v; else a.entradas += v;
@@ -1060,19 +1110,46 @@
         a.download = 'financas-cari-tech-' + new Date().toISOString().slice(0, 10) + '.csv';
         document.body.appendChild(a); a.click(); a.remove();
       };
-      const upd = (i, k, v) => setList((x) => x.map((m, idx) => idx === i ? { ...m, [k]: v } : m));
+      const upd = (id, k, v) => setList((x) => x.map((m) => m.id === id ? { ...m, [k]: v } : m));
       const add = () => setList((x) => [{ id: 'n' + Date.now(), data: new Date().toISOString().slice(0, 10), desc: '', tipo: 'entrada', valor: '', categoria: '' }, ...(x || [])]);
-      const del = (i) => setList((x) => x.filter((_, idx) => idx !== i));
+      const del = (id) => setList((x) => x.filter((m) => m.id !== id));
       const save = async () => {
         setBusy(true); setMsg(null);
-        const r = await api('financas-save', 'POST', { financas: L });
+        const r = await api('financas-save', 'POST', { financas: list || [] });
         setBusy(false);
-        if (r.ok) { setList(r.financas || []); setMsg({ ok: true, text: AT('finSaved') }); }
+        if (r.ok) { setList((r.financas || []).map((m, i) => (m.id ? m : { ...m, id: 'f' + i + '-' + Date.now() }))); setMsg({ ok: true, text: AT('finSaved') }); }
         else setMsg({ ok: false, text: r.message || AT('genErr') });
       };
       if (list === null) return <div className="admin-panel"><p style={{color:'var(--ink-muted)'}}>{T_loading()}</p></div>;
       return (
         <>
+          <div className="admin-panel" style={{marginBottom:16,display:'flex',alignItems:'flex-end',gap:14,flexWrap:'wrap'}}>
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-muted)',marginBottom:6}}><FA name="calendar-days" s={12} /> {AT('finPeriod')}</label>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {[['all','finPall'],['mes','finPmes'],['3meses','finP3'],['ano','finPano'],['custom','finPcustom']].map(([v,k]) => (
+                  <button key={v} type="button" onClick={() => setPeriodo(v)}
+                    style={{padding:'7px 12px',borderRadius:8,fontSize:12.5,fontWeight:600,cursor:'pointer',
+                      border: periodo===v ? '1.5px solid var(--accent)' : '1px solid var(--line)',
+                      background: periodo===v ? 'var(--accent)' : 'var(--card,#fff)', color: periodo===v ? '#fff' : 'var(--ink)'}}>{AT(k)}</button>
+                ))}
+              </div>
+            </div>
+            {periodo === 'custom' && (
+              <div style={{display:'flex',gap:10,alignItems:'flex-end'}}>
+                <div><label style={{display:'block',fontSize:11,color:'var(--ink-muted)',marginBottom:6}}>{AT('finFrom')}</label><input type="date" value={de} onChange={(e) => setDe(e.target.value)} style={fInput} /></div>
+                <div><label style={{display:'block',fontSize:11,color:'var(--ink-muted)',marginBottom:6}}>{AT('finTo')}</label><input type="date" value={ate} onChange={(e) => setAte(e.target.value)} style={fInput} /></div>
+              </div>
+            )}
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-muted)',marginBottom:6}}><FA name="list-ol" s={12} /> {AT('finQty')}</label>
+              <select value={limite} onChange={(e) => setLimite(parseInt(e.target.value, 10))} style={fInput}>
+                <option value={0}>{AT('finQtyAll')}</option>
+                <option value={10}>10</option><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option>
+              </select>
+            </div>
+            <div style={{marginLeft:'auto',fontSize:12,color:'var(--ink-muted)',fontWeight:600}}>{AT('finShowing').replace('{n}', L.length).replace('{t}', totalRaw)}</div>
+          </div>
           <div className="kpi-row" style={{marginBottom:16}}>
             <div className="kpi"><div className="kpi-ico" style={{color:'var(--success)'}}><FA name="arrow-trend-up" s={17} /></div><div className="kpi-label">{AT('finIncome')}</div><div className="kpi-num" style={{fontSize:22}}>{fmt(totais.entradas)}</div></div>
             <div className="kpi"><div className="kpi-ico" style={{color:'var(--danger,#e5484d)'}}><FA name="arrow-trend-down" s={17} /></div><div className="kpi-label">{AT('finExpense')}</div><div className="kpi-num" style={{fontSize:22}}>{fmt(totais.saidas)}</div></div>
@@ -1119,16 +1196,16 @@
                   <tbody>
                     {L.map((m, i) => (
                       <tr key={m.id || i}>
-                        <td><input type="date" value={m.data || ''} onChange={(e) => upd(i, 'data', e.target.value)} style={fInput} /></td>
-                        <td><input value={m.desc || ''} onChange={(e) => upd(i, 'desc', e.target.value)} placeholder="—" style={{...fInput, minWidth:160}} /></td>
-                        <td><input value={m.categoria || ''} onChange={(e) => upd(i, 'categoria', e.target.value)} placeholder="—" style={{...fInput, width:120}} /></td>
+                        <td><input type="date" value={m.data || ''} onChange={(e) => upd(m.id, 'data', e.target.value)} style={fInput} /></td>
+                        <td><input value={m.desc || ''} onChange={(e) => upd(m.id, 'desc', e.target.value)} placeholder="—" style={{...fInput, minWidth:160}} /></td>
+                        <td><input value={m.categoria || ''} onChange={(e) => upd(m.id, 'categoria', e.target.value)} placeholder="—" style={{...fInput, width:120}} /></td>
                         <td>
-                          <select value={m.tipo || 'entrada'} onChange={(e) => upd(i, 'tipo', e.target.value)} style={{...fInput, fontWeight:600, color: m.tipo === 'saida' ? 'var(--danger,#e5484d)' : 'var(--success)'}}>
+                          <select value={m.tipo || 'entrada'} onChange={(e) => upd(m.id, 'tipo', e.target.value)} style={{...fInput, fontWeight:600, color: m.tipo === 'saida' ? 'var(--danger,#e5484d)' : 'var(--success)'}}>
                             <option value="entrada">{AT('finIncomeOpt')}</option><option value="saida">{AT('finExpenseOpt')}</option>
                           </select>
                         </td>
-                        <td><input value={m.valor} onChange={(e) => upd(i, 'valor', e.target.value)} placeholder="0.00" style={{...fInput, width:110, textAlign:'right'}} /></td>
-                        <td><button className="ra-btn danger" onClick={() => del(i)}><Trash s={12} /></button></td>
+                        <td><input value={m.valor} onChange={(e) => upd(m.id, 'valor', e.target.value)} placeholder="0.00" style={{...fInput, width:110, textAlign:'right'}} /></td>
+                        <td><button className="ra-btn danger" onClick={() => del(m.id)}><Trash s={12} /></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -1207,6 +1284,7 @@
         updConfirm:'Atualizar o site com este ZIP? Os ficheiros serão substituídos. config.php, a pasta dados/ e uploads/ são preservados.',
         updating:'A atualizar…', btnUpdateSite:'Atualizar site', updError:'Erro ao atualizar.',
         updTip:'Dica: faça um backup (hPanel → Backups) antes de atualizar, por precaução.',
+        updLogTitle:'Histórico de atualizações', updLogEmpty:'Ainda não há atualizações registadas.', updLogFiles:'ficheiros',
         // Pagamentos
         payTitle:'Pagamentos (checkout)',
         payNote:'Métodos mostrados ao cliente ao finalizar o pedido. Active e preencha só os que usa. O link online pode ser um pagamento hospedado (ex.: PayPal, Stripe, Paysuite).',
@@ -1254,6 +1332,8 @@
         finAdd:'Adicionar movimento', finIncomeOpt:'Entrada', finExpenseOpt:'Saída',
         btnSaveFin:'Guardar finanças', finSaved:'Finanças guardadas.', finEmpty:'Sem movimentos. Clique em "Adicionar movimento".',
         finChart:'Entradas vs Saídas por mês', finExport:'Exportar CSV', finNoData:'Registe movimentos para ver o gráfico.',
+        finPeriod:'Período', finPall:'Tudo', finPmes:'Este mês', finP3:'Últimos 3 meses', finPano:'Este ano', finPcustom:'Personalizado',
+        finFrom:'De', finTo:'Até', finQty:'Quantidade', finQtyAll:'Todos', finShowing:'A mostrar {n} de {t} movimentos',
         // Relatórios
         downloadReport:'Descarregar relatório', thRequests:'Pedidos', svcReport:'Pedidos por serviço',
         // Login
@@ -1279,6 +1359,9 @@
         dlvSave:'Guardar entrega', dlvSaved:'Entrega guardada.', dlvNotify:'Notificar cliente', dlvOpenClient:'Abrir Área de Cliente',
         dlvDelivered:'Entregue', dlvPending:'Sem entrega', dlvErr:'Erro ao guardar a entrega.',
         dlvComments:'Comentários', dlvNoComments:'Sem comentários do cliente.', dlvReplyPh:'Responder ao cliente…',
+        dlvPay:'Estado de pagamento', dlvPayHint:'Enquanto não estiver «Pago», as imagens aparecem ao cliente com marca de água (demo) e as descargas ficam bloqueadas.',
+        payNao:'Por pagar', payParcial:'Parcial', payPago:'Pago',
+        dlvClientFiles:'Ficheiros enviados pelo cliente', dlvNoClientFiles:'O cliente ainda não enviou ficheiros.',
         dlvNotifyMsg:'Olá {nome}! O seu pedido na Cari Tech Graphic está pronto. Aceda às suas entregas em {url}/cliente.html — E-mail: {email} · Código: {codigo}',
         loading:'A carregar…', confirmDelLead:'Remover este lead? Esta acção não pode ser desfeita.',
         notifNewTitle:'Novo pedido de cliente', notifNewBody:'Recebeu um novo contacto.',
@@ -1344,6 +1427,7 @@
         updNote:'Upload a .zip with the new version. Files are replaced, but config.php, the dados/ folder (leads and content) and uploads/ (images/logo) are always preserved.',
         updConfirm:'Update the site with this ZIP? Files will be replaced. config.php, the dados/ folder and uploads/ are preserved.',
         updating:'Updating…', btnUpdateSite:'Update site', updError:'Update error.',
+        updLogTitle:'Update history', updLogEmpty:'No updates recorded yet.', updLogFiles:'files',
         updTip:'Tip: make a backup (hPanel → Backups) before updating, just in case.',
         // Payments
         payTitle:'Payments (checkout)',
@@ -1392,6 +1476,8 @@
         finAdd:'Add entry', finIncomeOpt:'Income', finExpenseOpt:'Expense',
         btnSaveFin:'Save finance', finSaved:'Finance saved.', finEmpty:'No entries. Click "Add entry".',
         finChart:'Income vs Expenses by month', finExport:'Export CSV', finNoData:'Add entries to see the chart.',
+        finPeriod:'Period', finPall:'All', finPmes:'This month', finP3:'Last 3 months', finPano:'This year', finPcustom:'Custom',
+        finFrom:'From', finTo:'To', finQty:'Quantity', finQtyAll:'All', finShowing:'Showing {n} of {t} entries',
         // Reports
         downloadReport:'Download report', thRequests:'Requests', svcReport:'Requests per service',
         // Login
@@ -1417,6 +1503,9 @@
         dlvSave:'Save delivery', dlvSaved:'Delivery saved.', dlvNotify:'Notify client', dlvOpenClient:'Open Client Area',
         dlvDelivered:'Delivered', dlvPending:'No delivery', dlvErr:'Error saving the delivery.',
         dlvComments:'Comments', dlvNoComments:'No comments from the client.', dlvReplyPh:'Reply to the client…',
+        dlvPay:'Payment status', dlvPayHint:'Until it is “Paid”, images are shown to the client with a watermark (demo) and downloads stay locked.',
+        payNao:'Unpaid', payParcial:'Partial', payPago:'Paid',
+        dlvClientFiles:'Files uploaded by the client', dlvNoClientFiles:'The client hasn\'t uploaded files yet.',
         dlvNotifyMsg:'Hi {nome}! Your request at Cari Tech Graphic is ready. Access your deliveries at {url}/cliente.html — Email: {email} · Code: {codigo}',
         loading:'Loading…', confirmDelLead:'Remove this lead? This action cannot be undone.',
         notifNewTitle:'New client request', notifNewBody:'You received a new contact.',
@@ -1461,6 +1550,7 @@
       const [dBusy, setDBusy] = useState(false);
       const [dSaved, setDSaved] = useState(false);
       const [dReply, setDReply] = useState('');
+      const [dPago, setDPago] = useState('nao');           // estado de pagamento: nao | parcial | pago
 
       // Tema (claro/escuro) e idioma do painel — persistidos no navegador.
       useEffect(() => { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('ctg_admin_theme', theme); }, [theme]);
@@ -1598,9 +1688,16 @@
       const openDeliver = (lead) => {
         const ex = deliveries[lead.id];
         setDForm({ msg: (ex && ex.msg) || '', entregas: (ex && ex.entregas) ? ex.entregas.map((e) => ({ ...e })) : [] });
+        setDPago((ex && ex.pago) || 'nao');
         setDSaved(false);
         setDReply('');
         setDelivering(lead);
+      };
+      // Actualiza o estado de pagamento (habilita/bloqueia descargas na Área de Cliente)
+      const dSetPago = async (estado) => {
+        setDPago(estado);
+        const r = await api('lead-pago', 'POST', { leadId: delivering.id, pago: estado });
+        if (r.ok) setDeliveries((d) => ({ ...d, [delivering.id]: { ...(d[delivering.id] || { leadId: delivering.id }), pago: estado } }));
       };
       const dUploadFile = async (file) => {
         if (!file) return;
@@ -1617,7 +1714,7 @@
       const dSave = async () => {
         const entregas = dForm.entregas.filter((e) => (e.url || '').trim());
         setDBusy(true);
-        const r = await api('lead-deliver', 'POST', { leadId: delivering.id, msg: dForm.msg, entregas });
+        const r = await api('lead-deliver', 'POST', { leadId: delivering.id, msg: dForm.msg, entregas, pago: dPago });
         setDBusy(false);
         if (r.ok) {
           setDeliveries((d) => ({ ...d, [delivering.id]: r.delivery }));
@@ -2163,6 +2260,21 @@
                   <div style={{fontSize:12,color:'var(--ink-muted)',marginTop:4}}>{T.dlvCodeHint}</div>
                 </div>
 
+                <div style={{marginBottom:16}}>
+                  <label style={{marginBottom:8,display:'block'}}><FA name="money-bill-wave" s={13} /> {T.dlvPay}</label>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                    {[['nao','lock','#c0392b'],['parcial','clock','#b9770e'],['pago','circle-check','#166c46']].map(([est,ic,cor]) => (
+                      <button key={est} type="button" onClick={() => dSetPago(est)}
+                        style={{flex:'1 1 90px',display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7,padding:'9px 10px',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',
+                          border: dPago===est ? `1.5px solid ${cor}` : '1px solid var(--line)',
+                          background: dPago===est ? cor : 'var(--card,#fff)', color: dPago===est ? '#fff' : 'var(--ink)'}}>
+                        <FA name={ic} s={12} /> {est==='nao'?T.payNao:(est==='parcial'?T.payParcial:T.payPago)}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{fontSize:11.5,color:'var(--ink-muted)',marginTop:6,lineHeight:1.45}}>{T.dlvPayHint}</div>
+                </div>
+
                 <div style={{display:'grid',gap:12}}>
                   <div className="field">
                     <label>{T.dlvMsg}</label>
@@ -2210,6 +2322,29 @@
                       </div>
                     )}
                   </div>
+
+                  {(() => {
+                    const cf = (deliveries[delivering.id] && deliveries[delivering.id].cliente_ficheiros) || [];
+                    return (
+                      <div style={{borderTop:'1px solid var(--line)',paddingTop:14}}>
+                        <label style={{marginBottom:8,display:'block'}}><FA name="paperclip" s={13} /> {T.dlvClientFiles} {cf.length ? `(${cf.length})` : ''}</label>
+                        {cf.length === 0 ? (
+                          <div style={{fontSize:13,color:'var(--ink-muted)'}}>{T.dlvNoClientFiles}</div>
+                        ) : (
+                          <div style={{display:'grid',gap:7}}>
+                            {cf.map((f, i) => (
+                              <a key={i} href={f.url} target="_blank" rel="noopener" download
+                                style={{display:'flex',alignItems:'center',gap:9,padding:'8px 11px',border:'1px solid var(--line)',borderRadius:9,fontSize:13,color:'var(--ink)'}}>
+                                <FA name="file-arrow-down" s={13} />
+                                <span style={{flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.nome || f.url}</span>
+                                <span style={{fontSize:11,color:'var(--ink-muted)'}}>{fmtData(f.data)}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {dSaved && (
                     <div style={{background:'#e9f8f0',border:'1px solid #b6e6cf',borderRadius:10,padding:'10px 14px',fontSize:13,color:'#166c46',fontWeight:600}}>

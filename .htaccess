@@ -27,6 +27,9 @@ DirectoryIndex index.html
 # --- Proteger a pasta de dados (leads.csv) ---------------------------------
 RedirectMatch 403 ^/dados/.*$
 
+# --- Entregas: acesso só através de demo.php (protecção por pagamento) ------
+RedirectMatch 403 ^/uploads/entregas/.*$
+
 # --- Segurança: cabeçalhos -------------------------------------------------
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"

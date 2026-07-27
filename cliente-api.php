@@ -35,12 +35,18 @@ if (!is_array($body)) $body = $_POST;
 
 $action = $_GET['action'] ?? 'deliverables';
 
-if (!in_array($action, ['deliverables', 'comment'], true)) {
+if (!in_array($action, ['deliverables', 'comment', 'upload'], true)) {
     responder(false, ['message' => 'Acção desconhecida.'], 400);
 }
 
-$email  = strtolower(trim((string) ($body['email'] ?? '')));
-$codigo = strtoupper(trim((string) ($body['codigo'] ?? '')));
+/* Upload usa multipart (POST normal), não JSON. */
+if ($action === 'upload') {
+    $email  = strtolower(trim((string) ($_POST['email'] ?? '')));
+    $codigo = strtoupper(trim((string) ($_POST['codigo'] ?? '')));
+} else {
+    $email  = strtolower(trim((string) ($body['email'] ?? '')));
+    $codigo = strtoupper(trim((string) ($body['codigo'] ?? '')));
+}
 
 if ($email === '' || $codigo === '') {
     responder(false, ['message' => 'Indique o e-mail e o código de acesso.'], 422);
@@ -90,6 +96,40 @@ if ($action === 'comment') {
     responder(true, ['comentarios' => $comentarios]);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Upload de ficheiro pelo cliente (brief/referências) num pedido             */
+/* -------------------------------------------------------------------------- */
+if ($action === 'upload') {
+    $leadId = (string) ($_POST['leadId'] ?? '');
+    $pertence = null;
+    foreach ($doCliente as $l) { if (($l['id'] ?? '') === $leadId) { $pertence = $l; break; } }
+    if (!$pertence) responder(false, ['message' => 'Pedido não encontrado.'], 404);
+
+    $file = $_FILES['file'] ?? null;
+    if (empty($file) || ($file['error'] ?? 1) !== UPLOAD_ERR_OK) {
+        responder(false, ['message' => 'Nenhum ficheiro recebido (ou demasiado grande).'], 422);
+    }
+    if ($file['size'] > 15 * 1024 * 1024) responder(false, ['message' => 'O ficheiro não pode exceder 15 MB.'], 422);
+    $nomeOrig = (string) ($file['name'] ?? 'ficheiro');
+    $ext = strtolower(pathinfo($nomeOrig, PATHINFO_EXTENSION));
+    $permitidas = ['pdf','doc','docx','txt','rtf','png','jpg','jpeg','gif','webp','svg','zip','rar','ai','psd','eps'];
+    if ($ext === '' || !in_array($ext, $permitidas, true)) {
+        responder(false, ['message' => 'Tipo de ficheiro não permitido.'], 422);
+    }
+    $dir = __DIR__ . '/uploads/cliente';
+    @mkdir($dir, 0755, true);
+    $slug = preg_replace('/[^a-zA-Z0-9._-]+/', '-', pathinfo($nomeOrig, PATHINFO_FILENAME));
+    $slug = trim(substr($slug, 0, 40), '-') ?: 'ficheiro';
+    $nomeDisco = $slug . '-' . bin2hex(random_bytes(5)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $nomeDisco)) {
+        responder(false, ['message' => 'Não foi possível guardar o ficheiro.'], 500);
+    }
+    $lista = store_add_cliente_ficheiro($config, $leadId, [
+        'url' => 'uploads/cliente/' . $nomeDisco, 'nome' => $nomeOrig, 'data' => date('c'),
+    ]);
+    responder(true, ['message' => 'Ficheiro enviado.', 'cliente_ficheiros' => $lista]);
+}
+
 /* Estado legível para o cliente. */
 $estados = [
     'new'       => 'Pedido recebido',
@@ -125,6 +165,10 @@ $pedidos = array_map(function ($l) use ($config, $estados) {
         'comentarios' => ($entrega && !empty($entrega['comentarios'])) ? array_map(function ($c) {
             return ['de' => $c['de'] ?? 'cliente', 'nome' => $c['nome'] ?? '', 'texto' => $c['texto'] ?? '', 'data' => $c['data'] ?? ''];
         }, $entrega['comentarios']) : [],
+        'pago' => $entrega['pago'] ?? 'nao',
+        'cliente_ficheiros' => ($entrega && !empty($entrega['cliente_ficheiros'])) ? array_map(function ($f) {
+            return ['url' => $f['url'] ?? '', 'nome' => $f['nome'] ?? '', 'data' => $f['data'] ?? ''];
+        }, $entrega['cliente_ficheiros']) : [],
     ];
 }, $doCliente);
 
