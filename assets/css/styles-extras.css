@@ -331,6 +331,27 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .site-actions { flex: 0 0 auto; gap: 8px; }
 }
 
+/* ==========================================================================
+   Secção "Nossos Sites & Sistemas" — cartões com pré-visualização ao vivo
+   ========================================================================== */
+.sites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+.site-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); transition: transform .18s ease, box-shadow .18s ease; }
+.site-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.site-card .site-preview { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--line); display: block; }
+.site-preview-frame { position: relative; height: 210px; overflow: hidden; background: #fff; }
+.site-preview-frame iframe { width: 133%; height: 280%; border: 0; transform: scale(0.75); transform-origin: top left; pointer-events: none; }
+/* Escudo transparente: o clique abre o site (a pré-visualização não é interactiva) */
+.site-preview-shield { position: absolute; inset: 0; z-index: 2; }
+.site-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+.site-card-body h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.site-card-body p { font-size: 13.5px; color: var(--ink-muted); line-height: 1.55; margin: 0; }
+.site-card-body .btn { align-self: flex-start; margin-top: 4px; gap: 8px; }
+@media (max-width: 640px) { .sites-grid { grid-template-columns: 1fr; } }
+
+/* Logótipo só-nome (quando não há imagem de logótipo carregada) */
+.logo-text-only .logo-name { font-size: 19px; letter-spacing: -0.02em; }
+.footer-brand .logo-text-only .logo-name { color: #fff; }
+
 /* Formas de pagamento no checkout */
 .cart-pay { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
 .cart-pay-head { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }

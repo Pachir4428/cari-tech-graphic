@@ -35,7 +35,7 @@ if (!is_array($body)) $body = $_POST;
 
 $action = $_GET['action'] ?? 'deliverables';
 
-if ($action !== 'deliverables') {
+if (!in_array($action, ['deliverables', 'comment'], true)) {
     responder(false, ['message' => 'Acção desconhecida.'], 400);
 }
 
@@ -61,8 +61,33 @@ foreach (store_get_leads($config) as $l) {
 }
 
 if (!$doCliente || !$codigoValido) {
-    usleep(600000); // atrasa tentativas por força bruta
+    usleep(600000);
     responder(false, ['message' => 'E-mail ou código incorrectos. Confirme os dados do e-mail de confirmação.'], 401);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Comentário do cliente numa entrega/pedido                                  */
+/* -------------------------------------------------------------------------- */
+if ($action === 'comment') {
+    $leadId = (string) ($body['leadId'] ?? '');
+    $texto  = trim((string) ($body['texto'] ?? ''));
+    if ($leadId === '' || $texto === '') {
+        responder(false, ['message' => 'Escreva um comentário.'], 422);
+    }
+    /* Confirma que o pedido pertence mesmo a este cliente. */
+    $pertence = false;
+    foreach ($doCliente as $l) { if (($l['id'] ?? '') === $leadId) { $pertence = true; break; } }
+    if (!$pertence) {
+        responder(false, ['message' => 'Pedido não encontrado.'], 404);
+    }
+    if (mb_strlen($texto) > 1000) $texto = mb_substr($texto, 0, 1000);
+    $comentarios = store_add_comment($config, $leadId, [
+        'de'    => 'cliente',
+        'nome'  => $nomeCliente,
+        'texto' => $texto,
+        'data'  => date('c'),
+    ]);
+    responder(true, ['comentarios' => $comentarios]);
 }
 
 /* Estado legível para o cliente. */
@@ -97,6 +122,9 @@ $pedidos = array_map(function ($l) use ($config, $estados) {
             }, $entrega['entregas'] ?? []),
             'data'     => $entrega['data'] ?? '',
         ] : null,
+        'comentarios' => ($entrega && !empty($entrega['comentarios'])) ? array_map(function ($c) {
+            return ['de' => $c['de'] ?? 'cliente', 'nome' => $c['nome'] ?? '', 'texto' => $c['texto'] ?? '', 'data' => $c['data'] ?? ''];
+        }, $entrega['comentarios']) : [],
     ];
 }, $doCliente);
 

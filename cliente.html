@@ -4,302 +4,348 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Área de Cliente — Cari Tech Graphic</title>
-  <meta name="description" content="Acompanhe o seu pedido e receba as suas entregas na Área de Cliente da Cari Tech Graphic." />
+  <meta name="description" content="Acompanhe os seus pedidos e receba as suas entregas na Área de Cliente da Cari Tech Graphic." />
   <meta name="robots" content="noindex" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     :root{
-      --brand-deep:#025254; --brand-deep-2:#013E40; --brand-mid:#036C6F;
-      --accent:#FF7200; --accent-2:#E56500;
-      --ink:#0f1720; --muted:#5b6b73; --line:#e4ebec; --card:#ffffff; --bg:#f4f8f8;
-      --ok:#0f9d58; --radius:16px;
+      /* Paleta suave (menos radiante) */
+      --brand-deep:#0f4b4d; --brand-mid:#1a6e70; --brand-soft:#e7f0f0;
+      --accent:#e8792f; --accent-2:#cf6820; --accent-soft:#fdf0e6;
+      --ink:#1b2830; --muted:#6a7a80; --line:#e7edee; --card:#ffffff; --bg:#f4f7f7;
+      --ok:#2f9e6f; --radius:14px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
+    html,body{margin:0;padding:0;height:100%}
     body{
       font-family:'Manrope',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-      color:var(--ink); background:
-        radial-gradient(1100px 500px at 15% -10%, rgba(3,108,111,.10), transparent 60%),
-        radial-gradient(900px 500px at 100% 0%, rgba(255,114,0,.08), transparent 55%),
-        var(--bg);
-      min-height:100vh; padding:28px 18px 60px;
+      color:var(--ink); background:var(--bg); min-height:100vh;
     }
-    a{color:var(--brand-mid)}
-    .wrap{max-width:680px;margin:0 auto}
-    .brandbar{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:22px}
-    .brandbar .logo{height:44px;width:auto;display:block}
-    .brandmark{
-      display:inline-flex;align-items:center;gap:10px;font-family:'Poppins',sans-serif;
-      font-weight:800;font-size:1.15rem;color:var(--brand-deep);text-decoration:none;letter-spacing:-.02em
-    }
-    .brandmark .dot{
-      width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;
-      background:linear-gradient(135deg,var(--brand-deep),var(--brand-mid));font-size:1rem
-    }
-    .card{
-      background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-      padding:26px 24px;box-shadow:0 18px 50px -30px rgba(2,82,84,.5)
-    }
-    h1{font-family:'Poppins',sans-serif;font-size:1.5rem;margin:0 0 6px;letter-spacing:-.02em}
-    .sub{color:var(--muted);margin:0 0 22px;font-size:.96rem;line-height:1.5}
-    label{display:block;font-weight:600;font-size:.9rem;margin:0 0 6px}
-    .field{margin-bottom:16px}
-    input{
-      width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;
-      font-size:1rem;font-family:inherit;background:#fff;transition:border-color .15s,box-shadow .15s
-    }
-    input:focus{outline:none;border-color:var(--brand-mid);box-shadow:0 0 0 4px rgba(3,108,111,.12)}
-    input[name=codigo]{text-transform:uppercase;letter-spacing:.12em;font-weight:700}
-    .btn{
-      width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;
-      font-size:1rem;font-weight:700;font-family:inherit;color:#fff;
-      background:linear-gradient(135deg,var(--accent),var(--accent-2));
-      box-shadow:0 10px 24px -10px var(--accent);transition:transform .12s,filter .12s
-    }
-    .btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
-    .btn:disabled{opacity:.6;cursor:default;transform:none}
-    .msg{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:.92rem;display:none}
-    .msg.err{display:block;background:#fdecec;color:#b3261e;border:1px solid #f7c9c6}
-    .foot{text-align:center;color:var(--muted);font-size:.82rem;margin-top:22px}
-    .foot a{color:var(--muted)}
+    a{color:var(--brand-mid);text-decoration:none}
+    button{font-family:inherit}
 
-    /* --- Resultado --- */
-    .result{display:none}
-    .status-pill{
-      display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
-      font-weight:700;font-size:.82rem;margin-bottom:14px
+    /* ---------- Estrutura: sidebar fixo + main ---------- */
+    .app{min-height:100vh}
+    .side{
+      position:fixed; top:0; left:0; bottom:0; width:250px; z-index:20;
+      background:var(--brand-deep); color:#fff; padding:26px 20px;
+      display:flex; flex-direction:column; gap:8px;
     }
-    .status-pill .d{width:9px;height:9px;border-radius:50%;background:currentColor}
-    .st-new{background:rgba(3,108,111,.12);color:var(--brand-mid)}
-    .st-contacted{background:rgba(255,114,0,.14);color:var(--accent-2)}
-    .st-won{background:rgba(15,157,88,.14);color:var(--ok)}
+    .side .brand{display:flex;align-items:center;gap:10px;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:26px}
+    .side .brand img{height:34px;width:auto;display:block;filter:brightness(0) invert(1)}
+    .side-nav{display:flex;flex-direction:column;gap:4px}
+    .side-nav .item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;color:rgba(255,255,255,.72);font-weight:600;font-size:14px;background:none;border:none;text-align:left;cursor:pointer;width:100%}
+    .side-nav .item i{width:18px;text-align:center;font-size:15px}
+    .side-nav .item.active,.side-nav .item:hover{background:rgba(255,255,255,.10);color:#fff}
+    .side-nav .item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px}
+    .side-foot{margin-top:auto;font-size:12px;color:rgba(255,255,255,.4);line-height:1.6}
+    .side-foot a{color:rgba(255,255,255,.6)}
+    .logout{margin-top:14px;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:none;font-weight:700;font-size:14px;cursor:pointer;width:100%}
+    .logout:hover{background:rgba(255,255,255,.16)}
+
+    .main{margin-left:250px;padding:30px 34px 60px;min-height:100vh}
+    .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+    .topbar h1{font-family:'Poppins',sans-serif;font-size:26px;font-weight:800;margin:0}
+    .topbar .who{color:var(--muted);font-size:14px;margin-top:3px}
+
+    /* ---------- Grid de pedidos ---------- */
+    .req-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+    .req-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;display:flex;flex-direction:column;box-shadow:0 8px 24px -18px rgba(15,75,77,.35)}
+    .req-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .req-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;line-height:1.3}
+    .req-date{font-size:12px;color:var(--muted);margin-top:3px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-weight:700;font-size:11.5px;white-space:nowrap}
+    .pill i{font-size:9px}
+    .st-new{background:var(--brand-soft);color:var(--brand-mid)}
+    .st-contacted{background:var(--accent-soft);color:var(--accent-2)}
+    .st-won{background:#e7f5ee;color:var(--ok)}
     .st-lost{background:#eef1f2;color:var(--muted)}
-    .info{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;background:#fafcfc}
-    .info .row{display:flex;justify-content:space-between;gap:14px;padding:5px 0;font-size:.92rem}
-    .info .row span:first-child{color:var(--muted)}
-    .info .row span:last-child{font-weight:600;text-align:right}
-    h2{font-family:'Poppins',sans-serif;font-size:1.1rem;margin:20px 0 10px}
-    .deliver-msg{background:#fff8f1;border:1px solid #ffe0c2;border-radius:12px;padding:12px 15px;font-size:.92rem;color:#7a4a10;margin-bottom:14px;line-height:1.5}
-    .dl{
-      display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid var(--line);
-      border-radius:12px;margin-bottom:10px;text-decoration:none;color:var(--ink);
-      transition:border-color .15s,box-shadow .15s,transform .1s;background:#fff
-    }
-    .dl:hover{border-color:var(--brand-mid);box-shadow:0 8px 22px -16px rgba(2,82,84,.6);transform:translateY(-1px)}
-    .dl .ic{
-      width:40px;height:40px;flex:none;border-radius:10px;display:grid;place-items:center;font-size:1.05rem;
-      background:linear-gradient(135deg,var(--brand-deep),var(--brand-mid));color:#fff
-    }
-    .dl.link .ic{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+    .req-msg{font-size:13.5px;color:var(--ink);background:#f8fafa;border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;margin:13px 0;line-height:1.55}
+    .sec-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;margin:8px 0 8px}
+    .deliver-msg{background:var(--accent-soft);border:1px solid #f4dcc7;border-radius:10px;padding:11px 13px;font-size:13px;color:#8a542a;margin-bottom:10px;line-height:1.5}
+    .dl{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;color:var(--ink);transition:border-color .15s,box-shadow .15s,transform .1s;background:#fff}
+    .dl:hover{border-color:var(--brand-mid);box-shadow:0 6px 18px -14px rgba(15,75,77,.5);transform:translateY(-1px)}
+    .dl .ic{width:38px;height:38px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:16px;background:var(--brand-soft);color:var(--brand-mid)}
+    .dl.link .ic{background:var(--accent-soft);color:var(--accent-2)}
     .dl .tx{min-width:0}
-    .dl .tx b{display:block;font-size:.96rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .dl .tx small{color:var(--muted);font-size:.82rem}
-    .dl .go{margin-left:auto;color:var(--muted);flex:none}
-    .empty{color:var(--muted);font-size:.92rem;background:#fafcfc;border:1px dashed var(--line);border-radius:12px;padding:16px;text-align:center;line-height:1.5}
-    .backlink{background:none;border:none;color:var(--brand-mid);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-top:14px}
-    /* Cartões de pedido (lista de requisições) */
-    .req-card{border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;margin-bottom:14px;background:#fff}
-    .req-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .req-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:1.05rem}
-    .req-meta{font-size:.8rem;color:var(--muted);margin-top:2px}
-    .req-msg{font-size:.9rem;color:var(--ink);background:#fafcfc;border-left:3px solid var(--accent);border-radius:8px;padding:9px 12px;margin:11px 0;line-height:1.5}
-    .req-deliveries{margin-top:6px}
-    .req-deliveries .dl{margin-bottom:8px}
-    .req-deliveries .empty{padding:12px;font-size:.85rem}
+    .dl .tx b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+    .dl .tx small{color:var(--muted);font-size:12px}
+    .dl .go{margin-left:auto;color:var(--muted);flex:none;font-size:13px}
+    .empty{color:var(--muted);font-size:13px;background:#f8fafa;border:1px dashed var(--line);border-radius:11px;padding:14px;text-align:center;line-height:1.5}
+    .btn-all{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:4px;padding:11px;border:none;border-radius:10px;background:var(--brand-deep);color:#fff;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s}
+    .btn-all:hover{background:var(--brand-mid)}
+
+    /* Comentários */
+    .comments{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+    .cmt{display:flex;gap:9px;margin-bottom:9px}
+    .cmt .av{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
+    .cmt.cliente .av{background:var(--accent)}
+    .cmt.studio .av{background:var(--brand-mid)}
+    .cmt .bd{background:#f6f9f9;border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.5;flex:1}
+    .cmt .bd .meta{font-size:11px;color:var(--muted);margin-top:3px}
+    .cmt-form{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
+    .cmt-form textarea{flex:1;min-height:40px;max-height:120px;resize:vertical;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13px;font-family:inherit;color:var(--ink);background:#fff}
+    .cmt-form textarea:focus{outline:none;border-color:var(--brand-mid);box-shadow:0 0 0 3px rgba(26,110,112,.12)}
+    .cmt-send{flex:none;width:42px;height:42px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:15px;cursor:pointer}
+    .cmt-send:hover{background:var(--accent-2)}
+    .cmt-send:disabled{opacity:.5;cursor:default}
+
+    /* ---------- Cartão de acesso (login por código) ---------- */
+    .gate-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .gate{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 28px;box-shadow:0 24px 60px -34px rgba(15,75,77,.5)}
+    .gate .brand{display:flex;align-items:center;gap:10px;justify-content:center;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:var(--brand-deep);margin-bottom:16px}
+    .gate .brand img{height:38px;width:auto}
+    .gate h1{font-family:'Poppins',sans-serif;font-size:22px;margin:0 0 6px;text-align:center}
+    .gate p.sub{color:var(--muted);font-size:14px;text-align:center;margin:0 0 20px;line-height:1.5}
+    .gate label{display:block;font-weight:600;font-size:13px;margin:0 0 6px}
+    .gate .field{margin-bottom:14px}
+    .gate input{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
+    .gate input:focus{outline:none;border-color:var(--brand-mid);box-shadow:0 0 0 4px rgba(26,110,112,.12)}
+    .gate input[readonly]{background:#f4f7f7;color:var(--muted)}
+    .gate input[name=codigo]{text-transform:uppercase;letter-spacing:.14em;font-weight:700}
+    .gate .btn{width:100%;padding:13px;border:none;border-radius:11px;cursor:pointer;font-size:15px;font-weight:700;color:#fff;background:var(--accent)}
+    .gate .btn:hover{background:var(--accent-2)}
+    .gate .btn:disabled{opacity:.6}
+    .msg{margin-top:12px;padding:11px 13px;border-radius:10px;font-size:13px;display:none}
+    .msg.err{display:block;background:#fdecec;color:#b3261e;border:1px solid #f7c9c6}
+    .gate .foot{text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)}
+
+    /* ---------- Mobile ---------- */
+    @media (max-width:860px){
+      .side{position:static;width:auto;flex-direction:row;align-items:center;gap:12px;padding:14px 16px}
+      .side .brand{margin-bottom:0;font-size:16px}
+      .side-nav{display:none}
+      .side-foot{display:none}
+      .logout{margin:0 0 0 auto;width:auto;padding:9px 14px}
+      .main{margin-left:0;padding:22px 16px 60px}
+      .req-grid{grid-template-columns:1fr}
+    }
+    @media (prefers-color-scheme: dark){
+      :root{--ink:#e8eef0;--muted:#93a4ab;--line:#25333a;--card:#111a1c;--bg:#0b1214;--brand-soft:#12312f;--accent-soft:#2a1d12}
+      .req-msg,.empty,.cmt .bd{background:#0e1719}
+      .dl,.gate input,.cmt-form textarea{background:#0e1719}
+      .gate input[readonly]{background:#0b1214}
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="brandbar" id="brandbar">
-      <a class="brandmark" href="index.html"><span class="dot">C</span> Cari Tech Graphic</a>
+  <!-- Portão de acesso por código (aparece com ?email= ou sem sessão) -->
+  <div class="gate-wrap" id="gateWrap" style="display:none">
+    <div class="gate">
+      <div class="brand" id="gateBrand"><span>Cari Tech Graphic</span></div>
+      <h1>A sua Área de Cliente</h1>
+      <p class="sub" id="gateSub">Introduza o código que recebeu no e-mail de confirmação do seu pedido.</p>
+      <form id="gateForm" autocomplete="off">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" placeholder="o.seu@email.com" required />
+        </div>
+        <div class="field">
+          <label for="codigo">Código de acesso</label>
+          <input type="text" id="codigo" name="codigo" placeholder="Ex.: 3F9A2C" maxlength="16" required />
+        </div>
+        <button class="btn" type="submit" id="gateBtn">Entrar</button>
+        <div class="msg" id="msgBox"></div>
+      </form>
+      <div class="foot"><a href="entrar.html"><i class="fa-solid fa-arrow-left-long"></i> Outro tipo de acesso</a> · <a href="index.html">Voltar ao site</a></div>
     </div>
+  </div>
 
-    <div class="card">
-      <!-- Formulário de acesso (oculto: o login é feito em entrar.html) -->
-      <div id="loginView" style="display:none">
-        <h1>Área de Cliente</h1>
-        <p class="sub">Consulte o estado do seu pedido e transfira as suas entregas. Use o <b>e-mail</b> e o <b>código</b> que recebeu no e-mail de confirmação.</p>
-        <form id="form" autocomplete="off">
-          <div class="field">
-            <label for="email">E-mail</label>
-            <input type="email" id="email" name="email" placeholder="o.seu@email.com" required />
-          </div>
-          <div class="field">
-            <label for="codigo">Código de acesso</label>
-            <input type="text" id="codigo" name="codigo" placeholder="Ex.: 3F9A2C" maxlength="16" required />
-          </div>
-          <button class="btn" type="submit" id="submitBtn">Entrar</button>
-          <div class="msg" id="errBox"></div>
-        </form>
+  <!-- Dashboard -->
+  <div class="app" id="app" style="display:none">
+    <aside class="side">
+      <div class="brand" id="sideBrand"><span>Cari Tech Graphic</span></div>
+      <nav class="side-nav">
+        <button class="item active"><i class="fa-solid fa-box-open"></i> Os meus pedidos <span class="badge" id="navCount">0</span></button>
+        <a class="item" href="index.html#services"><i class="fa-solid fa-plus"></i> Novo pedido</a>
+        <a class="item" href="index.html#contact"><i class="fa-solid fa-headset"></i> Falar connosco</a>
+      </nav>
+      <div class="side-foot">
+        Precisa de ajuda?<br><a href="index.html#contact">Contacte a nossa equipa</a>
       </div>
-
-      <!-- Resultado -->
-      <div id="resultView" class="result"></div>
-    </div>
-
-    <p class="foot">
-      Precisa de ajuda? <a href="index.html#contacto">Fale connosco</a> ·
-      <a href="index.html">Voltar ao site</a>
-    </p>
+      <button class="logout" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 id="greet">Os meus pedidos</h1>
+          <div class="who" id="who"></div>
+        </div>
+      </div>
+      <div id="grid" class="req-grid"></div>
+    </main>
   </div>
 
   <script>
-    // Carrega o logótipo do site (se existir) para a barra de marca.
-    (function(){
-      fetch('conteudo.php').then(r=>r.json()).then(d=>{
-        var b = (d && d.branding) || {};
-        var logo = b.light || b.dark;
-        if (logo) {
-          var bar = document.getElementById('brandbar');
-          bar.innerHTML = '<a href="index.html"><img class="logo" src="'+logo+'" alt="Cari Tech Graphic"></a>';
-        }
-      }).catch(function(){});
-    })();
+    var CRED = { email:'', codigo:'' };
+    var PEDIDOS = [];
 
-    var iconFor = function(nome){
-      var ext = (nome.split('.').pop() || '').toLowerCase();
-      if (['png','jpg','jpeg','gif','webp','svg','bmp','tiff','ico'].indexOf(ext)>=0) return '🖼️';
-      if (['pdf'].indexOf(ext)>=0) return '📄';
-      if (['zip','rar','7z'].indexOf(ext)>=0) return '🗜️';
-      if (['mp4','mov','webm'].indexOf(ext)>=0) return '🎬';
-      if (['mp3','wav','ogg'].indexOf(ext)>=0) return '🎵';
-      if (['doc','docx','txt','rtf'].indexOf(ext)>=0) return '📝';
-      if (['xls','xlsx','csv'].indexOf(ext)>=0) return '📊';
-      if (['ppt','pptx'].indexOf(ext)>=0) return '📽️';
-      if (['ai','psd','eps','indd','cdr','sketch','fig','xd'].indexOf(ext)>=0) return '🎨';
-      return '📁';
-    };
+    var esc = function(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; };
+    var fmtData = function(iso){ if(!iso) return ''; var dt=new Date(iso); if(isNaN(dt)) return ''; return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}); };
+    var fmtDataHora = function(iso){ if(!iso) return ''; var dt=new Date(iso); if(isNaN(dt)) return ''; return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}); };
+    var inicial = function(s){ return (s||'?').trim().charAt(0).toUpperCase(); };
 
-    var esc = function(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; };
+    function faFor(nome){
+      var ext=(String(nome).split('.').pop()||'').toLowerCase();
+      if(['png','jpg','jpeg','gif','webp','svg','bmp','tiff','ico'].indexOf(ext)>=0)return'fa-file-image';
+      if(ext==='pdf')return'fa-file-pdf';
+      if(['zip','rar','7z'].indexOf(ext)>=0)return'fa-file-zipper';
+      if(['mp4','mov','webm'].indexOf(ext)>=0)return'fa-file-video';
+      if(['mp3','wav','ogg'].indexOf(ext)>=0)return'fa-file-audio';
+      if(['doc','docx','txt','rtf'].indexOf(ext)>=0)return'fa-file-lines';
+      if(['xls','xlsx','csv'].indexOf(ext)>=0)return'fa-file-excel';
+      if(['ppt','pptx'].indexOf(ext)>=0)return'fa-file-powerpoint';
+      if(['ai','psd','eps','indd','cdr','sketch','fig','xd'].indexOf(ext)>=0)return'fa-swatchbook';
+      return'fa-file';
+    }
 
-    var fmtData = function(iso){
-      if(!iso) return '';
-      var dt = new Date(iso);
-      if (isNaN(dt)) return '';
-      return dt.toLocaleDateString('pt-PT', {day:'2-digit',month:'2-digit',year:'numeric'});
-    };
+    // Marca (logo do site, se existir; senão apenas o nome)
+    function aplicarMarca(branding){
+      var logo = branding && (branding.light || branding.dark);
+      if(!logo) return;
+      var side=document.getElementById('sideBrand');
+      var gate=document.getElementById('gateBrand');
+      if(side) side.innerHTML='<img src="'+logo+'" alt="Cari Tech Graphic">';
+      if(gate) gate.innerHTML='<img src="'+logo+'" alt="Cari Tech Graphic">';
+    }
 
-    var form = document.getElementById('form');
-    var errBox = document.getElementById('errBox');
-    var btn = document.getElementById('submitBtn');
+    // ---------- Render do dashboard ----------
+    function renderDashboard(d){
+      var cliente = d.cliente || {};
+      PEDIDOS = d.pedidos || [];
+      var primeiro = (cliente.nome||'').split(' ')[0];
+      document.getElementById('greet').textContent = 'Olá'+(primeiro?', '+primeiro:'');
+      document.getElementById('who').textContent = (cliente.email||'') + ' · ' + PEDIDOS.length + (PEDIDOS.length===1?' pedido':' pedidos');
+      document.getElementById('navCount').textContent = PEDIDOS.length;
 
-    var showErr = function(txt){ errBox.textContent = txt; errBox.className = 'msg err'; };
-    var hideErr = function(){ errBox.className = 'msg'; };
+      var grid = document.getElementById('grid');
+      if(!PEDIDOS.length){ grid.innerHTML = '<div class="empty">Ainda não encontrámos pedidos nesta conta. Faça um pedido no site e ele aparecerá aqui.</div>'; }
+      else { grid.innerHTML = PEDIDOS.map(function(p,i){ return cardHtml(p,i); }).join(''); }
 
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      hideErr();
-      btn.disabled = true; btn.textContent = 'A verificar…';
+      document.getElementById('gateWrap').style.display='none';
+      document.getElementById('app').style.display='block';
+    }
 
-      var email = document.getElementById('email').value.trim();
-      var codigo = document.getElementById('codigo').value.trim();
-
-      fetch('cliente-api.php?action=deliverables', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({email:email, codigo:codigo})
-      })
-      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
-      .then(function(res){
-        btn.disabled = false; btn.textContent = 'Entrar';
-        if (!res.ok || !res.j.ok) {
-          // Credenciais inválidas/expiradas: volta ao login unificado.
-          if (window.__autoMode) { try { sessionStorage.removeItem('ctg_cli'); } catch(e){} location.replace('entrar.html'); return; }
-          showErr(res.j.message || 'Não foi possível entrar.');
-          return;
-        }
-        mostrarResultado(res.j);
-      })
-      .catch(function(){
-        btn.disabled = false; btn.textContent = 'Entrar';
-        if (window.__autoMode) { location.replace('entrar.html'); return; }
-        showErr('Erro de ligação. Tente novamente.');
-      });
-    });
-
-    function entregasHtml(entrega){
-      var html = '';
-      if (entrega && entrega.entregas && entrega.entregas.length) {
-        if (entrega.msg) html += '<div class="deliver-msg">'+esc(entrega.msg)+'</div>';
-        entrega.entregas.forEach(function(it){
-          var isFile = it.tipo === 'file';
-          var nome = it.nome || it.url;
-          var ic = isFile ? iconFor(nome) : '🔗';
-          html += '<a class="dl '+(isFile?'file':'link')+'" href="'+esc(it.url)+'" '+(isFile?'download':'target="_blank" rel="noopener"')+'>';
-          html += '<span class="ic">'+ic+'</span>';
-          html += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):(isFile?'Transferir ficheiro':'Abrir link'))+'</small></span>';
-          html += '<span class="go">'+(isFile?'⬇':'↗')+'</span>';
-          html += '</a>';
+    function cardHtml(p, i){
+      var st = 'st-' + (p.status||'new');
+      var stIcon = p.status==='won'?'fa-circle-check':(p.status==='contacted'?'fa-spinner':(p.status==='lost'?'fa-circle-minus':'fa-circle-dot'));
+      var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
+      var files = temEntrega ? p.entrega.entregas.filter(function(e){return e.tipo==='file';}) : [];
+      var h = '';
+      h += '<div class="req-card">';
+      h += ' <div class="req-top"><div><div class="req-title">'+esc(p.servico||'Pedido')+'</div><div class="req-date"><i class="fa-regular fa-calendar"></i> '+esc(fmtData(p.data))+'</div></div>';
+      h += '   <span class="pill '+st+'"><i class="fa-solid '+stIcon+'"></i> '+esc(p.estado)+'</span></div>';
+      if(p.mensagem) h += ' <div class="req-msg">'+esc(p.mensagem)+'</div>';
+      h += ' <div class="sec-label"><i class="fa-solid fa-box"></i> Entregas</div>';
+      if(temEntrega){
+        if(p.entrega.msg) h += ' <div class="deliver-msg"><i class="fa-solid fa-comment-dots"></i> '+esc(p.entrega.msg)+'</div>';
+        p.entrega.entregas.forEach(function(it){
+          var isFile = it.tipo==='file'; var nome=it.nome||it.url;
+          var ic = isFile ? faFor(nome) : 'fa-arrow-up-right-from-square';
+          h += '<a class="dl '+(isFile?'file':'link')+'" href="'+esc(it.url)+'" '+(isFile?'download':'target="_blank" rel="noopener"')+'>';
+          h += '<span class="ic"><i class="fa-solid '+ic+'"></i></span>';
+          h += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):(isFile?'Transferir ficheiro':'Abrir link'))+'</small></span>';
+          h += '<span class="go"><i class="fa-solid '+(isFile?'fa-download':'fa-arrow-right')+'"></i></span></a>';
         });
+        if(files.length>1) h += '<button class="btn-all" onclick="baixarTudo('+i+')"><i class="fa-solid fa-download"></i> Descarregar tudo ('+files.length+')</button>';
       } else {
-        html += '<div class="empty">Ainda sem entregas. Assim que este trabalho estiver pronto, aparece aqui — e será notificado.</div>';
+        h += '<div class="empty">Ainda sem entregas. Assim que este trabalho estiver pronto, aparece aqui — e será notificado.</div>';
       }
-      return html;
+      // Comentários
+      h += '<div class="comments"><div class="sec-label"><i class="fa-solid fa-comments"></i> Comentários</div>';
+      h += '<div id="cmts-'+i+'">'+comentariosHtml(p.comentarios||[])+'</div>';
+      h += '<div class="cmt-form"><textarea id="cmt-'+i+'" placeholder="Escreva um comentário para o estúdio…"></textarea>';
+      h += '<button class="cmt-send" id="cmtbtn-'+i+'" onclick="comentar('+i+')" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button></div>';
+      h += '</div>';
+      h += '</div>';
+      return h;
     }
 
-    function mostrarResultado(d){
-      // Compatível com resposta antiga (um pedido) e nova (lista de pedidos).
-      var pedidos = d.pedidos || (d.pedido ? [{
-        servico:d.pedido.servico, mensagem:d.pedido.mensagem, data:d.pedido.data,
-        status:d.pedido.status, estado:d.pedido.estado, entrega:d.entrega
-      }] : []);
-      var cliente = d.cliente || d.pedido || {};
-      var primeiroNome = (cliente.nome || '').split(' ')[0];
+    function comentariosHtml(lista){
+      if(!lista || !lista.length) return '<div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Sem comentários ainda.</div>';
+      return lista.map(function(c){
+        var studio = c.de==='studio' || c.de==='admin';
+        var quem = studio ? 'Cari Tech' : (c.nome || 'Você');
+        return '<div class="cmt '+(studio?'studio':'cliente')+'"><div class="av">'+inicial(quem)+'</div>'
+          +'<div class="bd">'+esc(c.texto)+'<div class="meta">'+esc(quem)+' · '+esc(fmtDataHora(c.data))+'</div></div></div>';
+      }).join('');
+    }
 
-      var html = '';
-      html += '<h1>Olá'+(primeiroNome?', '+esc(primeiroNome):'')+' 👋</h1>';
-      html += '<p class="sub">'+(pedidos.length>1
-        ? 'Aqui estão os seus '+pedidos.length+' pedidos na Cari Tech Graphic.'
-        : 'Este é o resumo do seu pedido na Cari Tech Graphic.')+'</p>';
-
-      if (!pedidos.length) {
-        html += '<div class="empty">Ainda não encontrámos pedidos associados a esta conta.</div>';
-      }
-
-      pedidos.forEach(function(p, i){
-        var stClass = 'st-' + (p.status || 'new');
-        var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
-        html += '<div class="req-card">';
-        html += '  <div class="req-head">';
-        html += '    <div class="req-title">'+esc(p.servico || 'Pedido')+'</div>';
-        html += '    <span class="status-pill '+stClass+'"><span class="d"></span>'+esc(p.estado)+'</span>';
-        html += '  </div>';
-        html += '  <div class="req-meta">'+(p.data?esc(fmtData(p.data)):'')+(temEntrega?' · <b style="color:var(--ok)">entregue</b>':'')+'</div>';
-        if (p.mensagem) html += '  <div class="req-msg">'+esc(p.mensagem)+'</div>';
-        html += '  <div class="req-deliveries">'+entregasHtml(p.entrega)+'</div>';
-        html += '</div>';
+    // Descarregar todos os ficheiros de um pedido
+    window.baixarTudo = function(i){
+      var entregas = (PEDIDOS[i].entrega && PEDIDOS[i].entrega.entregas) || [];
+      var files = entregas.filter(function(e){return e.tipo==='file';});
+      files.forEach(function(f,k){
+        setTimeout(function(){
+          var a=document.createElement('a'); a.href=f.url; a.download=f.nome||''; document.body.appendChild(a); a.click(); a.remove();
+        }, k*500);
       });
+    };
 
-      html += '<button class="backlink" onclick="try{sessionStorage.removeItem(\'ctg_cli\')}catch(e){};location.href=\'entrar.html\'">← Sair / consultar outra conta</button>';
+    // Enviar comentário
+    window.comentar = function(i){
+      var ta=document.getElementById('cmt-'+i); var texto=(ta.value||'').trim(); if(!texto) return;
+      var btn=document.getElementById('cmtbtn-'+i); btn.disabled=true;
+      fetch('cliente-api.php?action=comment',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:CRED.email,codigo:CRED.codigo,leadId:PEDIDOS[i].id,texto:texto})})
+      .then(function(r){return r.json();}).then(function(j){
+        btn.disabled=false;
+        if(j.ok){ PEDIDOS[i].comentarios=j.comentarios; document.getElementById('cmts-'+i).innerHTML=comentariosHtml(j.comentarios); ta.value=''; }
+        else alert(j.message||'Não foi possível comentar.');
+      }).catch(function(){ btn.disabled=false; alert('Erro de ligação.'); });
+    };
 
-      document.getElementById('loginView').style.display = 'none';
-      var rv = document.getElementById('resultView');
-      rv.innerHTML = html;
-      rv.style.display = 'block';
+    window.sair = function(){ try{sessionStorage.removeItem('ctg_cli');}catch(e){}; location.href='entrar.html'; };
+
+    // ---------- Autenticação ----------
+    var msgBox=document.getElementById('msgBox'), gateBtn=document.getElementById('gateBtn');
+    var showErr=function(t){ msgBox.textContent=t; msgBox.className='msg err'; };
+    var hideErr=function(){ msgBox.className='msg'; };
+
+    function carregar(email, codigo, auto){
+      return fetch('cliente-api.php?action=deliverables',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,codigo:codigo})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        if(!res.ok||!res.j.ok){
+          if(auto){ try{sessionStorage.removeItem('ctg_cli');}catch(e){} abrirPortao(email); }
+          throw res.j.message||'Credenciais incorrectas.';
+        }
+        CRED={email:email,codigo:codigo};
+        try{ sessionStorage.setItem('ctg_cli', JSON.stringify(CRED)); }catch(e){}
+        renderDashboard(res.j);
+      });
     }
 
-    // Uppercase automático no código.
-    document.getElementById('codigo').addEventListener('input', function(){
-      this.value = this.value.toUpperCase();
+    function abrirPortao(prefEmail){
+      document.getElementById('app').style.display='none';
+      document.getElementById('gateWrap').style.display='flex';
+      if(prefEmail){ var e=document.getElementById('email'); e.value=prefEmail; e.setAttribute('readonly','readonly'); document.getElementById('codigo').focus(); }
+    }
+
+    document.getElementById('codigo').addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
+    document.getElementById('gateForm').addEventListener('submit', function(e){
+      e.preventDefault(); hideErr(); gateBtn.disabled=true; gateBtn.textContent='A verificar…';
+      var email=document.getElementById('email').value.trim(), codigo=document.getElementById('codigo').value.trim();
+      carregar(email,codigo,false).catch(function(msg){ gateBtn.disabled=false; gateBtn.textContent='Entrar'; showErr(typeof msg==='string'?msg:'Erro.'); });
     });
 
-    // Login unificado: o acesso faz-se sempre por entrar.html, que guarda o
-    // e-mail + código em sessionStorage. Sem esses dados, volta ao login.
+    // Marca (logo)
+    fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){ aplicarMarca(d&&d.branding); }).catch(function(){});
+
+    // Fluxo de entrada: sessão → auto; ?email= → portão só-código; senão → entrar.html
     (function(){
-      var raw = null;
-      try { raw = sessionStorage.getItem('ctg_cli'); } catch (e) {}
-      if (!raw) { location.replace('entrar.html'); return; }
-      try {
-        var c = JSON.parse(raw);
-        if (c && c.email && c.codigo) {
-          window.__autoMode = true;                 // mantém as credenciais para refrescar
-          document.getElementById('email').value = c.email;
-          document.getElementById('codigo').value = String(c.codigo).toUpperCase();
-          form.dispatchEvent(new Event('submit'));
-        } else { location.replace('entrar.html'); }
-      } catch (e) { location.replace('entrar.html'); }
+      var params=new URLSearchParams(location.search);
+      var emailParam=params.get('email');
+      var raw=null; try{ raw=sessionStorage.getItem('ctg_cli'); }catch(e){}
+      if(raw){
+        try{ var c=JSON.parse(raw); if(c&&c.email&&c.codigo){ carregar(c.email,c.codigo,true).catch(function(){}); return; } }catch(e){}
+      }
+      if(emailParam){ abrirPortao(emailParam); return; }
+      location.replace('entrar.html');
     })();
   </script>
 </body>

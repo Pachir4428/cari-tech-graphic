@@ -118,15 +118,15 @@
   width: 520px; height: 520px;
   background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
   top: -120px; right: -160px;
-  opacity: 0.32;
+  opacity: 0.16;
 }
 .hero-blob-b {
   width: 420px; height: 420px;
   background: radial-gradient(circle, var(--brand-mid) 0%, transparent 70%);
   bottom: -200px; left: -180px;
-  opacity: 0.18;
+  opacity: 0.12;
 }
-[data-theme="dark"] .hero-blob-a { opacity: 0.45; }
+[data-theme="dark"] .hero-blob-a { opacity: 0.26; }
 .hero-grid {
   display: grid;
   grid-template-columns: 1.05fr 1fr;

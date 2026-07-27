@@ -123,6 +123,8 @@ Pode também entrar com **Google/Facebook** (ver [secção 7](#7-login-unificado
 - **Definições → Conta:** mude utilizador e palavra-passe (pede a senha actual).
 - **Definições → Logótipo:** dois logótipos (fundo claro/escuro); também vira o *favicon*.
 - **Definições → Pagamentos:** métodos mostrados no checkout (M-Pesa, e-Mola, transferência, link online).
+- **Definições → Sites & Sistemas:** cole links de sites/sistemas que criou — aparecem na secção
+  “Nossos Sites & Sistemas” do site com **pré-visualização ao vivo**. "Rascunho" fica oculto.
 - **Definições → Atualizar o site (ZIP):** aplica uma nova versão preservando `config.php`, `dados/` e `uploads/`.
 
 > Segurança: sessão PHP com cookie `HttpOnly`/`SameSite=Strict`, palavra-passe em *hash* bcrypt,
@@ -132,14 +134,15 @@ Pode também entrar com **Google/Facebook** (ver [secção 7](#7-login-unificado
 
 ## 6. Área de Cliente e entregas
 
-O cliente acede pelo login unificado (`entrar.html`) com **e-mail + código** (ou conta social) e vê
-**todos os seus pedidos** de uma vez — cada um com:
+A Área de Cliente é um **painel** (sidebar fixo + pedidos em grelha). O cliente entra com
+**e-mail + código** (ou conta social) e vê **todos os seus pedidos** — cada um com:
 
 - o **estado** (recebido, em andamento, concluído);
-- as **entregas**: ficheiros para transferir e/ou links (Google Drive, Figma…), com a mensagem do estúdio.
+- as **entregas**: ficheiros e/ou links, com botão **“Descarregar tudo”**;
+- **comentários**: o cliente comenta em cada pedido e o estúdio responde (na aba Leads → Entregar).
 
-Basta **um** código válido (enviado por e-mail) para provar que o e-mail é seu e ver a lista completa.
-O **e-mail de confirmação** de cada pedido é enviado em HTML com o visual da marca (logo, botão de acesso e código).
+Basta **um** código válido para ver a lista completa. O **e-mail de confirmação** é enviado em HTML com o
+visual da marca, e o botão leva **directamente à conta do cliente** — só falta introduzir o código.
 
 **Como entregar (no painel):** aba **Leads → botão Entregar** de um pedido:
 1. **Carregue ficheiros** (`uploads/entregas/`) e/ou **adicione links**.

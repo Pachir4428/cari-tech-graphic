@@ -17,6 +17,7 @@ require_once __DIR__ . '/armazenamento.php';
 $dados = store_get_content($config);
 $branding = store_get_branding($config);
 $payments = store_get_payments($config);
+$sites = store_get_sites($config);
 
 /* Só expõe ao público os itens marcados como activos/publicados. */
 $publicos = fn($lista) => array_values(array_filter(
@@ -36,6 +37,7 @@ echo json_encode([
     'contact'      => $obj($dados['contact']),
     'branding'     => $obj($branding),
     'payments'     => $obj($payments),
+    'sites'        => $publicos($sites),
     // Login social (só IDs públicos; o App Secret do Facebook NUNCA é exposto).
     'social'       => (function () use ($config) {
         $s = ctg_social($config);

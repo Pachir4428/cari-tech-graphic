@@ -10,6 +10,12 @@ window.I18N = {
       cta: 'Começar Agora',
       login: 'Entrar',
     },
+    sites: {
+      eyebrow: 'Nossos sites & sistemas',
+      title: 'Trabalhos publicados',
+      lede: 'Alguns dos sites e sistemas que criámos — veja-os ao vivo.',
+      visit: 'Visitar site',
+    },
     hero: {
       eyebrow: 'Cari Tech Graphic — Nampula, Moçambique',
       title_a: 'Transformamos ideias em',
@@ -220,6 +226,12 @@ window.I18N = {
       contact: 'Contact',
       cta: 'Get started',
       login: 'Log in',
+    },
+    sites: {
+      eyebrow: 'Our sites & systems',
+      title: 'Published work',
+      lede: 'Some of the sites and systems we built — see them live.',
+      visit: 'Visit site',
     },
     hero: {
       eyebrow: 'Cari Tech Graphic — Nampula, Mozambique',

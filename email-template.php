@@ -11,19 +11,21 @@ function email_cliente_html($config, $opts) {
     $servico = htmlspecialchars($opts['servico'] ?? '', ENT_QUOTES);
     $mensagem= nl2br(htmlspecialchars($opts['mensagem'] ?? '', ENT_QUOTES));
     $codigo  = htmlspecialchars($opts['codigo'] ?? '', ENT_QUOTES);
-    $email   = htmlspecialchars($opts['email'] ?? '', ENT_QUOTES);
+    $rawEmail= (string) ($opts['email'] ?? '');
+    $email   = htmlspecialchars($rawEmail, ENT_QUOTES);
     $whats   = preg_replace('/\D/', '', (string) ($config['whatsapp'] ?? ''));
     $helpMail= htmlspecialchars($config['to_email'] ?? '', ENT_QUOTES);
-    $areaUrl = $site !== '' ? ($site . '/entrar.html') : 'entrar.html';
+    /* Link directo para a conta do cliente: já leva o e-mail, só falta o código. */
+    $base    = $site !== '' ? $site : '';
+    $areaUrl = ($base !== '' ? $base . '/' : '') . 'cliente.html?email=' . rawurlencode($rawEmail);
 
-    // Logótipo: usa o do site (se definido e com site_url) senão o wordmark.
+    // Logótipo: usa o do site (se definido e com site_url); senão, apenas o nome.
     $logoImg = '';
     if ($site !== '' && !empty($opts['logo'])) {
         $logoImg = '<img src="' . $site . '/' . ltrim(htmlspecialchars($opts['logo'], ENT_QUOTES), '/') . '" alt="' . $marca . '" height="40" style="height:40px;width:auto;display:inline-block;border:0;">';
     }
     $header = $logoImg !== '' ? $logoImg :
-        '<span style="display:inline-block;vertical-align:middle;width:34px;height:34px;line-height:34px;text-align:center;background:#FF7200;color:#ffffff;border-radius:9px;font-weight:800;font-size:16px;font-family:Arial,sans-serif;">C</span>'
-        . '<span style="display:inline-block;vertical-align:middle;margin-left:10px;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#025254;letter-spacing:-.3px;">' . $marca . '</span>';
+        '<span style="display:inline-block;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#0f4b4d;letter-spacing:-.3px;">' . $marca . '</span>';
 
     ob_start(); ?>
 <!DOCTYPE html>
@@ -37,9 +39,9 @@ function email_cliente_html($config, $opts) {
     <tr><td align="center" style="padding:34px 30px 10px;"><?= $header ?></td></tr>
     <!-- Hero -->
     <tr><td align="center" style="padding:14px 30px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:16px;background:#025254;background:linear-gradient(135deg,#036C6F 0%,#025254 55%,#FF7200 160%);">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:16px;background:#0f4b4d;background:linear-gradient(135deg,#1a6e70 0%,#0f4b4d 55%,#e8792f 160%);">
         <tr><td align="center" style="padding:40px 20px;">
-          <div style="width:78px;height:78px;line-height:78px;margin:0 auto;text-align:center;background:#FF7200;border-radius:50%;color:#ffffff;font-size:38px;font-family:Arial,sans-serif;">&#10003;</div>
+          <div style="width:78px;height:78px;line-height:78px;margin:0 auto;text-align:center;background:#e8792f;border-radius:50%;color:#ffffff;font-size:38px;font-family:Arial,sans-serif;">&#10003;</div>
         </td></tr>
       </table>
     </td></tr>
@@ -51,14 +53,14 @@ function email_cliente_html($config, $opts) {
     <tr><td align="center" style="padding:10px 44px 4px;font-family:Arial,Helvetica,sans-serif;">
       <p style="margin:0;font-size:16px;line-height:1.7;color:#5b6b73;">
         Olá<?= $nome !== '' ? ' ' . $nome : '' ?>, obrigado por escolher a <?= $marca ?>.
-        Recebemos o seu pedido<?= $servico !== '' ? ' de <strong style="color:#025254;">' . $servico . '</strong>' : '' ?>
+        Recebemos o seu pedido<?= $servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '' ?>
         e vamos entrar em contacto em breve. Na sua <strong>Área de Cliente</strong> acompanha o estado e recebe as entregas.
       </p>
     </td></tr>
     <!-- Botão -->
     <tr><td align="center" style="padding:26px 30px 6px;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-        <td align="center" style="border-radius:999px;background:#FF7200;">
+        <td align="center" style="border-radius:999px;background:#e8792f;">
           <a href="<?= $areaUrl ?>" style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;">Aceder à Área de Cliente</a>
         </td>
       </tr></table>
@@ -68,7 +70,7 @@ function email_cliente_html($config, $opts) {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f8f8;border:1px solid #e4ebec;border-radius:12px;">
         <tr><td align="center" style="padding:16px;font-family:Arial,Helvetica,sans-serif;">
           <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#5b6b73;font-weight:700;">O seu código de acesso</div>
-          <div style="font-size:26px;letter-spacing:6px;font-weight:800;color:#025254;margin-top:6px;font-family:'Courier New',monospace;"><?= $codigo ?></div>
+          <div style="font-size:26px;letter-spacing:6px;font-weight:800;color:#0f4b4d;margin-top:6px;font-family:'Courier New',monospace;"><?= $codigo ?></div>
           <div style="font-size:12px;color:#8a999f;margin-top:6px;">E-mail: <?= $email ?></div>
         </td></tr>
       </table>
@@ -76,7 +78,7 @@ function email_cliente_html($config, $opts) {
     <?php if (trim(strip_tags($mensagem)) !== ''): ?>
     <tr><td style="padding:16px 44px 0;font-family:Arial,Helvetica,sans-serif;">
       <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8a999f;font-weight:700;margin-bottom:6px;">Resumo do pedido</div>
-      <div style="font-size:14px;line-height:1.6;color:#5b6b73;background:#fafcfc;border-left:3px solid #FF7200;border-radius:8px;padding:12px 14px;"><?= $mensagem ?></div>
+      <div style="font-size:14px;line-height:1.6;color:#5b6b73;background:#fafcfc;border-left:3px solid #e8792f;border-radius:8px;padding:12px 14px;"><?= $mensagem ?></div>
     </td></tr>
     <?php endif; ?>
     <!-- Divider -->
@@ -84,8 +86,8 @@ function email_cliente_html($config, $opts) {
     <!-- Ajuda -->
     <tr><td align="center" style="padding:18px 44px 6px;font-family:Arial,Helvetica,sans-serif;">
       <p style="margin:0;font-size:13px;line-height:1.7;color:#8a999f;">
-        Tem dúvidas? Responda a este e-mail<?= $helpMail !== '' ? ' ou escreva para <a href="mailto:' . $helpMail . '" style="color:#036C6F;text-decoration:none;font-weight:700;">' . $helpMail . '</a>' : '' ?>.
-        <?= $whats !== '' ? '<br>WhatsApp: <a href="https://wa.me/' . $whats . '" style="color:#036C6F;text-decoration:none;font-weight:700;">falar connosco</a>.' : '' ?>
+        Tem dúvidas? Responda a este e-mail<?= $helpMail !== '' ? ' ou escreva para <a href="mailto:' . $helpMail . '" style="color:#1a6e70;text-decoration:none;font-weight:700;">' . $helpMail . '</a>' : '' ?>.
+        <?= $whats !== '' ? '<br>WhatsApp: <a href="https://wa.me/' . $whats . '" style="color:#1a6e70;text-decoration:none;font-weight:700;">falar connosco</a>.' : '' ?>
       </p>
     </td></tr>
     <!-- Rodapé -->

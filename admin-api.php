@@ -201,6 +201,7 @@ switch ($action) {
             'branding'     => store_get_branding($config),
             'payments'     => store_get_payments($config),
             'social'       => ctg_social($config),
+            'sites'        => store_get_sites($config),
             'username'     => ctg_admin_user($config),
         ]);
 
@@ -210,6 +211,27 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         store_set_payments($config, $p);
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'sites-save':
+        exigir_login();
+        $s = $body['sites'] ?? null;
+        if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        $limpos = [];
+        foreach ($s as $it) {
+            $url = trim((string) ($it['url'] ?? ''));
+            $nome = trim((string) ($it['nome'] ?? ''));
+            if ($url === '' && $nome === '') continue;
+            if ($url !== '' && !preg_match('~^https?://~i', $url)) $url = 'https://' . $url;
+            $limpos[] = [
+                'id'     => (string) ($it['id'] ?? uniqid()),
+                'nome'   => $nome,
+                'url'    => $url,
+                'desc'   => trim((string) ($it['desc'] ?? '')),
+                'status' => (($it['status'] ?? 'active') === 'draft') ? 'draft' : 'active',
+            ];
+        }
+        store_set_sites($config, $limpos);
+        responder(true, ['message' => 'Sites guardados.', 'sites' => $limpos]);
 
     case 'social-save':
         exigir_login();
@@ -287,6 +309,17 @@ switch ($action) {
     case 'deliveries':
         exigir_login();
         responder(true, ['deliveries' => store_get_deliveries($config)]);
+
+    case 'lead-comment':
+        exigir_login();
+        $leadId = (string) ($body['leadId'] ?? '');
+        $texto  = trim((string) ($body['texto'] ?? ''));
+        if ($leadId === '' || $texto === '') responder(false, ['message' => 'Escreva um comentário.'], 422);
+        if (mb_strlen($texto) > 1000) $texto = mb_substr($texto, 0, 1000);
+        $comentarios = store_add_comment($config, $leadId, [
+            'de' => 'studio', 'nome' => 'Cari Tech', 'texto' => $texto, 'data' => date('c'),
+        ]);
+        responder(true, ['message' => 'Comentário enviado.', 'comentarios' => $comentarios]);
 
     case 'upload-file':
         exigir_login();

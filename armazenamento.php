@@ -239,6 +239,10 @@ function store_set_payments($config, $p) { return _meta_set($config, 'payments',
 function store_get_social($config)    { return _meta_get($config, 'social', 'social.json') ?: []; }
 function store_set_social($config, $s) { return _meta_set($config, 'social', 'social.json', $s); }
 
+/* Sites & Sistemas: trabalhos publicados (link + pré-visualização). Público. */
+function store_get_sites($config)    { $v = _meta_get($config, 'sites', 'sites.json'); return is_array($v) ? $v : []; }
+function store_set_sites($config, $s) { return _meta_set($config, 'sites', 'sites.json', array_values($s)); }
+
 /* Configuração social EFECTIVA: o que está guardado no painel tem prioridade
    sobre os valores padrão do config.php. Usada por auth.php e conteudo.php. */
 function ctg_social($config) {
@@ -269,6 +273,21 @@ function store_set_delivery($config, $leadId, $entrega) {
 function store_get_delivery($config, $leadId) {
     $todas = store_get_deliveries($config);
     return $todas[$leadId] ?? null;
+}
+
+/* Adiciona um comentário a um pedido (cliente ou estúdio). Cria a entrada de
+   entrega se ainda não existir. Devolve a lista actualizada de comentários. */
+function store_add_comment($config, $leadId, $comentario) {
+    $todas = store_get_deliveries($config);
+    if (!isset($todas[$leadId]) || !is_array($todas[$leadId])) {
+        $todas[$leadId] = ['leadId' => $leadId, 'entregas' => [], 'msg' => '', 'entregue' => false];
+    }
+    if (empty($todas[$leadId]['comentarios']) || !is_array($todas[$leadId]['comentarios'])) {
+        $todas[$leadId]['comentarios'] = [];
+    }
+    $todas[$leadId]['comentarios'][] = $comentario;
+    store_set_deliveries($config, $todas);
+    return $todas[$leadId]['comentarios'];
 }
 
 /* -------------------------------------------------------------------------- */

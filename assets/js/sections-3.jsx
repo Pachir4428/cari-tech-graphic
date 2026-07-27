@@ -42,26 +42,11 @@ function LogoMark({ branding }) {
   if (logo) {
     return <img src={logo} alt="Cari Tech Graphic" className="logo-img" style={{ height: 40, width: 'auto', display: 'block' }} />;
   }
+  // Sem logótipo carregado: mostra apenas o nome do site (sem símbolo).
   return (
-    <>
-      <div className="logo-mark">
-        <svg viewBox="0 0 32 32" fill="none">
-          <defs>
-            <linearGradient id="lm" x1="0" x2="1">
-              <stop offset="0" stopColor="var(--accent)" />
-              <stop offset="1" stopColor="var(--accent-2)" />
-            </linearGradient>
-          </defs>
-          <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm)" opacity="0.18" />
-          <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm)" strokeWidth="1.6" fill="none" />
-          <text x="16" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="currentColor">C</text>
-        </svg>
-      </div>
-      <span className="logo-text">
-        <span className="logo-name">Cari Tech</span>
-        <span className="logo-sub">Graphic</span>
-      </span>
-    </>
+    <span className="logo-text logo-text-only">
+      <span className="logo-name">Cari Tech Graphic</span>
+    </span>
   );
 }
 

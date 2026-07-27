@@ -3,18 +3,18 @@
    ============================================ */
 
 :root {
-  /* Brand */
-  --brand-deep: #025254;
-  --brand-deep-2: #013E40;
-  --brand-mid: #036C6F;
-  --accent: #FF7200;
-  --accent-2: #E56500;
-  --accent-glow: rgba(255, 114, 0, 0.35);
+  /* Brand — tons mais suaves (menos radiantes) */
+  --brand-deep: #0F4B4D;
+  --brand-deep-2: #0A3B3D;
+  --brand-mid: #1A6E70;
+  --accent: #E8792F;
+  --accent-2: #CF6820;
+  --accent-glow: rgba(232, 121, 47, 0.22);
 
   /* Neutrals — light */
-  --bg: #F6FAFA;
+  --bg: #F5F8F8;
   --bg-elev: #FFFFFF;
-  --bg-soft: #ECF3F3;
+  --bg-soft: #EEF4F4;
   --ink: #02373A;
   --ink-soft: #2F4F51;
   --ink-muted: #647E80;
