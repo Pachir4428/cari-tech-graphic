@@ -281,6 +281,41 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .logo { flex-shrink: 0; }
 }
 
+/* ==========================================================================
+   1.0.3 — Botão de login no menu + header defensivo no telemóvel
+   ========================================================================== */
+/* Botão "Entrar" nas acções do cabeçalho (desktop) */
+.login-btn {
+  width: auto; padding: 0 14px; gap: 7px;
+  background: var(--brand-deep); color: #fff; border-color: var(--brand-deep);
+  font-weight: 700;
+}
+.login-btn:hover { background: var(--brand-mid); border-color: var(--brand-mid); color: #fff; }
+.login-btn span { font-size: 13px; }
+
+/* Botão "Entrar" dentro do menu (dropdown do telemóvel) — escondido no desktop */
+.nav-login {
+  display: none;
+  align-items: center; justify-content: center;
+  background: var(--accent); color: #fff !important;
+  padding: 12px 16px; border-radius: 12px; font-weight: 700;
+  text-align: center; margin-top: 6px;
+}
+.nav-login:hover { background: var(--accent-2); }
+
+/* Header defensivo: garante que o logótipo e as acções nunca são cortados
+   no telemóvel, mesmo com conteúdo decorativo à volta. */
+@media (max-width: 900px) {
+  .site-header-inner {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+    gap: 12px;
+  }
+  .logo { flex: 0 0 auto; max-width: 62%; overflow: hidden; }
+  .logo-img { max-height: 38px; width: auto; }
+  .site-actions { flex: 0 0 auto; gap: 8px; }
+}
+
 /* Formas de pagamento no checkout */
 .cart-pay { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
 .cart-pay-head { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }

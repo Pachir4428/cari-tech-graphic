@@ -1103,7 +1103,8 @@ a.contact-card:hover {
     z-index: 99;
   }
   .site-nav.open { transform: translateY(0); }
-  .header-cta { display: none; }
+  .header-cta, .login-btn { display: none; }
+  .nav-login { display: inline-flex !important; }
   .hamburger {
     display: flex;
     flex-direction: column;

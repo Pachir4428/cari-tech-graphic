@@ -36,4 +36,6 @@ echo json_encode([
     'contact'      => $obj($dados['contact']),
     'branding'     => $obj($branding),
     'payments'     => $obj($payments),
+    // ID de cliente do Google (público, não é segredo) — activa o botão social.
+    'google_client_id' => (string) ($config['google_client_id'] ?? ''),
 ], JSON_UNESCAPED_UNICODE);

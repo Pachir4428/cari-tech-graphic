@@ -50,6 +50,18 @@ return [
     'admin_user'          => 'admin',
     'admin_password_hash' => '$2y$12$X.Q5w2g879KLOCGa9daRReVzTHnGCdfluiLK.MRxwfLPTy1ny2f1S',
 
+    // ---- Login social (Google) — OPCIONAL --------------------------------
+    // O botão "Continuar com Google" na página de entrada (entrar.html) só
+    // aparece se preencher 'google_client_id'. Para obter um:
+    //   1. https://console.cloud.google.com → APIs e Serviços → Credenciais
+    //   2. Criar "ID de cliente OAuth" → tipo "Aplicação Web"
+    //   3. Em "Origens JavaScript autorizadas" ponha https://seudominio.com
+    //   4. Copie o "ID de cliente" para aqui.
+    // Um cliente entra com a conta Google se o e-mail coincidir com um pedido.
+    // Se puser o seu e-mail em 'admin_email', entra como administrador.
+    'google_client_id' => '',
+    'admin_email'      => '',
+
     // Onde ficam guardados os leads em JSON (usado pelo painel admin).
     'leads_json' => __DIR__ . '/dados/leads.json',
 

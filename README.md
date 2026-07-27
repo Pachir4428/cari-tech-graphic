@@ -1,228 +1,220 @@
 # Cari Tech Graphic — Website
 
-Site institucional do estúdio **Cari Tech Graphic** (design, marketing e tecnologia · Nampula, Moçambique).
-Feito para captar e responder a clientes: formulários de contacto/orçamento que chegam ao seu e-mail,
-registo automático de leads, botão de WhatsApp e chat de apoio.
+Site do estúdio **Cari Tech Graphic** (design, marketing e tecnologia · Nampula, Moçambique),
+pensado para **captar, atender e entregar trabalho a clientes**: formulários que chegam ao seu
+e-mail, painel de gestão, **Área de Cliente com entregas**, WhatsApp e chat de apoio.
 
-> **Stack:** HTML + CSS + React (via CDN, sem build) + um único ficheiro PHP para receber os formulários.
-> Corre em qualquer hospedagem partilhada com PHP (Hostinger, cPanel, etc.) e também em VPS.
+> **Stack:** HTML + CSS + React (via CDN, **sem build**) + PHP. Corre em qualquer
+> hospedagem partilhada com PHP (Hostinger, cPanel…) e também em VPS. Sem dependências obrigatórias.
 
 ---
 
-## 1. Estrutura do projecto
+## Índice
+
+1. [O que o site faz](#1-o-que-o-site-faz)
+2. [Estrutura dos ficheiros](#2-estrutura-dos-ficheiros)
+3. [Publicar na Hostinger](#3-publicar-na-hostinger-passo-a-passo)
+4. [Acessos: administração e clientes](#4-acessos-administração-e-clientes)
+5. [Painel de administração](#5-painel-de-administração-adminhtml)
+6. [Área de Cliente e entregas](#6-área-de-cliente-e-entregas)
+7. [Login unificado e login social (Google)](#7-login-unificado-e-login-social-google)
+8. [Onde os dados ficam (ficheiros ou MySQL)](#8-onde-os-dados-ficam-ficheiros-ou-mysql)
+9. [E-mail e SMTP](#9-e-mail-e-smtp)
+10. [Atualizar o site (versões)](#10-atualizar-o-site-versões)
+11. [VPS (opcional)](#11-publicar-num-vps-opcional)
+12. [Desenvolvimento local](#12-desenvolvimento-local)
+13. [Segurança](#13-segurança)
+
+---
+
+## 1. O que o site faz
+
+| Área | Descrição |
+|------|-----------|
+| **Site público** | Página inicial, "Sobre", serviços, portfólio, testemunhos, contactos — tudo editável no painel. |
+| **Pedidos (leads)** | Formulário de contacto/orçamento e **checkout** de serviços → chegam ao seu e-mail e ficam guardados. |
+| **Recibo automático** | Quem faz um pedido recebe um e-mail de confirmação com o resumo e o acesso à Área de Cliente. |
+| **Painel de gestão** | Gerir leads, serviços, portfólio, testemunhos, contactos, logótipo, pagamentos e **entregas**. |
+| **Área de Cliente** | O cliente entra com e-mail + código e **transfere as suas entregas** (ficheiros e links). |
+| **Login unificado** | Um único acesso (`entrar.html`) que encaminha para o painel (admin) ou a Área de Cliente. |
+| **WhatsApp + Chat** | Botão de WhatsApp com mensagem pré-preenchida e chat de apoio (sem chave de API). |
+| **PT / EN** | Site e painel totalmente bilingues. |
+
+---
+
+## 2. Estrutura dos ficheiros
 
 ```
 cari-tech-graphic/
-├── index.html                 ← página principal (abre automaticamente no domínio)
-├── sobre.html                 ← página "Sobre nós"
-├── admin.html                 ← painel de administração (login + gestão de leads)
-├── enviar.php                 ← recebe os formulários e envia o e-mail  ⭐
-├── admin-api.php              ← API do painel (login + leads + conteúdo)  ⭐
-├── conteudo.php               ← conteúdo público (serviços/portfólio geridos)
-├── armazenamento.php          ← camada de dados: MySQL ou ficheiros (fallback)
-├── config.php                 ← as SUAS definições (e-mail, WhatsApp, senha, BD, SMTP)  ⭐
-├── .htaccess                  ← HTTPS, cache, segurança, protecção de ficheiros
-├── robots.txt
-├── assets/
-│   ├── css/                   ← todos os estilos
-│   └── js/                    ← config.js, i18n.js e componentes React (.jsx)
-├── uploads/                   ← imagens do site
-├── dados/                     ← cópia de segurança dos leads (leads.csv) — protegida
-└── docs/                      ← guia de implantação em PDF/HTML e capturas de ecrã
+├── index.html            ← página principal
+├── sobre.html            ← página "Sobre nós"
+├── entrar.html           ← login unificado (admin ou cliente)     ⭐
+├── admin.html            ← painel de administração
+├── cliente.html          ← Área de Cliente (entregas)             ⭐
+├── enviar.php            ← recebe os formulários, guarda o lead e envia e-mails
+├── auth.php              ← login unificado (decide admin vs cliente)
+├── admin-api.php         ← API do painel (leads, conteúdo, entregas…)
+├── cliente-api.php       ← API pública da Área de Cliente
+├── conteudo.php          ← conteúdo público (serviços/portfólio geridos)
+├── armazenamento.php     ← camada de dados: MySQL ou ficheiros (fallback)
+├── config.php            ← as SUAS definições (e-mail, WhatsApp, senha, BD, SMTP)  ⭐
+├── .htaccess             ← HTTPS, cache, segurança
+├── assets/{css,js}/      ← estilos e componentes React (.jsx)
+├── uploads/              ← imagens e logótipo (e uploads/entregas/ para os ficheiros entregues)
+├── dados/               ← leads e conteúdo (protegida ao público)
+├── atualizacoes/         ← pacotes .zip de cada versão + guia
+└── docs/                 ← guias de implantação e schema.sql
 ```
 
-Os únicos ficheiros que você precisa de editar são **`config.php`** (definições do servidor)
-e **`assets/js/config.js`** (contactos mostrados no site).
+Normalmente só edita **`config.php`** (definições do servidor). O resto gere-se pelo painel.
 
 ---
 
-## 2. Publicar na Hostinger (hospedagem partilhada) — recomendado
+## 3. Publicar na Hostinger (passo a passo)
 
-O plano **Profissional** da Hostinger já inclui PHP e envio de e-mail — é tudo o que este site precisa.
+O plano **Profissional** já inclui PHP e envio de e-mail — é tudo o que este site precisa.
 
-### Passo 1 — Preparar o ZIP
-Baixe/compacte a pasta do projecto num ficheiro `.zip` (com os ficheiros na raiz, não dentro de uma subpasta extra).
-
-### Passo 2 — Enviar para o servidor
-1. Entre em **hpanel.hostinger.com** e escolha o seu site.
-2. **Ficheiros → Gestor de Ficheiros** e abra a pasta **`public_html`**.
-3. Apague ficheiros de exemplo que a Hostinger tenha criado (`default.php`, `index.html` em branco).
-4. Clique em **Upload** e envie o `.zip`; depois clique com o botão direito → **Extrair** para descompactar no servidor.
-
-> Não é preciso renomear nada: o ficheiro principal já se chama `index.html` e abre sozinho no domínio.
-
-### Passo 3 — Criar o e-mail que recebe os contactos
-1. No hPanel, vá a **E-mails → Contas de E-mail** e crie uma caixa no seu domínio,
-   por exemplo `contacto@seudominio.com`.
-2. Crie também `no-reply@seudominio.com` (usada como remetente dos avisos).
-
-### Passo 4 — Configurar `config.php`
-No Gestor de Ficheiros, edite **`config.php`** e ajuste:
-
-```php
-'to_email'   => 'contacto@seudominio.com',   // onde quer receber os pedidos
-'from_email' => 'no-reply@seudominio.com',   // TEM de ser do seu domínio
-'whatsapp'   => '258XXXXXXXXX',              // só dígitos, formato internacional
-```
-
-E edite **`assets/js/config.js`** com o WhatsApp, e-mail e telefone que aparecem no site.
-
-### Passo 5 — Activar HTTPS (SSL)
-Em **Segurança → SSL**, active o certificado gratuito. O `.htaccess` já força `https://` automaticamente.
-
-### Passo 6 — Testar
-Abra o seu domínio, preencha o formulário de contacto e confirme que o e-mail chega.
-Se não carregar a versão nova, faça *hard refresh*: `Ctrl+Shift+R` (Windows) / `Cmd+Shift+R` (Mac).
-
----
-
-## 3. Como funciona a interação com clientes
-
-| Canal | O que acontece |
-|-------|----------------|
-| **Formulário de Contacto / Orçamento** | Envia para `enviar.php` → valida → **guarda em `dados/leads.csv`** → envia e-mail para si. |
-| **Rede de segurança** | Mesmo que o e-mail falhe, o lead fica gravado no CSV e o cliente é convidado a continuar pelo WhatsApp — nenhum contacto se perde. |
-| **Botão WhatsApp** | Abre uma conversa com mensagem pré-preenchida (nome, serviço, mensagem). |
-| **Chat de apoio** | Responde a perguntas comuns (preços, serviços, prazos, contactos) e encaminha para o WhatsApp. Não precisa de nenhuma chave de API para funcionar no site publicado. |
-
-**Ver os leads guardados:** use o **painel de administração** (ver secção 3.1) ou, em alternativa,
-baixe `dados/leads.csv` do Gestor de Ficheiros e abra no Excel/Sheets.
-A pasta `dados/` está bloqueada ao público pelo `.htaccess` (ninguém acede pela web).
-
-### 3.1. Painel de administração (`admin.html`)
-
-Página protegida por login para gerir os pedidos e todo o conteúdo do site.
-O link "Admin" **não aparece no menu** do site — acede-se apenas indo directamente a
-`https://seudominio.com/admin.html` (guarde nos favoritos).
-
-- **Entrar:** utilizador **`admin`** e senha **`caritech2026`** (padrão) — **mude-os assim que entrar**
-  (Definições → Conta de acesso, ou ver abaixo).
-- **Aba Leads (dados reais):** lista os contactos, permite mudar o estado
-  (Novo → Contactado → Ganho / Perdido), responder por **WhatsApp** ou **e-mail** com um clique,
-  e remover. Os estados ficam guardados em `dados/leads.json`.
-- **Abas Serviços e Portfólio (editáveis, refletidas no site):** adicione, edite ou remova
-  serviços e projectos, **e edite os cabeçalhos de cada secção** (rótulo, título e descrição
-  que aparecem no site). O que marcar como **Activo/Publicado** aparece na página inicial;
-  "Rascunho" fica oculto no site. É guardado automaticamente em `dados/conteudo.json` e lido
-  pelo site através de `conteudo.php`. Enquanto não editar nada, o site mostra os textos padrão.
-- **Aba Testemunhos (editável, refletida no site):** adicione, edite ou remova depoimentos de
-  clientes (texto, nome, cargo) e edite o cabeçalho da secção. Os 3 primeiros marcados como
-  **Activo** aparecem no site; "Rascunho" fica oculto.
-- **Aba Contactos:** edite o e-mail, telefone, WhatsApp, morada e horário. Estes valores
-  aparecem na secção Contacto, no rodapé, no botão flutuante de WhatsApp e são usados pelos
-  formulários e pelo chat. Guardado automaticamente.
-- **Botão "Ver site":** abre a página pública numa nova aba — como o site lê o conteúdo a cada
-  carregamento, mostra sempre a versão mais recente do que guardou.
-- **Definições → Conta de acesso:** mude o **utilizador e a palavra-passe** do painel (pede a senha
-  actual por segurança). Ficam guardados no servidor — já não é preciso editar ficheiros.
-- **Definições → Logótipo:** carregue a **imagem do logótipo** (PNG/JPG/SVG, até 2 MB). Passa a
-  aparecer no cabeçalho e no rodapé do site; sem logótipo, é usado o símbolo padrão.
-- **Definições → Atualizar o site (ZIP):** envie um `.zip` com uma nova versão e o site é
-  actualizado no servidor. O `config.php`, a pasta `dados/` (leads e conteúdo) e `uploads/`
-  (imagens/logótipo) são **sempre preservados** — nunca perde configurações nem dados.
-
-**Mudar as credenciais** faz-se no painel (Definições → Conta de acesso).
-Em alternativa/recuperação, os valores iniciais estão em `config.php` (`admin_user` e
-`admin_password_hash` — gere um hash com `php -r 'echo password_hash("SENHA", PASSWORD_DEFAULT);'`).
-
-> Segurança: o acesso usa sessão PHP com cookie `HttpOnly`/`SameSite=Strict`, a senha é guardada
-> apenas como *hash* bcrypt, e a API (`admin-api.php`) recusa qualquer pedido sem sessão válida.
-
-### Melhorar a entrega de e-mail (opcional, mas recomendado)
-A função `mail()` do PHP às vezes cai no spam. Para entrega fiável via SMTP:
-
-1. Instale o PHPMailer na pasta do projecto (via SSH):
-   ```bash
-   composer require phpmailer/phpmailer
+1. **Enviar os ficheiros.** hPanel → **Ficheiros → Gestor de Ficheiros** → pasta **`public_html`**.
+   Envie o `.zip` do projecto e **Extrair** (os ficheiros devem ficar na raiz de `public_html`,
+   não dentro de uma subpasta).
+2. **Criar os e-mails.** hPanel → **E-mails** → crie `contacto@seudominio.com` e `no-reply@seudominio.com`.
+3. **Configurar `config.php`:**
+   ```php
+   'to_email'   => 'contacto@seudominio.com',   // onde recebe os pedidos
+   'from_email' => 'no-reply@seudominio.com',   // TEM de ser do seu domínio
+   'whatsapp'   => '258XXXXXXXXX',              // só dígitos, formato internacional
+   'site_url'   => 'https://seudominio.com',    // usado no recibo (link da Área de Cliente)
    ```
-2. Em `config.php`, ponha `'smtp_enabled' => true` e preencha `smtp_host`, `smtp_user`, `smtp_pass`
-   (use os dados SMTP da sua caixa de e-mail Hostinger — porta 465/SSL).
+4. **Activar HTTPS.** Segurança → SSL → activar. O `.htaccess` já força `https://`.
+5. **Testar.** Abra o domínio, envie o formulário e confirme o e-mail. Depois entre em
+   `seudominio.com/admin.html` e **mude a palavra-passe**.
+
+> **Nada a atualizar no site?** Faça *hard refresh*: `Ctrl+Shift+R` (Windows) / `Cmd+Shift+R` (Mac).
+> Cada versão do site já força a recarga do CSS/JS automaticamente (ver [secção 10](#10-atualizar-o-site-versões)).
 
 ---
 
-## 3.5. Onde os dados são guardados — ficheiros ou MySQL
+## 4. Acessos: administração e clientes
 
-Por omissão, **não é preciso base de dados**: tudo (leads e conteúdo) é guardado em ficheiros
-dentro da pasta `dados/` — funciona logo, sem qualquer configuração, e o backup é só copiar a pasta.
+Há **um único ponto de entrada**: **`seudominio.com/entrar.html`** (também no botão **Entrar** do menu).
+Consoante as credenciais, o sistema encaminha:
 
-| Dados | Modo ficheiros (padrão) | Modo MySQL |
-|-------|-------------------------|------------|
-| Leads | `dados/leads.json` (+ `dados/leads.csv`) | tabela `leads` |
-| Serviços, Portfólio, Testemunhos, Cabeçalhos, Contactos | `dados/conteudo.json` | tabelas `content_items` + `settings` |
+| Perfil | Credenciais | Vai para |
+|--------|-------------|----------|
+| **Administrador** | utilizador + palavra-passe | `admin.html` (painel de gestão) |
+| **Cliente** | e-mail + código do pedido | `cliente.html` (Área de Cliente) |
 
-### Usar a base de dados MySQL da Hostinger (opcional)
-Útil se esperar **muitos** leads, quiser relatórios ou vários utilizadores em simultâneo.
+- Administrador padrão: **`admin`** / **`caritech2026`** — **mude assim que entrar**.
+- O cliente recebe o **código** no e-mail de confirmação (recibo automático) de cada pedido.
 
-1. No hPanel: **Bases de Dados → MySQL** → crie uma base de dados e um utilizador
-   (anote **nome da BD**, **utilizador** e **palavra-passe**).
-2. Em `config.php`, na secção `'db'`, preencha `name`, `user`, `pass` e ponha `'enabled' => true`.
-3. Pronto — **as tabelas são criadas automaticamente** na primeira utilização.
-   (O esquema também está em `docs/schema.sql`, caso prefira criá-las à mão no phpMyAdmin.)
-
-> **Rede de segurança:** se o MySQL estiver activado mas a ligação falhar (dados errados, servidor
-> em baixo), o site volta **automaticamente** aos ficheiros — nunca fica offline por causa da BD.
-> O ficheiro `dados/leads.csv` continua a ser escrito como cópia extra em qualquer dos modos.
+O painel `admin.html` continua a funcionar directamente; `entrar.html` é apenas o acesso unificado.
 
 ---
 
-## 4. Publicar num VPS (só se precisar de mais controlo)
+## 5. Painel de administração (`admin.html`)
 
-Um VPS **não é necessário** para este site — a hospedagem partilhada chega perfeitamente.
-Considere VPS apenas se, no futuro, quiser: tráfego muito alto, uma base de dados própria,
-um back-end Node/Python, ou vários sites no mesmo servidor.
+- **Leads:** lista os pedidos, muda o estado (Novo → Contactado → Ganho / Perdido), responde por
+  **WhatsApp/e-mail** e permite **Entregar** (ver [secção 6](#6-área-de-cliente-e-entregas)).
+- **Serviços / Portfólio / Testemunhos:** adicione, edite, remova e defina os cabeçalhos de cada
+  secção. "Activo/Publicado" aparece no site; "Rascunho" fica oculto. Guardado automaticamente.
+- **Contactos:** e-mail, telefone, WhatsApp, morada e horário mostrados no site.
+- **Definições → Conta:** mude utilizador e palavra-passe (pede a senha actual).
+- **Definições → Logótipo:** dois logótipos (fundo claro/escuro); também vira o *favicon*.
+- **Definições → Pagamentos:** métodos mostrados no checkout (M-Pesa, e-Mola, transferência, link online).
+- **Definições → Atualizar o site (ZIP):** aplica uma nova versão preservando `config.php`, `dados/` e `uploads/`.
 
-### Opção A — Nginx (site estático + PHP-FPM)
+> Segurança: sessão PHP com cookie `HttpOnly`/`SameSite=Strict`, palavra-passe em *hash* bcrypt,
+> e a API recusa qualquer pedido sem sessão válida.
 
-```bash
-# 1. Instalar servidor web + PHP
-sudo apt update
-sudo apt install -y nginx php-fpm php-cli
+---
 
-# 2. Colocar o site
-sudo mkdir -p /var/www/caritech
-sudo cp -r ./* /var/www/caritech/
-sudo chown -R www-data:www-data /var/www/caritech
-```
+## 6. Área de Cliente e entregas
 
-Configuração `/etc/nginx/sites-available/caritech`:
+O cliente acede em **`cliente.html`** (ou pelo login unificado) com **e-mail + código** e vê:
 
-```nginx
-server {
-    listen 80;
-    server_name seudominio.com www.seudominio.com;
-    root /var/www/caritech;
-    index index.html;
+- o **estado** do pedido (recebido, em andamento, concluído);
+- as **entregas**: ficheiros para transferir e/ou links (Google Drive, Figma…), com a sua mensagem.
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+**Como entregar (no painel):** aba **Leads → botão Entregar** de um pedido:
+1. **Carregue ficheiros** (`uploads/entregas/`) e/ou **adicione links**.
+2. Escreva uma **mensagem** para o cliente.
+3. **Guardar entrega** (o pedido passa a "Ganho") e **Notificar cliente** por WhatsApp/e-mail
+   — a notificação inclui o link da Área de Cliente e o código.
 
-    # Processar o enviar.php
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php-fpm.sock;
-    }
+Cada pedido recebe um **código de acesso** automático, incluído no recibo enviado ao cliente.
 
-    # Bloquear ficheiros sensíveis
-    location ~ ^/(config\.php|dados/) { deny all; return 403; }
-}
-```
+---
 
-```bash
-sudo ln -s /etc/nginx/sites-available/caritech /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
+## 7. Login unificado e login social (Google)
 
-# 3. HTTPS grátis com Let's Encrypt
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d seudominio.com -d www.seudominio.com
-```
+`entrar.html` tem um formulário único (**e-mail/utilizador** + **palavra-passe/código**) que chama
+`auth.php`, que tenta primeiro admin e depois cliente, e devolve para onde encaminhar.
 
-### Opção B — Apache
-O `.htaccess` incluído já funciona no Apache. Instale `apache2` + `libapache2-mod-php`,
-copie os ficheiros para `/var/www/html`, active `mod_rewrite`/`mod_headers`
-(`sudo a2enmod rewrite headers expires deflate`) e corra o `certbot --apache` para o SSL.
+**Login com Google (opcional).** Aparece um botão "Continuar com Google" **apenas se** configurar
+um *Client ID*:
 
-### Opção C — Docker (portátil)
+1. [Google Cloud Console](https://console.cloud.google.com) → **APIs e Serviços → Credenciais**.
+2. **Criar credenciais → ID de cliente OAuth → Aplicação Web.**
+3. Em **Origens JavaScript autorizadas**, ponha `https://seudominio.com`.
+4. Copie o **ID de cliente** para `config.php`:
+   ```php
+   'google_client_id' => 'XXXX.apps.googleusercontent.com',
+   'admin_email'      => 'voce@gmail.com',  // opcional: entra como admin com esta conta Google
+   ```
+
+Com Google, o cliente entra se o e-mail da conta **coincidir com um pedido** existente. A validação
+do token é feita no servidor junto da Google.
+
+---
+
+## 8. Onde os dados ficam (ficheiros ou MySQL)
+
+Por omissão **não é preciso base de dados**: tudo fica em ficheiros na pasta `dados/`.
+
+| Dados | Ficheiros (padrão) | MySQL |
+|-------|--------------------|-------|
+| Leads (+ códigos) | `dados/leads.json` (+ `dados/leads.csv`) | tabela `leads` |
+| Conteúdo do site | `dados/conteudo.json` | `content_items` + `settings` |
+| Entregas, logótipo, pagamentos, admin | `dados/*.json` | tabela `settings` |
+
+**Usar MySQL (opcional):** hPanel → **Bases de Dados → MySQL**, crie BD + utilizador, preencha a
+secção `'db'` do `config.php` e ponha `'enabled' => true`. As tabelas criam-se sozinhas
+(`docs/schema.sql` para referência). Se a ligação falhar, o site volta **automaticamente** aos ficheiros.
+
+---
+
+## 9. E-mail e SMTP
+
+`enviar.php` usa a função `mail()` do PHP (funciona na Hostinger). Para melhor entregabilidade,
+active **SMTP**:
+
+1. Instale o PHPMailer (via SSH): `composer require phpmailer/phpmailer`
+2. Em `config.php`: `'smtp_enabled' => true` e preencha `smtp_host`, `smtp_user`, `smtp_pass`
+   (dados da caixa Hostinger — porta 465/SSL).
+
+O **recibo automático** ao cliente pode ligar/desligar com `'send_receipt' => true`.
+
+---
+
+## 10. Atualizar o site (versões)
+
+Cada versão é um pacote `.zip` em **`atualizacoes/`**, no formato **1.0.0** (use o número mais alto).
+No painel: **Definições → Atualizar o site (ZIP)** → escolha o ZIP → **Atualizar**.
+
+- **Preservados sempre:** `config.php`, `dados/` (leads e conteúdo) e `uploads/` (imagens/logótipo).
+- Cada versão força a **recarga do CSS/JS** (cache-busting `?v=`), por isso as alterações aparecem
+  logo — sem esperar pela expiração da cache. A versão actual aparece no canto do painel.
+- Detalhes e histórico: **`atualizacoes/LEIA-ME.md`**.
+
+---
+
+## 11. Publicar num VPS (opcional)
+
+Não é necessário — a hospedagem partilhada chega. Num VPS, sirva os ficheiros com **Nginx + PHP-FPM**
+ou **Apache** (o `.htaccess` incluído já funciona no Apache com `mod_rewrite`/`headers`/`expires`),
+e obtenha SSL grátis com `certbot`. Num VPS, `mail()` normalmente não sai — use **SMTP** (secção 9).
+
+Exemplo Docker:
 ```dockerfile
 FROM php:8.2-apache
 RUN a2enmod rewrite headers expires deflate
@@ -230,57 +222,34 @@ COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html
 EXPOSE 80
 ```
-```bash
-docker build -t caritech . && docker run -d -p 80:80 --name caritech caritech
-```
-
-Em VPS, o e-mail via `mail()` normalmente **não** sai (sem servidor de correio). Use **SMTP**
-(secção 3) apontando para um provedor de e-mail — é o método fiável num VPS.
 
 ---
 
-## 5. Desenvolvimento local
+## 12. Desenvolvimento local
 
-Como há um ficheiro PHP, use um servidor com PHP (abrir o `index.html` por `file://` não processa o formulário):
+Como há PHP, use um servidor com PHP (abrir por `file://` não processa os formulários):
 
 ```bash
 php -S localhost:8000
 # abra http://localhost:8000
 ```
 
-Sem PHP instalado, o site continua a abrir e os formulários oferecem automaticamente
-o botão de WhatsApp como alternativa.
+Sem PHP, o site ainda abre e os formulários oferecem o WhatsApp como alternativa.
 
 ---
 
-## 6. Personalização rápida
-
-| Quer mudar… | Edite |
-|-------------|-------|
-| Contactos mostrados no site (WhatsApp, e-mail, telefone) | `assets/js/config.js` |
-| Para onde chegam os e-mails / SMTP | `config.php` |
-| Serviços e projectos do portfólio | painel **admin.html** → abas Serviços / Portfólio |
-| Textos e traduções gerais (PT/EN) | `assets/js/i18n.js` |
-| Cores, tipografia, layout | painel **Tweaks** (canto do site) ou `assets/css/` |
-| Imagens (fundador, equipa) | pasta `uploads/` |
-
----
-
-## 7. Segurança — checklist
+## 13. Segurança
 
 - [x] HTTPS forçado pelo `.htaccess`
 - [x] `config.php` e `dados/` bloqueados ao acesso web
-- [x] Honeypot anti-spam nos formulários
-- [x] Validação e limpeza dos dados no servidor
-- [x] Painel `admin.html` protegido por login (sessão PHP + senha em hash bcrypt)
-- [ ] Depois de publicar, **mude a senha do painel** (secção 3.1) e a `smtp_pass` em `config.php`
+- [x] Honeypot anti-spam + validação no servidor
+- [x] Painel protegido por login (sessão PHP + hash bcrypt)
+- [x] Uploads de entrega limitados a tipos seguros (sem PHP/executáveis)
+- [x] Login social valida o token junto da Google
+- [ ] Depois de publicar: **mude a palavra-passe do painel** e a `smtp_pass` em `config.php`
 
 ---
 
-## 8. Suporte
-
-- **Checklist de primeira publicação** (recomendado, interactivo e imprimível):
-  **`docs/checklist-primeira-publicacao.html`** — abra no navegador e marque cada passo;
-  o progresso fica guardado. Cobre todo o fluxo: subir → e-mails → configurar → SSL →
-  testar → mudar a senha do painel → personalizar.
-- **Guia visual detalhado:** **`docs/guia-implantacao-hostinger.html`**.
+**Suporte:** `atualizacoes/LEIA-ME.md` (como atualizar) ·
+`docs/checklist-primeira-publicacao.html` (checklist imprimível) ·
+`docs/guia-implantacao-hostinger.html` (guia visual).

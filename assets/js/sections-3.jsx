@@ -95,6 +95,9 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
           {links.map((l) => (
             <a key={l.id} href={l.href} onClick={() => setOpen(false)}>{l.label}</a>
           ))}
+          <a href="entrar.html" className="nav-login" onClick={() => setOpen(false)}>
+            <i className="fa-solid fa-right-to-bracket" aria-hidden="true" style={{ marginRight: 8 }} />{t.nav.login}
+          </a>
         </nav>
         <div className="site-actions">
           <button
@@ -112,6 +115,10 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
           >
             {theme === 'light' ? <Icon.Moon size={16} /> : <Icon.Sun size={16} />}
           </button>
+          <a href="entrar.html" className="action-btn login-btn" aria-label={t.nav.login} title={t.nav.login}>
+            <i className="fa-solid fa-right-to-bracket" aria-hidden="true" />
+            <span>{t.nav.login}</span>
+          </a>
           <button type="button" className="btn btn-primary header-cta" onClick={() => onStart('')}>
             {t.nav.cta}<Icon.Arrow size={14} />
           </button>

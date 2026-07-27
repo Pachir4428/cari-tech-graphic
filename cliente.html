@@ -252,6 +252,21 @@
     document.getElementById('codigo').addEventListener('input', function(){
       this.value = this.value.toUpperCase();
     });
+
+    // Auto-login vindo da página de entrada unificada (entrar.html).
+    (function(){
+      try {
+        var raw = sessionStorage.getItem('ctg_cli');
+        if (!raw) return;
+        sessionStorage.removeItem('ctg_cli');
+        var c = JSON.parse(raw);
+        if (c && c.email && c.codigo) {
+          document.getElementById('email').value = c.email;
+          document.getElementById('codigo').value = String(c.codigo).toUpperCase();
+          form.dispatchEvent(new Event('submit'));
+        }
+      } catch (e) {}
+    })();
   </script>
 </body>
 </html>

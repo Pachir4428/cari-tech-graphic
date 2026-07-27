@@ -8,6 +8,7 @@ window.I18N = {
       portfolio: 'Portfólio',
       contact: 'Contacto',
       cta: 'Começar Agora',
+      login: 'Entrar',
     },
     hero: {
       eyebrow: 'Cari Tech Graphic — Nampula, Moçambique',
@@ -218,6 +219,7 @@ window.I18N = {
       portfolio: 'Work',
       contact: 'Contact',
       cta: 'Get started',
+      login: 'Log in',
     },
     hero: {
       eyebrow: 'Cari Tech Graphic — Nampula, Mozambique',
