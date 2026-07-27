@@ -108,3 +108,94 @@ function email_cliente_html($config, $opts) {
 <?php
     return ob_get_clean();
 }
+
+/* -------------------------------------------------------------------------- */
+/* Notificação ao cliente: nova entrega ou nova resposta do estúdio.          */
+/* $opts: tipo ('entrega'|'resposta'), nome, servico, texto, codigo, email,   */
+/*        logo (opcional).                                                     */
+/* -------------------------------------------------------------------------- */
+function email_notificacao_html($config, $opts) {
+    $marca   = htmlspecialchars($config['from_name'] ?? 'Cari Tech Graphic', ENT_QUOTES);
+    $site    = rtrim((string) ($config['site_url'] ?? ''), '/');
+    $nome    = htmlspecialchars($opts['nome'] ?? '', ENT_QUOTES);
+    $servico = htmlspecialchars($opts['servico'] ?? '', ENT_QUOTES);
+    $texto   = nl2br(htmlspecialchars($opts['texto'] ?? '', ENT_QUOTES));
+    $codigo  = htmlspecialchars($opts['codigo'] ?? '', ENT_QUOTES);
+    $rawEmail= (string) ($opts['email'] ?? '');
+    $email   = htmlspecialchars($rawEmail, ENT_QUOTES);
+    $isEntrega = ($opts['tipo'] ?? 'entrega') === 'entrega';
+    $helpMail= htmlspecialchars($config['to_email'] ?? '', ENT_QUOTES);
+
+    $areaUrl = ($site !== '' ? $site . '/' : '') . 'cliente.html?email=' . rawurlencode($rawEmail)
+             . '&codigo=' . rawurlencode((string) ($opts['codigo'] ?? ''));
+    $titulo  = $isEntrega ? 'Tem uma nova entrega' : 'Nova resposta do estúdio';
+    $icone   = $isEntrega ? '&#9660;' : '&#9993;'; // seta p/ baixo / envelope
+    $intro   = $isEntrega
+        ? ('O seu pedido' . ($servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '') . ' tem uma nova entrega disponível na sua Área de Cliente.')
+        : ('A equipa da ' . $marca . ' respondeu ao seu pedido' . ($servico !== '' ? ' de <strong style="color:#0f4b4d;">' . $servico . '</strong>' : '') . '.');
+    $rotuloTexto = $isEntrega ? 'Mensagem do estúdio' : 'Resposta';
+
+    $logoImg = '';
+    if ($site !== '' && !empty($opts['logo'])) {
+        $logoImg = '<img src="' . $site . '/' . ltrim(htmlspecialchars($opts['logo'], ENT_QUOTES), '/') . '" alt="' . $marca . '" height="40" style="height:40px;width:auto;display:inline-block;border:0;">';
+    }
+    $header = $logoImg !== '' ? $logoImg :
+        '<span style="display:inline-block;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#0f4b4d;letter-spacing:-.3px;">' . $marca . '</span>';
+
+    ob_start(); ?>
+<!DOCTYPE html>
+<html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><title><?= $marca ?></title></head>
+<body style="margin:0;padding:0;background:#eef3f3;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef3f3;">
+<tr><td align="center" style="padding:28px 14px;">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 20px 50px rgba(2,82,84,.12);">
+    <tr><td align="center" style="padding:34px 30px 10px;"><?= $header ?></td></tr>
+    <tr><td align="center" style="padding:14px 30px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:16px;background:#0f4b4d;background:linear-gradient(135deg,#1a6e70 0%,#0f4b4d 55%,#e8792f 160%);">
+        <tr><td align="center" style="padding:34px 20px;">
+          <div style="width:70px;height:70px;line-height:70px;margin:0 auto;text-align:center;background:#e8792f;border-radius:50%;color:#ffffff;font-size:30px;font-family:Arial,sans-serif;"><?= $icone ?></div>
+        </td></tr>
+      </table>
+    </td></tr>
+    <tr><td align="center" style="padding:28px 40px 6px;font-family:Arial,Helvetica,sans-serif;">
+      <h1 style="margin:0;font-size:27px;line-height:1.2;color:#0f1720;font-weight:800;"><?= $titulo ?></h1>
+    </td></tr>
+    <tr><td align="center" style="padding:10px 44px 4px;font-family:Arial,Helvetica,sans-serif;">
+      <p style="margin:0;font-size:16px;line-height:1.7;color:#5b6b73;">Olá<?= $nome !== '' ? ' ' . $nome : '' ?>, <?= $intro ?></p>
+    </td></tr>
+    <?php if (trim(strip_tags($texto)) !== ''): ?>
+    <tr><td style="padding:18px 44px 0;font-family:Arial,Helvetica,sans-serif;">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8a999f;font-weight:700;margin-bottom:6px;"><?= $rotuloTexto ?></div>
+      <div style="font-size:14px;line-height:1.6;color:#5b6b73;background:#fafcfc;border-left:3px solid #e8792f;border-radius:8px;padding:12px 14px;"><?= $texto ?></div>
+    </td></tr>
+    <?php endif; ?>
+    <tr><td align="center" style="padding:26px 30px 6px;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td align="center" style="border-radius:999px;background:#e8792f;">
+          <a href="<?= $areaUrl ?>" style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;"><?= $isEntrega ? 'Ver a minha entrega' : 'Ver e responder' ?></a>
+        </td>
+      </tr></table>
+    </td></tr>
+    <tr><td align="center" style="padding:14px 44px 4px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f8f8;border:1px solid #e4ebec;border-radius:12px;">
+        <tr><td align="center" style="padding:14px;font-family:Arial,Helvetica,sans-serif;">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#5b6b73;font-weight:700;">Código de acesso</div>
+          <div style="font-size:22px;letter-spacing:5px;font-weight:800;color:#0f4b4d;margin-top:4px;font-family:'Courier New',monospace;"><?= $codigo ?></div>
+        </td></tr>
+      </table>
+    </td></tr>
+    <tr><td style="padding:24px 44px 0;"><div style="height:1px;background:#e4ebec;"></div></td></tr>
+    <tr><td align="center" style="padding:16px 44px 30px;font-family:Arial,Helvetica,sans-serif;">
+      <p style="margin:0;font-size:11px;line-height:1.7;color:#aab6bb;">
+        <?= $marca ?> · Nampula, Moçambique<br>
+        &copy; <?= date('Y') ?> <?= $marca ?>. Todos os direitos reservados.
+      </p>
+    </td></tr>
+  </table>
+</td></tr>
+</table>
+</body></html>
+<?php
+    return ob_get_clean();
+}

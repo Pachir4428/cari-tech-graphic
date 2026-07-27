@@ -38,6 +38,11 @@ return [
     // à Área de Cliente.
     'send_receipt' => true,
 
+    // Notificar o cliente por e-mail quando houver uma NOVA ENTREGA ou uma
+    // RESPOSTA do estúdio na Área de Cliente. Deixe true para manter o cliente
+    // informado automaticamente.
+    'notify_client' => true,
+
     // ---- Painel de administração (admin.html) ------------------------------
     // Credenciais INICIAIS de acesso. Depois de entrar, pode alterar o
     // utilizador e a palavra-passe directamente no painel (Definições → Conta),

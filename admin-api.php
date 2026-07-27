@@ -57,11 +57,51 @@ function exigir_login() {
 }
 
 require_once __DIR__ . '/armazenamento.php';
+require_once __DIR__ . '/email-enviar.php';
+require_once __DIR__ . '/email-template.php';
 
 /* Utilizador em vigor: o guardado no painel, ou o padrão do config. */
 function ctg_admin_user($config) {
     $cred = store_get_admin($config);
     return ($cred && !empty($cred['user'])) ? $cred['user'] : ($config['admin_user'] ?? 'admin');
+}
+
+/* Devolve o lead pelo id (ou null). */
+function ctg_lead_por_id($config, $leadId) {
+    foreach (store_get_leads($config) as $l) {
+        if (($l['id'] ?? '') === $leadId) return $l;
+    }
+    return null;
+}
+
+/* Notifica o cliente por e-mail de uma nova entrega ou resposta do estúdio.
+   Silencioso: nunca interrompe a acção principal se o e-mail falhar. */
+function ctg_notificar_cliente($config, $lead, $tipo, $texto) {
+    if (($config['notify_client'] ?? true) !== true) return false;
+    $email = trim((string) ($lead['email'] ?? ''));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+    $marca   = $config['from_name'] ?? 'Cari Tech Graphic';
+    $servico = (string) ($lead['servico'] ?? '');
+    $codigo  = (string) ($lead['codigo'] ?? '');
+    $nome    = (string) ($lead['nome'] ?? '');
+    $site    = rtrim((string) ($config['site_url'] ?? ''), '/');
+
+    if ($tipo === 'entrega') {
+        $assunto = 'Nova entrega disponível — Cari Tech Graphic';
+        $corpo  = "Olá {$nome},\n\nO seu pedido" . ($servico !== '' ? " de {$servico}" : '') . " tem uma nova entrega disponível.\n";
+    } else {
+        $assunto = 'Nova resposta ao seu pedido — Cari Tech Graphic';
+        $corpo  = "Olá {$nome},\n\nA {$marca} respondeu ao seu pedido" . ($servico !== '' ? " de {$servico}" : '') . ":\n\n{$texto}\n";
+    }
+    $corpo .= "\nAceda à sua Área de Cliente: {$site}/cliente.html?email=" . rawurlencode($email) . "&codigo=" . rawurlencode($codigo) . "\n";
+    $corpo .= "(E-mail: {$email} · Código: {$codigo})\n";
+
+    $branding = store_get_branding($config);
+    $html = email_notificacao_html($config, [
+        'tipo' => $tipo, 'nome' => $nome, 'servico' => $servico, 'texto' => $texto,
+        'codigo' => $codigo, 'email' => $email, 'logo' => $branding['light'] ?? ($branding['dark'] ?? ''),
+    ]);
+    return enviar_email($config, $email, $assunto, $corpo, $config['to_email'] ?? '', $marca, $html);
 }
 
 /* Verifica utilizador + palavra-passe contra as credenciais guardadas
@@ -340,7 +380,10 @@ switch ($action) {
         $comentarios = store_add_comment($config, $leadId, [
             'de' => 'studio', 'nome' => 'Cari Tech', 'texto' => $texto, 'data' => date('c'),
         ]);
-        responder(true, ['message' => 'Comentário enviado.', 'comentarios' => $comentarios]);
+        // Notifica o cliente por e-mail da nova resposta.
+        $leadC = ctg_lead_por_id($config, $leadId);
+        $notificado = $leadC ? ctg_notificar_cliente($config, $leadC, 'resposta', $texto) : false;
+        responder(true, ['message' => 'Comentário enviado.', 'comentarios' => $comentarios, 'notified' => $notificado]);
 
     case 'upload-file':
         exigir_login();
@@ -372,19 +415,26 @@ switch ($action) {
                 ];
             }
         }
+        $anterior = store_get_delivery($config, $leadId);
         $entrega = [
-            'leadId'   => $leadId,
-            'msg'      => trim((string) ($body['msg'] ?? '')),
-            'entregas' => $limpos,
-            'entregue' => !empty($limpos),
-            'data'     => date('c'),
+            'leadId'      => $leadId,
+            'msg'         => trim((string) ($body['msg'] ?? '')),
+            'entregas'    => $limpos,
+            'entregue'    => !empty($limpos),
+            'data'        => date('c'),
+            'comentarios' => ($anterior && !empty($anterior['comentarios'])) ? $anterior['comentarios'] : [],
         ];
         if (!store_set_delivery($config, $leadId, $entrega)) {
             responder(false, ['message' => 'Falha ao guardar a entrega.'], 500);
         }
-        // Marca o lead como ganho quando há entregas.
-        if (!empty($limpos)) store_set_lead_status($config, $leadId, 'won');
-        responder(true, ['message' => 'Entrega guardada.', 'delivery' => $entrega]);
+        // Marca o lead como ganho e notifica o cliente da nova entrega.
+        $notificado = false;
+        if (!empty($limpos)) {
+            store_set_lead_status($config, $leadId, 'won');
+            $leadD = ctg_lead_por_id($config, $leadId);
+            if ($leadD) $notificado = ctg_notificar_cliente($config, $leadD, 'entrega', $entrega['msg']);
+        }
+        responder(true, ['message' => 'Entrega guardada.', 'delivery' => $entrega, 'notified' => $notificado]);
 
     case 'update-zip':
         exigir_login();

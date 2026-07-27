@@ -4,7 +4,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 `cari-tech-graphic-1.0.0.zip`, `cari-tech-graphic-1.0.1.zip`, etc.
 **Use sempre o de número mais alto.**
 
-> Versão actual: **1.3.0** — a mesma que aparece no canto do painel de administração.
+> Versão actual: **1.3.1** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
@@ -26,6 +26,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 
 | Versão | Alterações |
 |--------|------------|
+| **1.3.1** | **Notificações por e-mail ao cliente:** sempre que o estúdio adiciona uma **nova entrega** ou **responde** a um pedido, o cliente recebe automaticamente um e-mail (design da marca) com o botão que entra **directo** na Área de Cliente. Liga/desliga em `config.php` (`notify_client`). Também: guardar uma entrega já **não apaga** os comentários existentes. |
 | **1.3.0** | **Área de Cliente:** alternador **PT/EN**, **lista de serviços** para pedir sem sair da área, e comentários por pedido. **O administrador vê e responde** aos comentários de cada pedido (indicador na lista de Leads). **Sessão persistente:** ao voltar e clicar Entrar entra directo na conta; desliga automaticamente após **15 min** de inactividade (cliente e admin). **Link do e-mail** "Aceder à Área de Cliente" agora entra **directo** (leva e-mail + código). **Endereço do painel oculto (segurança):** o admin define/gera um endereço secreto (Definições → Segurança) e o painel passa a abrir só por `painel.php?k=SEGREDO`; o `admin.html` directo deixa de funcionar. **Importante:** após actualizar, entre pelo `entrar.html` (é encaminhado automaticamente). |
 | **1.2.0** | **Visual renovado (UI/UX):** tipografia mais fina e limpa (Inter) em todo o sistema, cores **mais vivas mas profissionais**, sem alterar o layout. **Sidebar do painel de administração agora fixo** (como o do cliente). **Painel do cliente** ganha **pesquisa, alternador de tema (claro/escuro) e sino de notificações**. **Redes sociais geridas no painel** (Definições → Contactos): os links do Instagram/Facebook/X/YouTube/LinkedIn/TikTok aparecem no rodapé do site. Sem logótipo, tanto o site como o e-mail e os acessos mostram **apenas o nome** (sem símbolo). |
 | **1.1.0** | **Área de Cliente redesenhada** como painel: **sidebar fixo**, pedidos em **grelha**, botão **“Descarregar tudo”** por pedido, e **comentários** em cada entrega (o cliente comenta e o estúdio responde no painel). **Link do e-mail vai direto à conta** do cliente (já com o e-mail, só pede o código). Nova secção **“Nossos Sites & Sistemas”** — o administrador cola um link (Definições → Sites & Sistemas) e o site aparece ilustrado com pré-visualização ao vivo. **Visual mais suave** em todo o site (cores menos radiantes, brilhos reduzidos). **Ícones Font Awesome** na Área de Cliente. Sem logótipo carregado, o cabeçalho mostra **apenas o nome** do site. |
