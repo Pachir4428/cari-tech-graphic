@@ -3,18 +3,18 @@
    ============================================ */
 
 :root {
-  /* Brand — tons mais suaves (menos radiantes) */
-  --brand-deep: #0F4B4D;
-  --brand-deep-2: #0A3B3D;
-  --brand-mid: #1A6E70;
-  --accent: #E8792F;
-  --accent-2: #CF6820;
-  --accent-glow: rgba(232, 121, 47, 0.22);
+  /* Brand — vivo mas profissional (equilíbrio) */
+  --brand-deep: #0B4E50;
+  --brand-deep-2: #073E40;
+  --brand-mid: #148486;
+  --accent: #F5791C;
+  --accent-2: #DB640C;
+  --accent-glow: rgba(245, 121, 28, 0.28);
 
   /* Neutrals — light */
   --bg: #F5F8F8;
   --bg-elev: #FFFFFF;
-  --bg-soft: #EEF4F4;
+  --bg-soft: #EDF4F4;
   --ink: #02373A;
   --ink-soft: #2F4F51;
   --ink-muted: #647E80;
@@ -35,9 +35,9 @@
   --radius-lg: 24px;
   --radius-xl: 32px;
 
-  /* Type */
-  --font-sans: 'Manrope', -apple-system, system-ui, sans-serif;
-  --font-display: 'Manrope', -apple-system, system-ui, sans-serif;
+  /* Type — Inter para um look mais limpo e profissional */
+  --font-sans: 'Inter', -apple-system, system-ui, sans-serif;
+  --font-display: 'Inter', -apple-system, system-ui, sans-serif;
 
   /* Shadow */
   --shadow-sm: 0 1px 2px rgba(11, 31, 58, 0.04), 0 2px 8px rgba(11, 31, 58, 0.04);
@@ -127,7 +127,7 @@ input, textarea, select {
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.02em;
   margin: 0;
@@ -156,7 +156,7 @@ h1, h2, h3, h4 {
 
 .h-display {
   font-size: clamp(40px, 6.4vw, 84px);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 0.98;
 }

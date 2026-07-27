@@ -4,7 +4,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 `cari-tech-graphic-1.0.0.zip`, `cari-tech-graphic-1.0.1.zip`, etc.
 **Use sempre o de número mais alto.**
 
-> Versão actual: **1.1.0** — a mesma que aparece no canto do painel de administração.
+> Versão actual: **1.2.0** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
@@ -26,6 +26,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 
 | Versão | Alterações |
 |--------|------------|
+| **1.2.0** | **Visual renovado (UI/UX):** tipografia mais fina e limpa (Inter) em todo o sistema, cores **mais vivas mas profissionais**, sem alterar o layout. **Sidebar do painel de administração agora fixo** (como o do cliente). **Painel do cliente** ganha **pesquisa, alternador de tema (claro/escuro) e sino de notificações**. **Redes sociais geridas no painel** (Definições → Contactos): os links do Instagram/Facebook/X/YouTube/LinkedIn/TikTok aparecem no rodapé do site. Sem logótipo, tanto o site como o e-mail e os acessos mostram **apenas o nome** (sem símbolo). |
 | **1.1.0** | **Área de Cliente redesenhada** como painel: **sidebar fixo**, pedidos em **grelha**, botão **“Descarregar tudo”** por pedido, e **comentários** em cada entrega (o cliente comenta e o estúdio responde no painel). **Link do e-mail vai direto à conta** do cliente (já com o e-mail, só pede o código). Nova secção **“Nossos Sites & Sistemas”** — o administrador cola um link (Definições → Sites & Sistemas) e o site aparece ilustrado com pré-visualização ao vivo. **Visual mais suave** em todo o site (cores menos radiantes, brilhos reduzidos). **Ícones Font Awesome** na Área de Cliente. Sem logótipo carregado, o cabeçalho mostra **apenas o nome** do site. |
 | **1.0.5** | **E-mail de confirmação redesenhado** — recibo em HTML com o visual da marca (logo, banner, botão “Aceder à Área de Cliente”, código de acesso e resumo), com versão de texto de reserva. **Área de Cliente mostra TODOS os pedidos** — depois de entrar (por e-mail+código ou conta social), o cliente vê a lista completa das suas requisições, cada uma com o estado e as entregas. **Checkout mais visível** — botão “Pedido” fixo e sempre acessível no site. |
 | **1.0.4** | **Menu do telemóvel corrigido em definitivo** — o menu, ao fechar, fica totalmente inerte (`visibility`/`pointer-events`), deixa de se sobrepor ao site, e ganha um fundo escurecido que fecha ao tocar fora. **Login social gerido no painel** (Definições → Login social) — **Google e Facebook**: basta colar os IDs e os botões aparecem no login; o App Secret do Facebook fica só no servidor. **Login verdadeiramente único** — `admin.html` e `cliente.html` reencaminham para `entrar.html`; são as credenciais que decidem se vai para o painel ou para a Área de Cliente. |

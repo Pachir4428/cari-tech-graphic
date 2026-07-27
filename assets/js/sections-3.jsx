@@ -330,9 +330,18 @@ function Footer({ t }) {
             </div>
             <p>{t.footer.tagline}</p>
             <div className="socials">
-              <a href="#" aria-label="Instagram"><Icon.Instagram size={16} /></a>
-              <a href="#" aria-label="Facebook"><Icon.Facebook size={16} /></a>
-              <a href="#" aria-label="LinkedIn"><Icon.LinkedIn size={16} /></a>
+              {[
+                { k: 'instagram', icon: 'instagram', label: 'Instagram' },
+                { k: 'facebook', icon: 'facebook-f', label: 'Facebook' },
+                { k: 'twitter', icon: 'x-twitter', label: 'X' },
+                { k: 'youtube', icon: 'youtube', label: 'YouTube' },
+                { k: 'linkedin', icon: 'linkedin-in', label: 'LinkedIn' },
+                { k: 'tiktok', icon: 'tiktok', label: 'TikTok' },
+              ].filter((s) => c[s.k]).map((s) => (
+                <a key={s.k} href={c[s.k]} target="_blank" rel="noreferrer noopener" aria-label={s.label}>
+                  <i className={`fa-brands fa-${s.icon}`} aria-hidden="true" />
+                </a>
+              ))}
             </div>
           </div>
           <div className="footer-col">

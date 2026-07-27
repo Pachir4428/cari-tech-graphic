@@ -6,16 +6,14 @@
   <title>Admin · Cari Tech Graphic</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=106" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=106" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=106" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=107" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=107" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=107" />
   <style>
-    body { background: var(--bg-soft); }
+    body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
-      display: grid;
-      grid-template-columns: 256px 1fr;
       min-height: 100vh;
     }
     .admin-side {
@@ -23,6 +21,8 @@
       color: #fff;
       padding: 22px 14px;
       display: flex; flex-direction: column; gap: 3px;
+      position: fixed; top: 0; left: 0; bottom: 0; width: 256px; z-index: 40;
+      overflow-y: auto;
     }
     .admin-logo {
       display: flex; align-items: center; gap: 10px;
@@ -64,7 +64,7 @@
     .admin-nav-item.active {
       background: var(--accent);
       color: #fff;
-      box-shadow: 0 8px 18px rgba(255,114,0,0.28);
+      box-shadow: 0 8px 18px var(--accent-glow);
     }
     .admin-nav-item.active i { opacity: 1; }
     .admin-nav-item.active:hover { background: var(--accent); }
@@ -86,7 +86,7 @@
 
     .admin-main {
       padding: 24px 32px 80px;
-      overflow: auto;
+      margin-left: 256px;
     }
     .admin-topbar {
       display: flex; align-items: center; gap: 14px;
@@ -368,18 +368,16 @@
 
     /* ---- Painel responsivo: menu lateral vira gaveta (drawer) ---- */
     @media (max-width: 1024px) {
-      .admin-shell { grid-template-columns: 1fr; }
       .admin-side {
-        position: fixed; top: 0; left: 0; bottom: 0; width: 264px; z-index: 60;
+        width: 264px; z-index: 60;
         transform: translateX(-100%); transition: transform 0.28s ease;
-        overflow-y: auto;
       }
       .admin-side.open { transform: translateX(0); box-shadow: 0 0 60px rgba(0,0,0,0.5); }
       .side-close { display: inline-flex; }
       .admin-hamburger { display: inline-flex; }
       .dash-grid { grid-template-columns: 1fr; }
       .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .admin-main { padding: 16px; }
+      .admin-main { padding: 16px; margin-left: 0; }
       .admin-topbar h1 { font-size: 20px; }
       .admin-search { min-width: 0; width: 140px; }
     }
@@ -417,7 +415,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.1.0';
+    const APP_VERSION = '1.2.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -570,6 +568,12 @@
       { k: 'whatsapp', lk: 'cfWhats', ph: '258834157731' },
       { k: 'address', lk: 'cfAddress', ph: 'Bairro, cidade' },
       { k: 'hours', lk: 'cfHours', ph: 'Seg–Sex · 08h–17h' },
+      { k: 'instagram', lk: 'cfInstagram', ph: 'https://instagram.com/…', social: true, icon: 'instagram' },
+      { k: 'facebook', lk: 'cfFacebook', ph: 'https://facebook.com/…', social: true, icon: 'facebook' },
+      { k: 'twitter', lk: 'cfTwitter', ph: 'https://x.com/…', social: true, icon: 'x-twitter' },
+      { k: 'youtube', lk: 'cfYoutube', ph: 'https://youtube.com/@…', social: true, icon: 'youtube' },
+      { k: 'linkedin', lk: 'cfLinkedin', ph: 'https://linkedin.com/company/…', social: true, icon: 'linkedin-in' },
+      { k: 'tiktok', lk: 'cfTiktok', ph: 'https://tiktok.com/@…', social: true, icon: 'tiktok' },
     ];
 
     function ContactEditor({ contact, onCommit, saveState }) {
@@ -586,14 +590,21 @@
             {AT('contactsNote')}
           </p>
           <div style={{display:'grid',gap:12,maxWidth:560}}>
-            {CONTACT_FIELDS.map((f) => (
-              <div className="field" key={f.k}>
-                <label>{AT(f.lk)}</label>
-                <input value={local[f.k] || ''} placeholder={f.ph}
-                  onChange={(e) => setLocal({ ...local, [f.k]: e.target.value })}
-                  onBlur={() => commit(f.k)} />
-                <div className="field-error"/>
-              </div>
+            {CONTACT_FIELDS.map((f, i) => (
+              <React.Fragment key={f.k}>
+                {f.social && (!CONTACT_FIELDS[i-1] || !CONTACT_FIELDS[i-1].social) && (
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:'var(--ink-muted)',marginTop:8}}>
+                    <FA name="share-nodes" s={11} /> {AT('cfSocial')}
+                  </div>
+                )}
+                <div className="field">
+                  <label>{f.icon ? <i className={`fa-brands fa-${f.icon}`} style={{marginRight:8,width:16,textAlign:'center'}} aria-hidden="true" /> : null}{AT(f.lk)}</label>
+                  <input value={local[f.k] || ''} placeholder={f.ph}
+                    onChange={(e) => setLocal({ ...local, [f.k]: e.target.value })}
+                    onBlur={() => commit(f.k)} />
+                  <div className="field-error"/>
+                </div>
+              </React.Fragment>
             ))}
           </div>
         </div>
@@ -965,6 +976,8 @@
         contactsTitle:'Contactos do site',
         contactsNote:'Estes contactos aparecem na secção Contacto, no rodapé, no botão de WhatsApp e nos formulários. Guardados automaticamente.',
         cfEmail:'E-mail', cfPhone:'Telefone (como aparece no site)', cfWhats:'WhatsApp (só dígitos, formato internacional)', cfAddress:'Morada', cfHours:'Horário',
+        cfSocial:'Redes sociais (links — aparecem no rodapé do site)',
+        cfInstagram:'Instagram', cfFacebook:'Facebook', cfTwitter:'X (Twitter)', cfYoutube:'YouTube', cfLinkedin:'LinkedIn', cfTiktok:'TikTok',
         // Cabeçalho de secção
         sectionHeading:'Cabeçalho da secção (aparece no site)', fEyebrow:'Rótulo (eyebrow)', fTitle:'Título', fDesc:'Descrição',
         // Estado de gravação
@@ -1077,6 +1090,8 @@
         contactsTitle:'Site contacts',
         contactsNote:'These contacts appear in the Contact section, footer, WhatsApp button and forms. Saved automatically.',
         cfEmail:'Email', cfPhone:'Phone (as shown on site)', cfWhats:'WhatsApp (digits only, international format)', cfAddress:'Address', cfHours:'Hours',
+        cfSocial:'Social media (links — shown in the site footer)',
+        cfInstagram:'Instagram', cfFacebook:'Facebook', cfTwitter:'X (Twitter)', cfYoutube:'YouTube', cfLinkedin:'LinkedIn', cfTiktok:'TikTok',
         // Section heading
         sectionHeading:'Section heading (shown on site)', fEyebrow:'Label (eyebrow)', fTitle:'Title', fDesc:'Description',
         // Save state

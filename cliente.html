@@ -8,20 +8,20 @@
   <meta name="robots" content="noindex" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     :root{
-      /* Paleta suave (menos radiante) */
-      --brand-deep:#0f4b4d; --brand-mid:#1a6e70; --brand-soft:#e7f0f0;
-      --accent:#e8792f; --accent-2:#cf6820; --accent-soft:#fdf0e6;
+      /* Paleta viva mas profissional */
+      --brand-deep:#0B4E50; --brand-mid:#148486; --brand-soft:#e4f1f1;
+      --accent:#F5791C; --accent-2:#DB640C; --accent-soft:#fdefe1;
       --ink:#1b2830; --muted:#6a7a80; --line:#e7edee; --card:#ffffff; --bg:#f4f7f7;
       --ok:#2f9e6f; --radius:14px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;height:100%}
     body{
-      font-family:'Manrope',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
       color:var(--ink); background:var(--bg); min-height:100vh;
     }
     a{color:var(--brand-mid);text-decoration:none}
@@ -34,13 +34,13 @@
       background:var(--brand-deep); color:#fff; padding:26px 20px;
       display:flex; flex-direction:column; gap:8px;
     }
-    .side .brand{display:flex;align-items:center;gap:10px;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:26px}
+    .side .brand{display:flex;align-items:center;gap:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:18px;color:#fff;margin-bottom:26px}
     .side .brand img{height:34px;width:auto;display:block;filter:brightness(0) invert(1)}
     .side-nav{display:flex;flex-direction:column;gap:4px}
     .side-nav .item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;color:rgba(255,255,255,.72);font-weight:600;font-size:14px;background:none;border:none;text-align:left;cursor:pointer;width:100%}
     .side-nav .item i{width:18px;text-align:center;font-size:15px}
     .side-nav .item.active,.side-nav .item:hover{background:rgba(255,255,255,.10);color:#fff}
-    .side-nav .item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px}
+    .side-nav .item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
     .side-foot{margin-top:auto;font-size:12px;color:rgba(255,255,255,.4);line-height:1.6}
     .side-foot a{color:rgba(255,255,255,.6)}
     .logout{margin-top:14px;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:none;font-weight:700;font-size:14px;cursor:pointer;width:100%}
@@ -48,14 +48,29 @@
 
     .main{margin-left:250px;padding:30px 34px 60px;min-height:100vh}
     .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
-    .topbar h1{font-family:'Poppins',sans-serif;font-size:26px;font-weight:800;margin:0}
+    .topbar h1{font-family:'Inter',sans-serif;font-size:26px;font-weight:700;margin:0}
     .topbar .who{color:var(--muted);font-size:14px;margin-top:3px}
+    /* Controlos do topo: pesquisa + tema + notificações */
+    .tb-actions{display:flex;align-items:center;gap:10px}
+    .tb-search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted)}
+    .tb-search input{border:none;outline:none;background:none;font-size:13px;color:var(--ink);width:150px;font-family:inherit}
+    .tb-btn{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-size:15px;display:inline-flex;align-items:center;justify-content:center}
+    .tb-btn:hover{border-color:var(--brand-mid);color:var(--brand-mid)}
+    .tb-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+    .tb-notif{position:relative}
+    .tb-notif-panel{position:absolute;right:0;top:48px;width:300px;max-width:80vw;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(15,75,77,.5);z-index:30;overflow:hidden}
+    .tb-notif-head{padding:12px 15px;font-weight:700;font-size:13px;border-bottom:1px solid var(--line)}
+    .tb-notif-item{display:flex;gap:10px;align-items:flex-start;padding:11px 15px;border-bottom:1px solid var(--line);font-size:13px}
+    .tb-notif-item:last-child{border-bottom:none}
+    .tb-notif-item i{color:var(--ok);margin-top:2px}
+    .tb-notif-empty{padding:18px 15px;text-align:center;color:var(--muted);font-size:13px}
+    @media (max-width:560px){ .tb-search{display:none} }
 
     /* ---------- Grid de pedidos ---------- */
     .req-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
     .req-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;display:flex;flex-direction:column;box-shadow:0 8px 24px -18px rgba(15,75,77,.35)}
     .req-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .req-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;line-height:1.3}
+    .req-title{font-family:'Inter',sans-serif;font-weight:700;font-size:16px;line-height:1.3}
     .req-date{font-size:12px;color:var(--muted);margin-top:3px}
     .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-weight:700;font-size:11.5px;white-space:nowrap}
     .pill i{font-size:9px}
@@ -81,7 +96,7 @@
     /* Comentários */
     .comments{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
     .cmt{display:flex;gap:9px;margin-bottom:9px}
-    .cmt .av{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
+    .cmt .av{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
     .cmt.cliente .av{background:var(--accent)}
     .cmt.studio .av{background:var(--brand-mid)}
     .cmt .bd{background:#f6f9f9;border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.5;flex:1}
@@ -96,9 +111,9 @@
     /* ---------- Cartão de acesso (login por código) ---------- */
     .gate-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
     .gate{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 28px;box-shadow:0 24px 60px -34px rgba(15,75,77,.5)}
-    .gate .brand{display:flex;align-items:center;gap:10px;justify-content:center;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:var(--brand-deep);margin-bottom:16px}
+    .gate .brand{display:flex;align-items:center;gap:10px;justify-content:center;font-family:'Inter',sans-serif;font-weight:700;font-size:18px;color:var(--brand-deep);margin-bottom:16px}
     .gate .brand img{height:38px;width:auto}
-    .gate h1{font-family:'Poppins',sans-serif;font-size:22px;margin:0 0 6px;text-align:center}
+    .gate h1{font-family:'Inter',sans-serif;font-size:22px;margin:0 0 6px;text-align:center}
     .gate p.sub{color:var(--muted);font-size:14px;text-align:center;margin:0 0 20px;line-height:1.5}
     .gate label{display:block;font-weight:600;font-size:13px;margin:0 0 6px}
     .gate .field{margin-bottom:14px}
@@ -123,12 +138,17 @@
       .main{margin-left:0;padding:22px 16px 60px}
       .req-grid{grid-template-columns:1fr}
     }
+    /* Tema escuro — automático (sistema) e manual (data-theme) */
     @media (prefers-color-scheme: dark){
-      :root{--ink:#e8eef0;--muted:#93a4ab;--line:#25333a;--card:#111a1c;--bg:#0b1214;--brand-soft:#12312f;--accent-soft:#2a1d12}
-      .req-msg,.empty,.cmt .bd{background:#0e1719}
-      .dl,.gate input,.cmt-form textarea{background:#0e1719}
-      .gate input[readonly]{background:#0b1214}
+      :root:not([data-theme=light]){--ink:#e8eef0;--muted:#93a4ab;--line:#25333a;--card:#111a1c;--bg:#0b1214;--brand-soft:#12312f;--accent-soft:#2a1d12}
+      :root:not([data-theme=light]) .req-msg,:root:not([data-theme=light]) .empty,:root:not([data-theme=light]) .cmt .bd{background:#0e1719}
+      :root:not([data-theme=light]) .dl,:root:not([data-theme=light]) .gate input,:root:not([data-theme=light]) .cmt-form textarea{background:#0e1719}
+      :root:not([data-theme=light]) .gate input[readonly]{background:#0b1214}
     }
+    :root[data-theme=dark]{--ink:#e8eef0;--muted:#93a4ab;--line:#25333a;--card:#111a1c;--bg:#0b1214;--brand-soft:#12312f;--accent-soft:#2a1d12}
+    :root[data-theme=dark] .req-msg,:root[data-theme=dark] .empty,:root[data-theme=dark] .cmt .bd{background:#0e1719}
+    :root[data-theme=dark] .dl,:root[data-theme=dark] .gate input,:root[data-theme=dark] .cmt-form textarea{background:#0e1719}
+    :root[data-theme=dark] .gate input[readonly]{background:#0b1214}
   </style>
 </head>
 <body>
@@ -173,6 +193,14 @@
         <div>
           <h1 id="greet">Os meus pedidos</h1>
           <div class="who" id="who"></div>
+        </div>
+        <div class="tb-actions">
+          <label class="tb-search"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Pesquisar…" /></label>
+          <button class="tb-btn" id="themeBtn" title="Tema" aria-label="Tema"><i class="fa-solid fa-moon"></i></button>
+          <div class="tb-notif">
+            <button class="tb-btn" id="bellBtn" title="Notificações" aria-label="Notificações"><i class="fa-solid fa-bell"></i><span class="tb-badge" id="bellBadge" style="display:none">0</span></button>
+            <div class="tb-notif-panel" id="notifPanel" style="display:none"></div>
+          </div>
         </div>
       </div>
       <div id="grid" class="req-grid"></div>
@@ -221,12 +249,47 @@
       document.getElementById('who').textContent = (cliente.email||'') + ' · ' + PEDIDOS.length + (PEDIDOS.length===1?' pedido':' pedidos');
       document.getElementById('navCount').textContent = PEDIDOS.length;
 
-      var grid = document.getElementById('grid');
-      if(!PEDIDOS.length){ grid.innerHTML = '<div class="empty">Ainda não encontrámos pedidos nesta conta. Faça um pedido no site e ele aparecerá aqui.</div>'; }
-      else { grid.innerHTML = PEDIDOS.map(function(p,i){ return cardHtml(p,i); }).join(''); }
+      renderGrid('');
+      atualizarNotificacoes();
 
       document.getElementById('gateWrap').style.display='none';
       document.getElementById('app').style.display='block';
+    }
+
+    function renderGrid(q){
+      q = (q || '').trim().toLowerCase();
+      var grid = document.getElementById('grid');
+      var idxs = PEDIDOS.map(function(_,i){return i;}).filter(function(i){
+        if(!q) return true;
+        var p = PEDIDOS[i];
+        return ((p.servico||'')+' '+(p.mensagem||'')+' '+(p.estado||'')).toLowerCase().indexOf(q) >= 0;
+      });
+      if(!PEDIDOS.length){ grid.innerHTML = '<div class="empty">Ainda não encontrámos pedidos nesta conta. Faça um pedido no site e ele aparecerá aqui.</div>'; return; }
+      if(!idxs.length){ grid.innerHTML = '<div class="empty">Nenhum pedido corresponde à pesquisa.</div>'; return; }
+      grid.innerHTML = idxs.map(function(i){ return cardHtml(PEDIDOS[i], i); }).join('');
+    }
+
+    function atualizarNotificacoes(){
+      // Notificações = pedidos com entregas disponíveis ou resposta do estúdio
+      var novos = PEDIDOS.filter(function(p){
+        var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
+        var respStudio = (p.comentarios||[]).some(function(c){ return c.de==='studio'||c.de==='admin'; });
+        return temEntrega || respStudio;
+      });
+      var badge = document.getElementById('bellBadge');
+      if(novos.length){ badge.textContent = novos.length; badge.style.display='inline-flex'; }
+      else badge.style.display='none';
+      var panel = document.getElementById('notifPanel');
+      var html = '<div class="tb-notif-head"><i class="fa-solid fa-bell"></i> Notificações</div>';
+      if(!novos.length){ html += '<div class="tb-notif-empty">Sem novidades por agora.</div>'; }
+      else {
+        html += novos.slice(0,8).map(function(p){
+          var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
+          var txt = temEntrega ? 'Entregas disponíveis' : 'Nova resposta do estúdio';
+          return '<div class="tb-notif-item"><i class="fa-solid '+(temEntrega?'fa-box-open':'fa-comment-dots')+'"></i><div><b>'+esc(p.servico||'Pedido')+'</b><br><span style="color:var(--muted)">'+txt+'</span></div></div>';
+        }).join('');
+      }
+      panel.innerHTML = html;
     }
 
     function cardHtml(p, i){
@@ -332,6 +395,37 @@
       var email=document.getElementById('email').value.trim(), codigo=document.getElementById('codigo').value.trim();
       carregar(email,codigo,false).catch(function(msg){ gateBtn.disabled=false; gateBtn.textContent='Entrar'; showErr(typeof msg==='string'?msg:'Erro.'); });
     });
+
+    // Pesquisa
+    document.getElementById('search').addEventListener('input', function(){ renderGrid(this.value); });
+
+    // Alternador de tema (claro/escuro), persistido
+    (function(){
+      var saved = null; try{ saved = localStorage.getItem('ctg_cli_theme'); }catch(e){}
+      if(saved){ document.documentElement.setAttribute('data-theme', saved); }
+      var setIcon = function(){
+        var dark = document.documentElement.getAttribute('data-theme')==='dark' ||
+          (!document.documentElement.getAttribute('data-theme') && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.querySelector('#themeBtn i').className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      };
+      setIcon();
+      document.getElementById('themeBtn').addEventListener('click', function(){
+        var cur = document.documentElement.getAttribute('data-theme');
+        var dark = cur==='dark' || (!cur && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+        var next = dark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try{ localStorage.setItem('ctg_cli_theme', next); }catch(e){}
+        setIcon();
+      });
+    })();
+
+    // Sino de notificações
+    document.getElementById('bellBtn').addEventListener('click', function(e){
+      e.stopPropagation();
+      var p = document.getElementById('notifPanel');
+      p.style.display = p.style.display==='none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', function(){ document.getElementById('notifPanel').style.display='none'; });
 
     // Marca (logo)
     fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){ aplicarMarca(d&&d.branding); }).catch(function(){});

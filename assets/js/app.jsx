@@ -12,10 +12,10 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 }/*EDITMODE-END*/;
 
 const ACCENTS = {
-  orange: { a: '#E8792F', a2: '#CF6820', glow: 'rgba(232, 121, 47, 0.22)' },
-  amber:  { a: '#E0A032', a2: '#C07E1D', glow: 'rgba(224, 160, 50, 0.22)' },
-  coral:  { a: '#E8748A', a2: '#C63F58', glow: 'rgba(232, 116, 138, 0.22)' },
-  gradient: { a: '#E8792F', a2: '#EDA061', glow: 'rgba(237, 160, 97, 0.22)' },
+  orange: { a: '#F5791C', a2: '#DB640C', glow: 'rgba(245, 121, 28, 0.28)' },
+  amber:  { a: '#EFA218', a2: '#CE850C', glow: 'rgba(239, 162, 24, 0.28)' },
+  coral:  { a: '#F26B82', a2: '#DB3B55', glow: 'rgba(242, 107, 130, 0.28)' },
+  gradient: { a: '#F5791C', a2: '#F7A24E', glow: 'rgba(247, 162, 78, 0.28)' },
 };
 
 const FONTS = {
