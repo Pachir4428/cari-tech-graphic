@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=110" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=110" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=110" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=111" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=111" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=111" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -415,7 +415,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.4.0';
+    const APP_VERSION = '1.4.1';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -1032,6 +1032,34 @@
       }, { entradas: 0, saidas: 0 });
       const saldo = totais.entradas - totais.saidas;
       const fmt = (n) => (n || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MZN';
+      // Agrega por mês (YYYY-MM) para o gráfico — últimos 8 meses com dados.
+      const meses = (() => {
+        const map = {};
+        L.forEach((m) => {
+          const k = (m.data || '').slice(0, 7);
+          if (!/^\d{4}-\d{2}$/.test(k)) return;
+          if (!map[k]) map[k] = { ent: 0, sai: 0 };
+          const v = parseFloat(String(m.valor).replace(',', '.')) || 0;
+          if (m.tipo === 'saida') map[k].sai += v; else map[k].ent += v;
+        });
+        const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        return Object.keys(map).sort().slice(-8).map((k) => ({
+          k, label: nomes[parseInt(k.slice(5, 7), 10) - 1] + '/' + k.slice(2, 4), ent: map[k].ent, sai: map[k].sai,
+        }));
+      })();
+      const maxV = Math.max(1, ...meses.map((m) => Math.max(m.ent, m.sai)));
+      const exportCSV = () => {
+        const rows = [['Data','Descrição','Categoria','Tipo','Valor (MZN)']];
+        L.forEach((m) => rows.push([m.data || '', m.desc || '', m.categoria || '', (m.tipo === 'saida' ? AT('finExpenseOpt') : AT('finIncomeOpt')), String(m.valor)]));
+        rows.push([]); rows.push(['', '', '', AT('finIncome'), String(totais.entradas)]);
+        rows.push(['', '', '', AT('finExpense'), String(totais.saidas)]);
+        rows.push(['', '', '', AT('finBalance'), String(saldo)]);
+        const csv = '﻿' + rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        a.download = 'financas-cari-tech-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a); a.click(); a.remove();
+      };
       const upd = (i, k, v) => setList((x) => x.map((m, idx) => idx === i ? { ...m, [k]: v } : m));
       const add = () => setList((x) => [{ id: 'n' + Date.now(), data: new Date().toISOString().slice(0, 10), desc: '', tipo: 'entrada', valor: '', categoria: '' }, ...(x || [])]);
       const del = (i) => setList((x) => x.filter((_, idx) => idx !== i));
@@ -1050,10 +1078,36 @@
             <div className="kpi"><div className="kpi-ico" style={{color:'var(--danger,#e5484d)'}}><FA name="arrow-trend-down" s={17} /></div><div className="kpi-label">{AT('finExpense')}</div><div className="kpi-num" style={{fontSize:22}}>{fmt(totais.saidas)}</div></div>
             <div className="kpi"><div className="kpi-ico"><FA name="scale-balanced" s={17} /></div><div className="kpi-label">{AT('finBalance')}</div><div className="kpi-num" style={{fontSize:22,color: saldo < 0 ? 'var(--danger,#e5484d)' : 'var(--success)'}}>{fmt(saldo)}</div></div>
           </div>
+          <div className="admin-panel" style={{marginBottom:16}}>
+            <div className="admin-panel-head"><h2>{AT('finChart')}</h2>
+              <div style={{display:'flex',alignItems:'center',gap:16,fontSize:12,color:'var(--ink-muted)'}}>
+                <span><span style={{display:'inline-block',width:11,height:11,borderRadius:3,background:'var(--success)',marginRight:6,verticalAlign:'-1px'}} />{AT('finIncome')}</span>
+                <span><span style={{display:'inline-block',width:11,height:11,borderRadius:3,background:'var(--danger,#e5484d)',marginRight:6,verticalAlign:'-1px'}} />{AT('finExpense')}</span>
+              </div>
+            </div>
+            {meses.length === 0 ? (
+              <div style={{color:'var(--ink-muted)',fontSize:13,padding:'20px 0',textAlign:'center'}}>{AT('finNoData')}</div>
+            ) : (
+              <div style={{display:'flex',alignItems:'flex-end',gap:18,height:200,padding:'10px 4px 0',overflowX:'auto'}}>
+                {meses.map((m) => (
+                  <div key={m.k} style={{flex:'1 0 54px',display:'flex',flexDirection:'column',alignItems:'center',height:'100%'}}>
+                    <div style={{flex:1,display:'flex',alignItems:'flex-end',gap:5,width:'100%',justifyContent:'center'}}>
+                      <div title={fmt(m.ent)} style={{width:16,borderRadius:'5px 5px 0 0',background:'var(--success)',height:`${Math.max(2,(m.ent/maxV)*100)}%`,transition:'height .3s'}} />
+                      <div title={fmt(m.sai)} style={{width:16,borderRadius:'5px 5px 0 0',background:'var(--danger,#e5484d)',height:`${Math.max(2,(m.sai/maxV)*100)}%`,transition:'height .3s'}} />
+                    </div>
+                    <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:8,fontWeight:600,whiteSpace:'nowrap'}}>{m.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="admin-panel">
             <div className="admin-panel-head">
               <h2>{AT('financeTitle')}</h2>
-              <button className="btn-add" onClick={add}><Plus />{AT('finAdd')}</button>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <button className="btn-add" onClick={exportCSV} disabled={!L.length} style={{background:'var(--bg-soft)',color:'var(--ink)'}}><FA name="file-arrow-down" s={13} />{AT('finExport')}</button>
+                <button className="btn-add" onClick={add}><Plus />{AT('finAdd')}</button>
+              </div>
             </div>
             <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('financeNote')}</p>
             {L.length === 0 ? (
@@ -1199,6 +1253,7 @@
         finDate:'Data', finDesc:'Descrição', finType:'Tipo', finAmount:'Valor (MZN)', finCategory:'Categoria',
         finAdd:'Adicionar movimento', finIncomeOpt:'Entrada', finExpenseOpt:'Saída',
         btnSaveFin:'Guardar finanças', finSaved:'Finanças guardadas.', finEmpty:'Sem movimentos. Clique em "Adicionar movimento".',
+        finChart:'Entradas vs Saídas por mês', finExport:'Exportar CSV', finNoData:'Registe movimentos para ver o gráfico.',
         // Relatórios
         downloadReport:'Descarregar relatório', thRequests:'Pedidos', svcReport:'Pedidos por serviço',
         // Login
@@ -1336,6 +1391,7 @@
         finDate:'Date', finDesc:'Description', finType:'Type', finAmount:'Amount (MZN)', finCategory:'Category',
         finAdd:'Add entry', finIncomeOpt:'Income', finExpenseOpt:'Expense',
         btnSaveFin:'Save finance', finSaved:'Finance saved.', finEmpty:'No entries. Click "Add entry".',
+        finChart:'Income vs Expenses by month', finExport:'Export CSV', finNoData:'Add entries to see the chart.',
         // Reports
         downloadReport:'Download report', thRequests:'Requests', svcReport:'Requests per service',
         // Login

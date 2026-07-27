@@ -4,12 +4,12 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 `cari-tech-graphic-1.0.0.zip`, `cari-tech-graphic-1.0.1.zip`, etc.
 **Use sempre o de número mais alto.**
 
-> Versão actual: **1.4.0** — a mesma que aparece no canto do painel de administração.
+> Versão actual: **1.4.1** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
 1. **Baixe** o ZIP com o número mais alto desta pasta (no GitHub: abra o ficheiro → **Download**).
-2. Entre no painel: `https://seudominio.com/admin.html`.
+2. Entre no painel pelo login: `https://seudominio.com/entrar.html` (é encaminhado para o painel).
 3. Vá a **Definições → Atualizar o site (ZIP)**, escolha o ZIP e clique em **Atualizar site**.
 4. Confirme a versão no canto do painel. (Cada versão força a recarga do CSS/JS — sem precisar de limpar cache.)
 
@@ -26,6 +26,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 
 | Versão | Alterações |
 |--------|------------|
+| **1.4.1** | Módulo de **Finanças** ganha **gráfico** de Entradas vs Saídas por mês e **exportação em CSV** dos movimentos. |
 | **1.4.0** | **Módulo de Finanças** (só admin) — registe entradas/saídas e veja o saldo. **Relatório de leads** em CSV (Excel/Sheets) e **contagem de pedidos por serviço**. **Página de erro 404** nova e bonita. **SMTP no painel** (Definições → E-mail) com guia de como obter a palavra-passe no hPanel. Na **Área de Cliente**: formulário de **contacto** interno (sem sair do painel) e os **serviços ilustrados** com imagem. |
 | **1.3.1** | **Notificações por e-mail ao cliente:** sempre que o estúdio adiciona uma **nova entrega** ou **responde** a um pedido, o cliente recebe automaticamente um e-mail (design da marca) com o botão que entra **directo** na Área de Cliente. Liga/desliga em `config.php` (`notify_client`). Também: guardar uma entrega já **não apaga** os comentários existentes. |
 | **1.3.0** | **Área de Cliente:** alternador **PT/EN**, **lista de serviços** para pedir sem sair da área, e comentários por pedido. **O administrador vê e responde** aos comentários de cada pedido (indicador na lista de Leads). **Sessão persistente:** ao voltar e clicar Entrar entra directo na conta; desliga automaticamente após **15 min** de inactividade (cliente e admin). **Link do e-mail** "Aceder à Área de Cliente" agora entra **directo** (leva e-mail + código). **Endereço do painel oculto (segurança):** o admin define/gera um endereço secreto (Definições → Segurança) e o painel passa a abrir só por `painel.php?k=SEGREDO`; o `admin.html` directo deixa de funcionar. **Importante:** após actualizar, entre pelo `entrar.html` (é encaminhado automaticamente). |
