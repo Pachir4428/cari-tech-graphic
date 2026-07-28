@@ -379,6 +379,23 @@ function store_add_update_log($config, $entry) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Registo de auditoria — regista ações sensíveis (quem, quando, de onde).    */
+/* -------------------------------------------------------------------------- */
+function store_get_audit($config) { $v = _meta_get($config, 'audit', 'audit.json'); return is_array($v) ? $v : []; }
+function store_add_audit($config, $evento, $detalhe = '', $ip = '') {
+    $log = store_get_audit($config);
+    array_unshift($log, [
+        'data'    => date('c'),
+        'evento'  => (string) $evento,
+        'detalhe' => (string) $detalhe,
+        'ip'      => $ip !== '' ? $ip : ctg_client_ip(),
+    ]);
+    if (count($log) > 300) $log = array_slice($log, 0, 300);
+    _meta_set($config, 'audit', 'audit.json', $log);
+    return $log;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Limitação de tentativas (anti-força-bruta) para os logins.                 */
 /* Guarda, por chave (ex.: "login:IP"), as datas das últimas falhas dentro de */
 /* uma janela de tempo. Ao exceder o máximo, o acesso fica bloqueado até que  */

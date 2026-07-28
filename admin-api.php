@@ -213,8 +213,10 @@ switch ($action) {
             session_regenerate_id(true);
             $_SESSION['ctg_admin'] = true;
             $_SESSION['ctg_last'] = time();
+            store_add_audit($config, 'login-admin', 'Sessão iniciada');
             responder(true, ['message' => 'Autenticado.']);
         }
+        store_add_audit($config, 'login-falhou', "Utilizador tentado: {$user}");
         usleep(600000); // atrasa tentativas de força bruta
         responder(false, ['message' => 'Utilizador ou palavra-passe incorrectos.'], 401);
 
@@ -231,6 +233,7 @@ switch ($action) {
         if ($novoUser === '')            responder(false, ['message' => 'Indique um nome de utilizador.'], 422);
         if (strlen($novaPass) < 6)       responder(false, ['message' => 'A nova palavra-passe deve ter pelo menos 6 caracteres.'], 422);
         store_set_admin($config, $novoUser, password_hash($novaPass, PASSWORD_DEFAULT));
+        store_add_audit($config, 'credenciais-alteradas', "Novo utilizador: {$novoUser}");
         responder(true, ['message' => 'Credenciais actualizadas.']);
 
     case 'logout':
@@ -261,9 +264,11 @@ switch ($action) {
     case 'lead-delete':
         exigir_login();
         $id = (string) ($body['id'] ?? '');
+        $leadRem = ctg_lead_por_id($config, $id);
         if (!store_delete_lead($config, $id)) {
             responder(false, ['message' => 'Lead não encontrado.'], 404);
         }
+        store_add_audit($config, 'lead-apagado', trim(($leadRem['nome'] ?? '') . ' ' . ($leadRem['email'] ?? '')) ?: $id);
         responder(true, ['message' => 'Lead removido.']);
 
     case 'content':
@@ -483,6 +488,7 @@ switch ($action) {
             $leadP = ctg_lead_por_id($config, $leadId);
             if ($leadP) $notificado = ctg_notificar_cliente($config, $leadP, 'pago', '');
         }
+        if ($novo !== $estadoAnt) store_add_audit($config, 'pagamento', "Pedido {$leadId}: {$estadoAnt} → {$novo}");
         responder(true, ['message' => 'Pagamento actualizado.', 'pago' => $novo, 'notified' => $notificado]);
 
     case 'upload-file':
@@ -558,6 +564,7 @@ switch ($action) {
             'ficheiro'=> (string) ($_FILES['zip']['name'] ?? ''),
             'backup'  => (string) ($resultado['backup'] ?? ''),
         ]);
+        store_add_audit($config, 'site-atualizado', ($_FILES['zip']['name'] ?? '') . " ({$resultado['count']} ficheiro(s))");
         responder(true, ['message' => "Site actualizado. {$resultado['count']} ficheiro(s) actualizado(s).", 'count' => $resultado['count']]);
 
     case 'update-log':
@@ -575,7 +582,42 @@ switch ($action) {
             'ficheiro'=> 'Reposição do backup ' . $r['backup'],
             'backup'  => '',
         ]);
+        store_add_audit($config, 'site-revertido', "Backup {$r['backup']} ({$r['count']} ficheiro(s))");
         responder(true, ['message' => "Reposição concluída. {$r['count']} ficheiro(s) repostos.", 'count' => $r['count']]);
+
+    case 'audit':
+        exigir_login();
+        responder(true, ['audit' => store_get_audit($config)]);
+
+    case 'health':
+        exigir_login();
+        $checks = [];
+        $add = function ($nome, $ok, $valor, $aviso = false) use (&$checks) {
+            $checks[] = ['nome' => $nome, 'ok' => (bool) $ok, 'aviso' => (bool) $aviso, 'valor' => (string) $valor];
+        };
+        $add('Versão do PHP', version_compare(PHP_VERSION, '7.4', '>='), PHP_VERSION);
+        $dadosDir = __DIR__ . '/dados';
+        $add('Pasta dados/ gravável', is_dir($dadosDir) && is_writable($dadosDir), (is_dir($dadosDir) && is_writable($dadosDir)) ? 'OK' : 'sem permissão de escrita');
+        $upDir = __DIR__ . '/uploads'; @mkdir($upDir, 0755, true);
+        $add('Pasta uploads/ gravável', is_writable($upDir), is_writable($upDir) ? 'OK' : 'sem permissão de escrita');
+        $add('Imagens / marca de água (GD)', extension_loaded('gd'), extension_loaded('gd') ? 'disponível' : 'em falta');
+        $add('Atualização por ZIP (ZipArchive)', class_exists('ZipArchive'), class_exists('ZipArchive') ? 'disponível' : 'em falta');
+        $add('Verificação de ficheiros (finfo)', function_exists('finfo_open'), function_exists('finfo_open') ? 'disponível' : 'em falta (uploads menos seguros)', !function_exists('finfo_open'));
+        $smtp = store_get_smtp($config);
+        $emailOk = function_exists('mail') || !empty($smtp['smtp_host']) || !empty($config['smtp_host']);
+        $add('Envio de e-mail', $emailOk, !empty($smtp['smtp_host']) ? ('SMTP: ' . $smtp['smtp_host']) : (function_exists('mail') ? 'função mail() disponível' : 'sem método de envio'));
+        $free = @disk_free_space(__DIR__);
+        $add('Espaço em disco', $free === false || $free > 20 * 1024 * 1024, $free !== false ? (round($free / 1048576) . ' MB livres') : 'desconhecido', $free !== false && $free <= 50 * 1024 * 1024);
+        try {
+            $pdo = ctg_pdo($config);
+            if ($pdo) $add('Base de dados (MySQL)', true, 'ligada');
+            else $add('Base de dados (MySQL)', true, 'a usar ficheiros JSON (fallback)');
+        } catch (\Throwable $e) {
+            $add('Base de dados (MySQL)', true, 'a usar ficheiros JSON (fallback)');
+        }
+        $htaccess = is_file(__DIR__ . '/.htaccess');
+        $add('Configuração Apache (.htaccess)', $htaccess, $htaccess ? 'presente' : 'em falta (segurança/HTTPS podem não aplicar)', !$htaccess);
+        responder(true, ['health' => $checks]);
 
     default:
         responder(false, ['message' => 'Acção desconhecida.'], 400);
