@@ -63,4 +63,17 @@ ErrorDocument 403 /erro.html
 # --- MIME correcto para .jsx (servidos como texto p/ Babel no browser) -----
 <IfModule mod_mime.c>
   AddType text/babel .jsx
+  AddType application/manifest+json .webmanifest
 </IfModule>
+
+# --- PWA: o service worker e o manifesto não devem ser cacheados por muito --
+# tempo (senão as atualizações demoram a chegar aos utilizadores).
+<FilesMatch "^(sw\.js|manifest\.webmanifest)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, max-age=0, must-revalidate"
+  </IfModule>
+  <IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 0 seconds"
+  </IfModule>
+</FilesMatch>
