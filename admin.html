@@ -6,15 +6,15 @@
   <title>Admin · Cari Tech Graphic</title>
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#0B4E50" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=116" />
-  <link rel="icon" href="assets/icons/icon-192.png?v=116" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=117" />
+  <link rel="icon" href="assets/icons/icon-192.png?v=117" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=116" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=116" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=116" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=117" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=117" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=117" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -424,7 +424,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.8.0';
+    const APP_VERSION = '1.9.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -773,6 +773,93 @@
             <LogoSlot variant="light" label={AT('logoLight')} bg="var(--bg-soft)" logo={branding.light} onChanged={onChange} />
             <LogoSlot variant="dark" label={AT('logoDark')} bg="var(--brand-deep)" logo={branding.dark} onChanged={onChange} />
           </div>
+        </div>
+      );
+    }
+
+    function HealthPanel() {
+      const [items, setItems] = useState(null);
+      const [busy, setBusy] = useState(false);
+      const load = () => { setBusy(true); api('health').then((r) => { setItems(r.ok ? (r.health || []) : []); setBusy(false); }); };
+      useEffect(() => { load(); }, []);
+      const problemas = (items || []).filter((c) => !c.ok).length;
+      const avisos = (items || []).filter((c) => c.ok && c.aviso).length;
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <div className="admin-panel-head">
+            <h2 style={{display:'flex',alignItems:'center',gap:8}}><FA name="heart-pulse" s={15} /> {AT('healthTitle')}</h2>
+            <button className="btn-add" onClick={load} disabled={busy} style={{background:'var(--bg-soft)',color:'var(--ink)'}}><FA name="rotate" s={12} /> {AT('refresh')}</button>
+          </div>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:14}}>{AT('healthNote')}</p>
+          {items === null ? (
+            <p style={{color:'var(--ink-muted)',fontSize:13}}>{AT('loading')}</p>
+          ) : (
+            <>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12,fontSize:13,fontWeight:700,
+                color: problemas ? 'var(--danger,#e5484d)' : (avisos ? '#b9770e' : 'var(--success)')}}>
+                <FA name={problemas ? 'circle-exclamation' : (avisos ? 'triangle-exclamation' : 'circle-check')} s={14} />
+                {problemas ? AT('healthProblems').replace('{n}', problemas) : (avisos ? AT('healthWarn').replace('{n}', avisos) : AT('healthOk'))}
+              </div>
+              <div style={{display:'grid',gap:8}}>
+                {items.map((c, i) => {
+                  const cor = !c.ok ? 'var(--danger,#e5484d)' : (c.aviso ? '#b9770e' : 'var(--success)');
+                  const ic = !c.ok ? 'circle-xmark' : (c.aviso ? 'triangle-exclamation' : 'circle-check');
+                  return (
+                    <div key={i} style={{display:'flex',alignItems:'center',gap:11,padding:'9px 12px',border:'1px solid var(--line)',borderRadius:10,fontSize:13}}>
+                      <FA name={ic} s={14} style={{color:cor,flex:'none'}} />
+                      <span style={{flex:1,minWidth:0,fontWeight:600}}>{c.nome}</span>
+                      <span style={{fontSize:12.5,color:'var(--ink-muted)',textAlign:'right'}}>{c.valor}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    function AuditPanel() {
+      const [items, setItems] = useState(null);
+      const [busy, setBusy] = useState(false);
+      const load = () => { setBusy(true); api('audit').then((r) => { setItems(r.ok ? (r.audit || []) : []); setBusy(false); }); };
+      useEffect(() => { load(); }, []);
+      const META = {
+        'login-admin':      { ic: 'right-to-bracket', cor: 'var(--success)' },
+        'login-falhou':     { ic: 'user-lock',        cor: 'var(--danger,#e5484d)' },
+        'credenciais-alteradas': { ic: 'key',         cor: '#b9770e' },
+        'lead-apagado':     { ic: 'trash',            cor: 'var(--danger,#e5484d)' },
+        'pagamento':        { ic: 'money-bill-wave',  cor: 'var(--success)' },
+        'site-atualizado':  { ic: 'box-open',         cor: 'var(--accent)' },
+        'site-revertido':   { ic: 'rotate-left',      cor: '#b9770e' },
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <div className="admin-panel-head">
+            <h2 style={{display:'flex',alignItems:'center',gap:8}}><FA name="clipboard-list" s={15} /> {AT('auditTitle')}</h2>
+            <button className="btn-add" onClick={load} disabled={busy} style={{background:'var(--bg-soft)',color:'var(--ink)'}}><FA name="rotate" s={12} /> {AT('refresh')}</button>
+          </div>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:14}}>{AT('auditNote')}</p>
+          {items === null ? (
+            <p style={{color:'var(--ink-muted)',fontSize:13}}>{AT('loading')}</p>
+          ) : items.length === 0 ? (
+            <div style={{border:'1px dashed var(--line)',borderRadius:10,padding:'16px',textAlign:'center',color:'var(--ink-muted)',fontSize:13}}>{AT('auditEmpty')}</div>
+          ) : (
+            <div style={{display:'grid',gap:7,maxHeight:360,overflowY:'auto'}}>
+              {items.map((e, i) => {
+                const m = META[e.evento] || { ic: 'circle-info', cor: 'var(--ink-muted)' };
+                return (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:11,padding:'8px 12px',border:'1px solid var(--line)',borderRadius:10,fontSize:13}}>
+                    <span style={{width:30,height:30,flex:'none',borderRadius:8,display:'grid',placeItems:'center',background:'var(--bg-soft)',color:m.cor}}><FA name={m.ic} s={12} /></span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600}}>{AT('audit_' + e.evento) || e.evento}{e.detalhe ? <span style={{color:'var(--ink-muted)',fontWeight:400}}> — {e.detalhe}</span> : null}</div>
+                      <div style={{fontSize:11.5,color:'var(--ink-muted)'}}>{fmtData(e.data)} · {e.ip}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       );
     }
@@ -1309,6 +1396,13 @@
         updating:'A atualizar…', btnUpdateSite:'Atualizar site', updError:'Erro ao atualizar.',
         updTip:'Dica: faça um backup (hPanel → Backups) antes de atualizar, por precaução.',
         updLogTitle:'Histórico de atualizações', updLogEmpty:'Ainda não há atualizações registadas.', updLogFiles:'ficheiros',
+        healthTitle:'Estado do sistema', healthNote:'Diagnóstico do servidor — confirme que está tudo pronto para o site funcionar bem.',
+        healthOk:'Tudo em ordem.', healthWarn:'{n} aviso(s) a rever.', healthProblems:'{n} problema(s) a resolver.',
+        auditTitle:'Registo de auditoria', auditNote:'As acções sensíveis mais recentes (entradas, pagamentos, remoções e atualizações), com data e IP.',
+        auditEmpty:'Ainda não há registos.',
+        'audit_login-admin':'Entrada de administrador', 'audit_login-falhou':'Tentativa de entrada falhada',
+        'audit_credenciais-alteradas':'Credenciais alteradas', 'audit_lead-apagado':'Lead removido',
+        audit_pagamento:'Estado de pagamento alterado', 'audit_site-atualizado':'Site actualizado (ZIP)', 'audit_site-revertido':'Atualização revertida',
         updRestore:'Reverter', updRestoreHint:'Repor a versão anterior a esta atualização.',
         updRestoreConfirm:'Reverter para a versão anterior a esta atualização? Os ficheiros do site (excepto config.php, dados/ e uploads/) voltam ao estado guardado no backup.',
         // Pagamentos
@@ -1454,6 +1548,13 @@
         updConfirm:'Update the site with this ZIP? Files will be replaced. config.php, the dados/ folder and uploads/ are preserved.',
         updating:'Updating…', btnUpdateSite:'Update site', updError:'Update error.',
         updLogTitle:'Update history', updLogEmpty:'No updates recorded yet.', updLogFiles:'files',
+        healthTitle:'System status', healthNote:'Server diagnostics — check everything is ready for the site to run well.',
+        healthOk:'All good.', healthWarn:'{n} warning(s) to review.', healthProblems:'{n} problem(s) to fix.',
+        auditTitle:'Audit log', auditNote:'The most recent sensitive actions (logins, payments, deletions and updates), with date and IP.',
+        auditEmpty:'No records yet.',
+        'audit_login-admin':'Admin login', 'audit_login-falhou':'Failed login attempt',
+        'audit_credenciais-alteradas':'Credentials changed', 'audit_lead-apagado':'Lead removed',
+        audit_pagamento:'Payment status changed', 'audit_site-atualizado':'Site updated (ZIP)', 'audit_site-revertido':'Update rolled back',
         updRestore:'Roll back', updRestoreHint:'Restore the version prior to this update.',
         updRestoreConfirm:'Roll back to the version before this update? Site files (except config.php, dados/ and uploads/) return to the backed-up state.',
         updTip:'Tip: make a backup (hPanel → Backups) before updating, just in case.',
@@ -2195,7 +2296,9 @@
                 <SocialEditor social={social} onSaved={setSocial} />
                 <SmtpEditor smtp={smtp} onSaved={setSmtp} />
                 <SegEditor seg={seg} onSaved={setSeg} />
+                <HealthPanel />
                 <SiteUpdater />
+                <AuditPanel />
                 <div className="admin-panel">
                   <h2 style={{marginBottom:12}}>{T.aboutTitle}</h2>
                   <p style={{color:'var(--ink-muted)',fontSize:13,lineHeight:1.6,marginBottom:12}}>{T.aboutP1}</p>

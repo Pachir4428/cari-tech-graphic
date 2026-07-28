@@ -118,6 +118,7 @@ if ($action === 'login') {
         session_regenerate_id(true);
         $_SESSION['ctg_admin'] = true;
         $_SESSION['ctg_last'] = time();
+        store_add_audit($config, 'login-admin', 'Sessão iniciada (entrar.html)');
         responder(true, ['role' => 'admin', 'redirect' => ctg_painel_url($config)]);
     }
 
@@ -132,6 +133,7 @@ if ($action === 'login') {
     }
 
     store_rate_falha($config, $rlChave, 900);
+    store_add_audit($config, 'login-falhou', "Identificador tentado: {$id}");
     usleep(600000);
     responder(false, ['message' => 'Credenciais incorrectas. Use o seu utilizador/palavra-passe (admin) ou o e-mail + código do pedido (cliente).'], 401);
 }
