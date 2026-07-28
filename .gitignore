@@ -20,3 +20,6 @@ uploads/img-*
 # Ficheiros carregados em tempo de execução (entregas e briefs de clientes)
 uploads/entregas/
 uploads/cliente/
+
+# Backups automáticos criados antes de cada atualização por ZIP (só no servidor)
+backups/

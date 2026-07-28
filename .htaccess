@@ -27,6 +27,9 @@ DirectoryIndex index.html
 # --- Proteger a pasta de dados (leads.csv) ---------------------------------
 RedirectMatch 403 ^/dados/.*$
 
+# --- Proteger a pasta de backups (cópias da versão anterior do site) --------
+RedirectMatch 403 ^/backups/.*$
+
 # --- Entregas: acesso só através de demo.php (protecção por pagamento) ------
 RedirectMatch 403 ^/uploads/entregas/.*$
 
@@ -36,6 +39,10 @@ RedirectMatch 403 ^/uploads/entregas/.*$
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  # Content-Security-Policy — limita a origem de scripts, estilos, fontes, etc.
+  # ('unsafe-inline'/'unsafe-eval' são necessários: React + Babel no browser e
+  #  estilos/scripts inline). Inclui os CDNs e os serviços de login social usados.
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://accounts.google.com https://apis.google.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://graph.facebook.com https://connect.facebook.net; frame-src https://accounts.google.com https://www.facebook.com https://web.facebook.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 </IfModule>
 
 # --- Compressão (gzip) -----------------------------------------------------
@@ -63,4 +70,17 @@ ErrorDocument 403 /erro.html
 # --- MIME correcto para .jsx (servidos como texto p/ Babel no browser) -----
 <IfModule mod_mime.c>
   AddType text/babel .jsx
+  AddType application/manifest+json .webmanifest
 </IfModule>
+
+# --- PWA: o service worker e o manifesto não devem ser cacheados por muito --
+# tempo (senão as atualizações demoram a chegar aos utilizadores).
+<FilesMatch "^(sw\.js|manifest\.webmanifest)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, max-age=0, must-revalidate"
+  </IfModule>
+  <IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 0 seconds"
+  </IfModule>
+</FilesMatch>

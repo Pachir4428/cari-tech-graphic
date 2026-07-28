@@ -328,6 +328,37 @@ function store_add_cliente_ficheiro($config, $leadId, $ficheiro) {
     return $todas[$leadId]['cliente_ficheiros'];
 }
 
+/* Verificação de segurança do CONTEÚDO de um ficheiro carregado (não basta a
+   extensão). Rejeita SVG/HTML/XML com scripts embutidos (risco de XSS) e
+   ficheiros que dizem ser imagem mas não são. Devolve true se for seguro. */
+function ctg_ficheiro_seguro($tmp, $ext) {
+    $ext = strtolower((string) $ext);
+    if (!is_file($tmp)) return false;
+    // Formatos que podem conter código activo → verifica o conteúdo.
+    if (in_array($ext, ['svg', 'html', 'htm', 'xml', 'xhtml'], true)) {
+        $c = @file_get_contents($tmp, false, null, 0, 300000);
+        if ($c !== false && preg_match('/<script\b|javascript:|\son\w+\s*=|<iframe\b|<embed\b|<object\b|<!ENTITY/i', $c)) {
+            return false;
+        }
+    }
+    // Extensão de imagem tem mesmo de ser uma imagem válida.
+    if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'], true) && function_exists('getimagesize')) {
+        if (@getimagesize($tmp) === false) return false;
+    }
+    // Coerência com o MIME real (quando o finfo está disponível): nunca aceitar
+    // conteúdo executável (PHP, scripts, ELF) seja qual for a extensão.
+    if (function_exists('finfo_open')) {
+        $fi = finfo_open(FILEINFO_MIME_TYPE);
+        if ($fi) {
+            $mime = (string) finfo_file($fi, $tmp);
+            finfo_close($fi);
+            $perigosos = ['text/x-php', 'application/x-php', 'application/x-httpd-php', 'application/x-executable', 'application/x-dosexec', 'application/x-sh', 'text/x-shellscript'];
+            if (in_array($mime, $perigosos, true)) return false;
+        }
+    }
+    return true;
+}
+
 /* Estado de pagamento de um pedido: 'nao' | 'parcial' | 'pago'. */
 function store_set_pagamento($config, $leadId, $estado) {
     $todas = store_get_deliveries($config);
@@ -444,6 +475,73 @@ function atualizar_por_zip($raiz, $zipTmp) {
         $origem = $tmp . '/' . $itens[0];
     }
 
+    // Pasta de backup desta atualização (guarda a versão ANTERIOR dos ficheiros
+    // substituídos, para poder reverter). Fica em backups/<id>/.
+    $backupId  = date('Y-m-d_His');
+    $backupDir = $raiz . '/backups/' . $backupId;
+
+    $count = 0;
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($origem, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+    foreach ($it as $item) {
+        $rel = ltrim(str_replace('\\', '/', substr($item->getPathname(), strlen($origem))), '/');
+        if ($rel === '') continue;
+        $topo = explode('/', $rel)[0];
+        if (in_array($rel, $protegidos, true) || in_array($topo, $pastasProtegidas, true)) continue;
+        if ($topo === 'backups') continue; // nunca sobrepor a pasta de backups
+        $destino = $raiz . '/' . $rel;
+        if ($item->isDir()) {
+            @mkdir($destino, 0755, true);
+        } else {
+            @mkdir(dirname($destino), 0755, true);
+            // Antes de substituir, guarda a versão actual no backup.
+            if (is_file($destino)) {
+                $bkp = $backupDir . '/' . $rel;
+                @mkdir(dirname($bkp), 0755, true);
+                @copy($destino, $bkp);
+            }
+            if (@copy($item->getPathname(), $destino)) $count++;
+        }
+    }
+    _rmrf($tmp);
+    _backups_podar($raiz, 5); // mantém só os 5 backups mais recentes
+    return ['ok' => true, 'count' => $count, 'backup' => is_dir($backupDir) ? $backupId : ''];
+}
+
+/* Lista os backups existentes (mais recente primeiro). */
+function atualizacao_backups($raiz) {
+    $base = $raiz . '/backups';
+    if (!is_dir($base)) return [];
+    $ids = array_values(array_filter(scandir($base), function ($x) use ($base) {
+        return $x !== '.' && $x !== '..' && is_dir($base . '/' . $x);
+    }));
+    rsort($ids);
+    return $ids;
+}
+
+/* Mantém apenas os N backups mais recentes (apaga os mais antigos). */
+function _backups_podar($raiz, $manter = 5) {
+    $ids = atualizacao_backups($raiz);
+    foreach (array_slice($ids, $manter) as $velho) {
+        _rmrf($raiz . '/backups/' . $velho);
+    }
+}
+
+/* Reverte a última atualização (ou uma específica), repondo os ficheiros
+   guardados no backup. Preserva config.php, dados/ e uploads/. */
+function atualizacao_reverter($raiz, $backupId = '') {
+    $ids = atualizacao_backups($raiz);
+    if (!$ids) return ['ok' => false, 'message' => 'Não há nenhum backup para repor.'];
+    if ($backupId === '') $backupId = $ids[0];
+    // Valida o id (só nomes gerados por nós; sem path traversal).
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}_\d{6}$/', $backupId) || !in_array($backupId, $ids, true)) {
+        return ['ok' => false, 'message' => 'Backup inválido.'];
+    }
+    $origem = $raiz . '/backups/' . $backupId;
+    $protegidos = ['config.php'];
+    $pastasProtegidas = ['dados', 'uploads', 'backups'];
     $count = 0;
     $it = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($origem, FilesystemIterator::SKIP_DOTS),
@@ -462,8 +560,7 @@ function atualizar_por_zip($raiz, $zipTmp) {
             if (@copy($item->getPathname(), $destino)) $count++;
         }
     }
-    _rmrf($tmp);
-    return ['ok' => true, 'count' => $count];
+    return ['ok' => true, 'count' => $count, 'backup' => $backupId];
 }
 
 function _rmrf($dir) {

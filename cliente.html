@@ -6,6 +6,14 @@
   <title>Área de Cliente — Cari Tech Graphic</title>
   <meta name="description" content="Acompanhe os seus pedidos e receba as suas entregas na Área de Cliente da Cari Tech Graphic." />
   <meta name="robots" content="noindex" />
+  <!-- PWA (aplicação instalável) -->
+  <link rel="manifest" href="manifest.webmanifest?v=116" />
+  <meta name="theme-color" content="#0B4E50" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Cari Tech" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=116" />
+  <link rel="icon" href="assets/icons/icon-192.png?v=116" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -64,6 +72,22 @@
     .tb-notif-item:last-child{border-bottom:none}
     .tb-notif-item i{color:var(--ok);margin-top:2px}
     .tb-notif-empty{padding:18px 15px;text-align:center;color:var(--muted);font-size:13px}
+    /* Perfil (avatar + menu) */
+    .tb-profile{position:relative}
+    .tb-avatar{border:none;color:#fff;font-weight:800;font-size:15px;background:linear-gradient(135deg,var(--brand-mid),var(--brand-deep))}
+    .tb-avatar:hover{color:#fff;filter:brightness(1.07);box-shadow:0 6px 16px -8px rgba(15,75,77,.7)}
+    .tb-profile-panel{position:absolute;right:0;top:48px;width:250px;max-width:82vw;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(15,75,77,.5);z-index:31;overflow:hidden;padding:6px}
+    .pp-head{display:flex;align-items:center;gap:11px;padding:12px 12px 13px}
+    .pp-av{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:17px;color:#fff;background:linear-gradient(135deg,var(--brand-mid),var(--brand-deep))}
+    .pp-id{min-width:0}
+    .pp-id b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pp-id small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pp-item{display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border:none;background:none;color:var(--ink);font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer;border-radius:10px;text-align:left}
+    .pp-item i{width:18px;text-align:center;color:var(--muted)}
+    .pp-item:hover{background:var(--brand-soft)}
+    .pp-item.danger{color:#c0392b;border-top:1px solid var(--line);border-radius:0 0 10px 10px;margin-top:4px}
+    .pp-item.danger i{color:#c0392b}
+    #ppInstall{color:var(--brand-mid)} #ppInstall i{color:var(--brand-mid)}
     @media (max-width:560px){ .tb-search{display:none} }
 
     /* ---------- Grid de pedidos ---------- */
@@ -100,10 +124,27 @@
     .pay-parcial{background:var(--accent-soft);color:var(--accent-2)}
     .pay-nao{background:#fdeaea;color:#c0392b}
     .demo{position:relative;border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:8px;background:#0e1719}
-    .demo img{display:block;width:100%;height:auto;max-height:280px;object-fit:cover;pointer-events:none;-webkit-user-drag:none;user-select:none}
-    .demo .demo-cap{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12.5px;color:#fff;background:linear-gradient(0deg,rgba(11,20,22,.92),rgba(11,20,22,.6))}
+    .demo img{display:block;width:100%;height:auto;max-height:280px;object-fit:cover;cursor:zoom-in;-webkit-user-drag:none;user-select:none;transition:opacity .15s}
+    .demo img:hover{opacity:.92}
+    .demo .demo-cap{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12.5px;color:#fff;background:linear-gradient(0deg,rgba(11,20,22,.92),rgba(11,20,22,.6));flex-wrap:wrap}
     .demo .demo-cap i{color:var(--accent)}
     .demo .demo-cap b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .demo .zoomhint{display:inline-flex;align-items:center;gap:5px;margin-left:auto;color:#cfe3e3;font-weight:600}
+    .demo .zoomhint i{color:#cfe3e3}
+    /* Lightbox (ampliar a pré-visualização, sempre com marca de água) */
+    .lightbox{position:fixed;inset:0;z-index:60;background:rgba(6,12,13,.92);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)}
+    .lightbox .lb-fig{margin:0;max-width:min(960px,94vw);max-height:92vh;display:flex;flex-direction:column;gap:10px;align-items:center}
+    .lightbox .lb-fig img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:12px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7);cursor:default;-webkit-user-drag:none}
+    .lightbox .lb-cap{display:flex;align-items:center;gap:9px;color:#fff;font-size:13.5px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:9px 15px;border-radius:999px;max-width:100%}
+    .lightbox .lb-cap i{color:var(--accent)}
+    .lightbox .lb-cap b{font-weight:700}
+    .lightbox .lb-close{position:absolute;top:18px;right:20px;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+    .lightbox .lb-close:hover{background:rgba(255,255,255,.22)}
+    /* Pré-visualização de conteúdo longo (ver mais / ver menos) */
+    .clampable{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+    .clampable.aberto{-webkit-line-clamp:unset;display:block}
+    .ver-mais{display:inline-flex;align-items:center;gap:5px;margin:-2px 0 10px;padding:2px 2px;border:none;background:none;color:var(--brand-mid);font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer}
+    .ver-mais:hover{text-decoration:underline}
     .locked{display:flex;align-items:center;gap:12px;padding:12px 13px;border:1px dashed var(--line);border-radius:11px;margin-bottom:8px;background:#f8fafa;color:var(--muted)}
     .locked .ic{width:38px;height:38px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:16px;background:#fdeaea;color:#c0392b}
     .locked .tx{min-width:0}
@@ -235,6 +276,18 @@
             <button class="tb-btn" id="bellBtn" title="Notificações" aria-label="Notificações"><i class="fa-solid fa-bell"></i><span class="tb-badge" id="bellBadge" style="display:none">0</span></button>
             <div class="tb-notif-panel" id="notifPanel" style="display:none"></div>
           </div>
+          <div class="tb-profile">
+            <button class="tb-btn tb-avatar" id="profileBtn" title="Perfil" aria-label="Perfil" aria-haspopup="true" aria-expanded="false"><span id="avatarInitial">?</span></button>
+            <div class="tb-profile-panel" id="profilePanel" style="display:none">
+              <div class="pp-head">
+                <div class="pp-av" id="ppAv">?</div>
+                <div class="pp-id"><b id="ppName">—</b><small id="ppEmail"></small></div>
+              </div>
+              <button class="pp-item" id="ppInstall" style="display:none"><i class="fa-solid fa-cloud-arrow-down"></i> <span id="ppInstallLabel">Instalar aplicação</span></button>
+              <button class="pp-item" id="ppContact"><i class="fa-solid fa-headset"></i> <span id="ppContactLabel">Falar connosco</span></button>
+              <button class="pp-item danger" id="ppLogout"><i class="fa-solid fa-right-from-bracket"></i> <span id="ppLogoutLabel">Sair</span></button>
+            </div>
+          </div>
         </div>
       </div>
       <div id="grid" class="req-grid"></div>
@@ -251,6 +304,15 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Lightbox: amplia a pré-visualização (com marca de água, sem descarga) -->
+  <div id="lightbox" class="lightbox" style="display:none" onclick="fecharLightbox()">
+    <button class="lb-close" onclick="fecharLightbox()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    <figure class="lb-fig" onclick="event.stopPropagation()">
+      <img id="lbImg" src="" alt="" oncontextmenu="return false" />
+      <figcaption class="lb-cap"><i class="fa-solid fa-lock"></i> <b id="lbName"></b> <span id="lbNote"></span></figcaption>
+    </figure>
   </div>
 
   <script>
@@ -272,6 +334,8 @@
         notifTitle:'Notificações', notifEmpty:'Sem novidades por agora.',
         notifDeliveries:'Entregas disponíveis', notifReply:'Nova resposta do estúdio',
         signout:'Sair / consultar outra conta',
+        profile:'Perfil', installApp:'Instalar aplicação', appInstalled:'Aplicação instalada',
+        seeMore:'Ver mais', seeLess:'Ver menos', clickToZoom:'Clique para ampliar',
         gateTitle:'A sua Área de Cliente', gateSub:'Introduza o código que recebeu no e-mail de confirmação do seu pedido.',
         gEmail:'E-mail', gCode:'Código de acesso', gEnter:'Entrar', gChecking:'A verificar…',
         gOther:'Outro tipo de acesso', gBack:'Voltar ao site',
@@ -300,6 +364,8 @@
         notifTitle:'Notifications', notifEmpty:'Nothing new for now.',
         notifDeliveries:'Deliveries available', notifReply:'New reply from the studio',
         signout:'Log out / check another account',
+        profile:'Profile', installApp:'Install app', appInstalled:'App installed',
+        seeMore:'See more', seeLess:'See less', clickToZoom:'Click to enlarge',
         gateTitle:'Your Client Area', gateSub:'Enter the code you received in your order confirmation email.',
         gEmail:'Email', gCode:'Access code', gEnter:'Sign in', gChecking:'Checking…',
         gOther:'Other sign-in', gBack:'Back to site',
@@ -361,6 +427,12 @@
       document.getElementById('greet').textContent = T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
       document.getElementById('who').textContent = (cliente.email||'') + ' · ' + PEDIDOS.length + ' ' + (PEDIDOS.length===1?T('order'):T('orders'));
       document.getElementById('navCount').textContent = PEDIDOS.length;
+      // Perfil (avatar + menu no canto)
+      var ini = inicial(cliente.nome || cliente.email || '?');
+      document.getElementById('avatarInitial').textContent = ini;
+      document.getElementById('ppAv').textContent = ini;
+      document.getElementById('ppName').textContent = cliente.nome || T('you');
+      document.getElementById('ppEmail').textContent = cliente.email || '';
 
       renderGrid(document.getElementById('search').value || '');
       atualizarNotificacoes();
@@ -413,6 +485,37 @@
       return {cls:'pay-nao', ic:'fa-lock', txt:T('payUnpaid')};
     }
 
+    // Bloco de texto com pré-visualização quando o conteúdo é grande (ver mais / ver menos).
+    var txSeq = 0;
+    function blocoTexto(cls, texto, iconHtml){
+      var t = String(texto==null ? '' : texto);
+      var ic = iconHtml || '';
+      if(t.length <= 200) return ' <div class="'+cls+'">'+ic+esc(t)+'</div>';
+      var id = 'tx'+(txSeq++);
+      return ' <div class="'+cls+' clampable" id="'+id+'">'+ic+esc(t)+'</div>'
+        + '<button class="ver-mais" onclick="toggleTexto(\''+id+'\',this)"><i class="fa-solid fa-chevron-down"></i> '+T('seeMore')+'</button>';
+    }
+    window.toggleTexto = function(id, btn){
+      var el = document.getElementById(id); if(!el) return;
+      var aberto = el.classList.toggle('aberto');
+      btn.innerHTML = '<i class="fa-solid fa-chevron-'+(aberto?'up':'down')+'"></i> '+(aberto ? T('seeLess') : T('seeMore'));
+    };
+
+    // Lightbox: amplia a pré-visualização (mantém a marca de água; sem descarga).
+    window.abrirLightbox = function(img){
+      var lb = document.getElementById('lightbox');
+      document.getElementById('lbImg').src = img.src;
+      document.getElementById('lbName').textContent = img.getAttribute('data-nome') || '';
+      document.getElementById('lbNote').textContent = '· ' + T('afterPayment');
+      lb.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    };
+    window.fecharLightbox = function(){
+      document.getElementById('lightbox').style.display = 'none';
+      document.getElementById('lbImg').src = '';
+      document.body.style.overflow = '';
+    };
+
     function cardHtml(p, i){
       var st = 'st-' + (p.status||'new');
       var stIcon = p.status==='won'?'fa-circle-check':(p.status==='contacted'?'fa-spinner':(p.status==='lost'?'fa-circle-minus':'fa-circle-dot'));
@@ -424,11 +527,11 @@
       h += '<div class="req-card">';
       h += ' <div class="req-top"><div><div class="req-title">'+esc(p.servico||'Pedido')+'</div><div class="req-date"><i class="fa-regular fa-calendar"></i> '+esc(fmtData(p.data))+'</div></div>';
       h += '   <span class="pill '+st+'"><i class="fa-solid '+stIcon+'"></i> '+esc(estadoDe(p.status))+'</span></div>';
-      if(p.mensagem) h += ' <div class="req-msg">'+esc(p.mensagem)+'</div>';
+      if(p.mensagem) h += blocoTexto('req-msg', p.mensagem);
       h += ' <div class="sec-label"><i class="fa-solid fa-box"></i> '+T('deliveries')
          + '<span class="paybadge '+pay.cls+'"><i class="fa-solid '+pay.ic+'"></i> '+pay.txt+'</span></div>';
       if(temEntrega){
-        if(p.entrega.msg) h += ' <div class="deliver-msg"><i class="fa-solid fa-comment-dots"></i> '+esc(p.entrega.msg)+'</div>';
+        if(p.entrega.msg) h += blocoTexto('deliver-msg', p.entrega.msg, '<i class="fa-solid fa-comment-dots"></i> ');
         p.entrega.entregas.forEach(function(it){
           var isFile = it.tipo==='file'; var nome=it.nome||it.url;
           if(!isFile){
@@ -445,9 +548,9 @@
             h += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):T('transferFile'))+'</small></span>';
             h += '<span class="go"><i class="fa-solid fa-download"></i></span></a>';
           } else if(isImage(nome)){
-            // Por pagar + imagem → pré-visualização com marca de água (sem descarga)
-            h += '<div class="demo"><img src="'+esc(demoUrl(p.id,it.url,false))+'" alt="'+esc(T('demoTag'))+'" loading="lazy" oncontextmenu="return false">';
-            h += '<div class="demo-cap"><i class="fa-solid fa-lock"></i> <b>'+esc(nome)+'</b> · '+esc(T('afterPayment'))+'</div></div>';
+            // Por pagar + imagem → pré-visualização com marca de água (ampliável, sem descarga)
+            h += '<div class="demo"><img src="'+esc(demoUrl(p.id,it.url,false))+'" data-nome="'+esc(nome)+'" alt="'+esc(T('demoTag'))+'" loading="lazy" oncontextmenu="return false" onclick="abrirLightbox(this)">';
+            h += '<div class="demo-cap"><i class="fa-solid fa-lock"></i> <b>'+esc(nome)+'</b> · '+esc(T('afterPayment'))+'<span class="zoomhint"><i class="fa-solid fa-magnifying-glass-plus"></i> '+T('clickToZoom')+'</span></div></div>';
           } else {
             // Por pagar + outro tipo → bloqueado
             h += '<div class="locked"><span class="ic"><i class="fa-solid fa-lock"></i></span>';
@@ -668,6 +771,7 @@
       var set=function(id,val){ var el=document.getElementById(id); if(el) el.textContent=val; };
       set('navMyOrders',T('myOrders')); set('navServices',T('servicesNav')); set('navTalk',T('talkToUs'));
       set('footHelp',T('needHelp')); set('footTeam',T('contactTeam')); set('logoutLabel',T('logout'));
+      set('ppContactLabel',T('talkToUs')); set('ppLogoutLabel',T('logout')); set('ppInstallLabel',T('installApp'));
       set('gateTitle',T('gateTitle')); set('gateSub',T('gateSub')); set('gLabEmail',T('gEmail'));
       set('gLabCode',T('gCode')); set('gLinkOther',T('gOther')); set('gLinkBack',T('gBack'));
       set('langLabel', LANG.toUpperCase());
@@ -713,10 +817,56 @@
     // Sino de notificações
     document.getElementById('bellBtn').addEventListener('click', function(e){
       e.stopPropagation();
+      document.getElementById('profilePanel').style.display='none';
       var p = document.getElementById('notifPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
     });
-    document.addEventListener('click', function(){ document.getElementById('notifPanel').style.display='none'; });
+    document.addEventListener('click', function(){
+      document.getElementById('notifPanel').style.display='none';
+      var pp=document.getElementById('profilePanel'); if(pp){ pp.style.display='none'; document.getElementById('profileBtn').setAttribute('aria-expanded','false'); }
+    });
+
+    // Menu de perfil (canto superior direito)
+    document.getElementById('profileBtn').addEventListener('click', function(e){
+      e.stopPropagation();
+      document.getElementById('notifPanel').style.display='none';
+      var p = document.getElementById('profilePanel');
+      var aberto = p.style.display!=='none';
+      p.style.display = aberto ? 'none' : 'block';
+      this.setAttribute('aria-expanded', aberto ? 'false' : 'true');
+    });
+    document.getElementById('profilePanel').addEventListener('click', function(e){ e.stopPropagation(); });
+    document.getElementById('ppContact').addEventListener('click', function(){
+      document.getElementById('profilePanel').style.display='none';
+      mostrarVista('contact');
+    });
+    document.getElementById('ppLogout').addEventListener('click', function(){ sair(); });
+
+    // Fecha o lightbox com a tecla ESC.
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') fecharLightbox(); });
+
+    // ---------- PWA: instalar aplicação + service worker ----------
+    (function(){
+      // Regista o service worker (torna o site instalável e resistente a falhas de rede).
+      if('serviceWorker' in navigator){
+        window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+      }
+      var deferido = null;
+      var btn = document.getElementById('ppInstall');
+      var lbl = document.getElementById('ppInstallLabel');
+      // O navegador só dispara isto quando a app é instalável (e ainda não instalada).
+      window.addEventListener('beforeinstallprompt', function(e){
+        e.preventDefault(); deferido = e; btn.style.display='flex';
+      });
+      btn.addEventListener('click', function(){
+        if(!deferido) return;
+        deferido.prompt();
+        deferido.userChoice.finally(function(){ deferido=null; btn.style.display='none'; });
+      });
+      window.addEventListener('appinstalled', function(){
+        deferido=null; btn.style.display='none';
+      });
+    })();
 
     // Marca (logo)
     fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){ aplicarMarca(d&&d.branding); }).catch(function(){});

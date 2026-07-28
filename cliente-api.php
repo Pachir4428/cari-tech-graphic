@@ -127,6 +127,9 @@ if ($action === 'upload') {
     if ($ext === '' || !in_array($ext, $permitidas, true)) {
         responder(false, ['message' => 'Tipo de ficheiro não permitido.'], 422);
     }
+    if (!ctg_ficheiro_seguro($file['tmp_name'], $ext)) {
+        responder(false, ['message' => 'Ficheiro rejeitado por segurança: o conteúdo não corresponde ao tipo declarado.'], 422);
+    }
     $dir = __DIR__ . '/uploads/cliente';
     @mkdir($dir, 0755, true);
     $slug = preg_replace('/[^a-zA-Z0-9._-]+/', '-', pathinfo($nomeOrig, PATHINFO_FILENAME));
