@@ -8,6 +8,13 @@ window.I18N = {
       portfolio: 'Portfólio',
       contact: 'Contacto',
       cta: 'Começar Agora',
+      login: 'Entrar',
+    },
+    sites: {
+      eyebrow: 'Nossos sites & sistemas',
+      title: 'Trabalhos publicados',
+      lede: 'Alguns dos sites e sistemas que criámos — veja-os ao vivo.',
+      visit: 'Visitar site',
     },
     hero: {
       eyebrow: 'Cari Tech Graphic — Nampula, Moçambique',
@@ -204,6 +211,7 @@ window.I18N = {
       explore: 'Explorar',
       services: 'Serviços',
       contact: 'Contacto',
+      clientArea: 'Área de Cliente',
       rights: '© 2026 Cari Tech Graphic. Todos os direitos reservados.',
       built: 'Feito com cuidado em Nampula.',
     },
@@ -217,6 +225,13 @@ window.I18N = {
       portfolio: 'Work',
       contact: 'Contact',
       cta: 'Get started',
+      login: 'Log in',
+    },
+    sites: {
+      eyebrow: 'Our sites & systems',
+      title: 'Published work',
+      lede: 'Some of the sites and systems we built — see them live.',
+      visit: 'Visit site',
     },
     hero: {
       eyebrow: 'Cari Tech Graphic — Nampula, Mozambique',
@@ -361,6 +376,7 @@ window.I18N = {
       explore: 'Explore',
       services: 'Services',
       contact: 'Contact',
+      clientArea: 'Client Area',
       rights: '© 2026 Cari Tech Graphic. All rights reserved.',
       built: 'Crafted with care in Nampula.',
     },

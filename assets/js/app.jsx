@@ -12,10 +12,10 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 }/*EDITMODE-END*/;
 
 const ACCENTS = {
-  orange: { a: '#FF7200', a2: '#E56500', glow: 'rgba(255, 114, 0, 0.35)' },
-  amber:  { a: '#F59E0B', a2: '#D97706', glow: 'rgba(245, 158, 11, 0.35)' },
-  coral:  { a: '#FB7185', a2: '#E11D48', glow: 'rgba(251, 113, 133, 0.35)' },
-  gradient: { a: '#FF7200', a2: '#FF9A3C', glow: 'rgba(255, 154, 60, 0.35)' },
+  orange: { a: '#F5791C', a2: '#DB640C', glow: 'rgba(245, 121, 28, 0.28)' },
+  amber:  { a: '#EFA218', a2: '#CE850C', glow: 'rgba(239, 162, 24, 0.28)' },
+  coral:  { a: '#F26B82', a2: '#DB3B55', glow: 'rgba(242, 107, 130, 0.28)' },
+  gradient: { a: '#F5791C', a2: '#F7A24E', glow: 'rgba(247, 162, 78, 0.28)' },
 };
 
 const FONTS = {
@@ -62,6 +62,7 @@ function App() {
         <Services t={t} onView={setServiceDetail} onRequest={openLead} onAdd={addToCart} />
         <Partners t={t} />
         <Portfolio t={t} onView={setPortfolioDetail} />
+        <SitesFeitos t={t} />
         <Why t={t} />
         <AI t={t} />
         <ContainerScroll

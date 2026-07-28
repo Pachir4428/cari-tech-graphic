@@ -419,11 +419,12 @@ function ChatAssistant() {
 
 // ---------- Carrinho / Checkout de serviços ----------
 function CartFab({ count, onOpen }) {
-  if (!count) return null;
+  // Sempre visível para o cliente encontrar o pedido/checkout facilmente.
   return (
-    <button className="cart-fab" onClick={onOpen} aria-label="Ver pedido">
-      <i className="fa-solid fa-cart-shopping" style={{ fontSize: 22 }} aria-hidden="true" />
-      <span className="cart-count">{count}</span>
+    <button className={`cart-fab ${count ? 'has-items' : ''}`} onClick={onOpen} aria-label="Ver pedido">
+      <i className="fa-solid fa-cart-shopping" style={{ fontSize: 20 }} aria-hidden="true" />
+      <span className="cart-fab-label">Pedido</span>
+      {count > 0 && <span className="cart-count">{count}</span>}
     </button>
   );
 }
@@ -524,4 +525,53 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
   );
 }
 
-Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant, CartFab, CartModal });
+// ---------- Nossos Sites & Sistemas (geridos no painel) ----------
+function SitesFeitos({ t }) {
+  const [sites, setSites] = useS4([]);
+  const ref = window.useReveal();
+  useE4(() => {
+    window.loadContent().then((c) => { if (c && Array.isArray(c.sites)) setSites(c.sites); });
+  }, []);
+  if (!sites.length) return null;
+  const ts = (t && t.sites) || {};
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } };
+  return (
+    <section id="trabalhos" className="section sites-section" ref={ref}>
+      <div className="container">
+        <div className="services-head reveal" style={{ marginBottom: 32 }}>
+          <div>
+            <div className="eyebrow">{ts.eyebrow || 'Nossos sites & sistemas'}</div>
+            <h2 className="h-section">{ts.title || 'Trabalhos publicados'}</h2>
+          </div>
+          <p style={{ color: 'var(--ink-muted)', maxWidth: 420 }}>{ts.lede || 'Alguns dos sites e sistemas que criámos — veja-os ao vivo.'}</p>
+        </div>
+        <div className="sites-grid">
+          {sites.map((s) => (
+            <article className="site-card reveal" key={s.id || s.url}>
+              <a className="site-preview" href={s.url} target="_blank" rel="noreferrer noopener">
+                <div className="site-preview-bar">
+                  <span className="spb-dot" /><span className="spb-dot" /><span className="spb-dot" />
+                  <span className="spb-url">{host(s.url)}</span>
+                </div>
+                <div className="site-preview-frame">
+                  <iframe src={s.url} title={s.nome || host(s.url)} loading="lazy" scrolling="no"
+                    sandbox="allow-scripts allow-same-origin allow-popups" tabIndex="-1" />
+                  <span className="site-preview-shield" aria-hidden="true" />
+                </div>
+              </a>
+              <div className="site-card-body">
+                <h3>{s.nome || host(s.url)}</h3>
+                {s.desc && <p>{s.desc}</p>}
+                <a className="btn btn-ghost" href={s.url} target="_blank" rel="noreferrer noopener">
+                  <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true" /> {ts.visit || 'Visitar site'}
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant, CartFab, CartModal, SitesFeitos });

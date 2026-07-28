@@ -6,16 +6,14 @@
   <title>Admin · Cari Tech Graphic</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=101" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=101" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=101" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=113" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=113" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=113" />
   <style>
-    body { background: var(--bg-soft); }
+    body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
-      display: grid;
-      grid-template-columns: 256px 1fr;
       min-height: 100vh;
     }
     .admin-side {
@@ -23,6 +21,8 @@
       color: #fff;
       padding: 22px 14px;
       display: flex; flex-direction: column; gap: 3px;
+      position: fixed; top: 0; left: 0; bottom: 0; width: 256px; z-index: 40;
+      overflow-y: auto;
     }
     .admin-logo {
       display: flex; align-items: center; gap: 10px;
@@ -64,7 +64,7 @@
     .admin-nav-item.active {
       background: var(--accent);
       color: #fff;
-      box-shadow: 0 8px 18px rgba(255,114,0,0.28);
+      box-shadow: 0 8px 18px var(--accent-glow);
     }
     .admin-nav-item.active i { opacity: 1; }
     .admin-nav-item.active:hover { background: var(--accent); }
@@ -86,7 +86,7 @@
 
     .admin-main {
       padding: 24px 32px 80px;
-      overflow: auto;
+      margin-left: 256px;
     }
     .admin-topbar {
       display: flex; align-items: center; gap: 14px;
@@ -368,18 +368,16 @@
 
     /* ---- Painel responsivo: menu lateral vira gaveta (drawer) ---- */
     @media (max-width: 1024px) {
-      .admin-shell { grid-template-columns: 1fr; }
       .admin-side {
-        position: fixed; top: 0; left: 0; bottom: 0; width: 264px; z-index: 60;
+        width: 264px; z-index: 60;
         transform: translateX(-100%); transition: transform 0.28s ease;
-        overflow-y: auto;
       }
       .admin-side.open { transform: translateX(0); box-shadow: 0 0 60px rgba(0,0,0,0.5); }
       .side-close { display: inline-flex; }
       .admin-hamburger { display: inline-flex; }
       .dash-grid { grid-template-columns: 1fr; }
       .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .admin-main { padding: 16px; }
+      .admin-main { padding: 16px; margin-left: 0; }
       .admin-topbar h1 { font-size: 20px; }
       .admin-search { min-width: 0; width: 140px; }
     }
@@ -417,7 +415,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.0.1';
+    const APP_VERSION = '1.5.1';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -476,7 +474,7 @@
         const r = await api('login', 'POST', { username: user.trim(), password: pass });
         setBusy(false);
         if (r.ok) onOk();
-        else setErr(r.message || 'Não foi possível entrar. Verifique a ligação ao servidor.');
+        else setErr(r.message || AT('loginErr'));
       };
       return (
         <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,background:'var(--brand-deep)'}}>
@@ -488,22 +486,22 @@
                 Cari Tech
               </div>
               <div style={{position:'relative'}}>
-                <div style={{color:'var(--accent)',fontWeight:700,letterSpacing:'0.14em',fontSize:11,textTransform:'uppercase',marginBottom:12}}>Painel de gestão</div>
-                <h2 style={{color:'#fff',fontSize:34,lineHeight:1.14,fontWeight:800,margin:0}}>Bem-vindo<br/><span style={{color:'var(--accent)'}}>de volta</span>.</h2>
-                <p style={{color:'rgba(255,255,255,0.6)',fontSize:14,lineHeight:1.6,marginTop:14,maxWidth:320}}>Faça login para gerir os pedidos, serviços, portfólio, testemunhos e contactos do seu site.</p>
+                <div style={{color:'var(--accent)',fontWeight:700,letterSpacing:'0.14em',fontSize:11,textTransform:'uppercase',marginBottom:12}}>{AT('loginPanelTag')}</div>
+                <h2 style={{color:'#fff',fontSize:34,lineHeight:1.14,fontWeight:800,margin:0}}>{AT('loginWelcome1')}<br/><span style={{color:'var(--accent)'}}>{AT('loginWelcome2')}</span>.</h2>
+                <p style={{color:'rgba(255,255,255,0.6)',fontSize:14,lineHeight:1.6,marginTop:14,maxWidth:320}}>{AT('loginHeroSub')}</p>
               </div>
-              <div style={{position:'relative',color:'rgba(255,255,255,0.35)',fontSize:12}}>Cari Tech Graphic · Nampula, Moçambique</div>
+              <div style={{position:'relative',color:'rgba(255,255,255,0.35)',fontSize:12}}>{AT('loginLocation')}</div>
             </div>
             <div className="login-form" style={{display:'flex',flexDirection:'column',justifyContent:'center',background:'#0e1416'}}>
-              <h1 style={{color:'#fff',fontSize:30,fontWeight:800,margin:'0 0 4px'}}>Entrar<span style={{color:'var(--accent)'}}>.</span></h1>
-              <p style={{color:'rgba(255,255,255,0.45)',fontSize:13,margin:'0 0 24px'}}>Acesso reservado à administração.</p>
+              <h1 style={{color:'#fff',fontSize:30,fontWeight:800,margin:'0 0 4px'}}>{AT('loginEnter')}<span style={{color:'var(--accent)'}}>.</span></h1>
+              <p style={{color:'rgba(255,255,255,0.45)',fontSize:13,margin:'0 0 24px'}}>{AT('loginReserved')}</p>
               <form onSubmit={submit} style={{display:'grid',gap:14}}>
-                <LoginField icon="user" label="Utilizador" value={user} onChange={setUser} placeholder="admin" />
+                <LoginField icon="user" label={AT('loginUser')} value={user} onChange={setUser} placeholder="admin" />
                 <LoginField
-                  icon="lock" label="Palavra-passe" value={pass} onChange={setPass} autoFocus
+                  icon="lock" label={AT('loginPass')} value={pass} onChange={setPass} autoFocus
                   type={show ? 'text' : 'password'} placeholder="••••••••"
                   trailing={
-                    <button type="button" onClick={() => setShow(!show)} aria-label="Mostrar palavra-passe"
+                    <button type="button" onClick={() => setShow(!show)} aria-label={AT('loginShowPass')}
                       style={{background:'none',border:'none',color:'rgba(255,255,255,0.45)',cursor:'pointer',padding:4}}>
                       <FA name={show ? 'eye-slash' : 'eye'} s={15} />
                     </button>
@@ -512,7 +510,7 @@
                 {err && <div style={{color:'#ff6b6b',fontSize:13,fontWeight:600}}>{err}</div>}
                 <button type="submit" disabled={busy || !user || !pass}
                   style={{marginTop:6,background:'var(--accent)',color:'#fff',border:'none',borderRadius:14,padding:'15px',fontSize:15,fontWeight:700,cursor:'pointer',opacity:(busy||!user||!pass)?0.55:1,transition:'opacity .15s'}}>
-                  {busy ? 'A entrar…' : 'Entrar'}
+                  {busy ? AT('loginBusy') : AT('loginEnter')}
                 </button>
               </form>
             </div>
@@ -565,11 +563,17 @@
     };
 
     const CONTACT_FIELDS = [
-      { k: 'email', label: 'E-mail', ph: 'contacto@seudominio.com' },
-      { k: 'phone', label: 'Telefone (como aparece no site)', ph: '+258 87 987 7200' },
-      { k: 'whatsapp', label: 'WhatsApp (só dígitos, formato internacional)', ph: '258834157731' },
-      { k: 'address', label: 'Morada', ph: 'Bairro, cidade' },
-      { k: 'hours', label: 'Horário', ph: 'Seg–Sex · 08h–17h' },
+      { k: 'email', lk: 'cfEmail', ph: 'contacto@seudominio.com' },
+      { k: 'phone', lk: 'cfPhone', ph: '+258 87 987 7200' },
+      { k: 'whatsapp', lk: 'cfWhats', ph: '258834157731' },
+      { k: 'address', lk: 'cfAddress', ph: 'Bairro, cidade' },
+      { k: 'hours', lk: 'cfHours', ph: 'Seg–Sex · 08h–17h' },
+      { k: 'instagram', lk: 'cfInstagram', ph: 'https://instagram.com/…', social: true, icon: 'instagram' },
+      { k: 'facebook', lk: 'cfFacebook', ph: 'https://facebook.com/…', social: true, icon: 'facebook' },
+      { k: 'twitter', lk: 'cfTwitter', ph: 'https://x.com/…', social: true, icon: 'x-twitter' },
+      { k: 'youtube', lk: 'cfYoutube', ph: 'https://youtube.com/@…', social: true, icon: 'youtube' },
+      { k: 'linkedin', lk: 'cfLinkedin', ph: 'https://linkedin.com/company/…', social: true, icon: 'linkedin-in' },
+      { k: 'tiktok', lk: 'cfTiktok', ph: 'https://tiktok.com/@…', social: true, icon: 'tiktok' },
     ];
 
     function ContactEditor({ contact, onCommit, saveState }) {
@@ -579,21 +583,28 @@
       return (
         <div className="admin-panel">
           <div className="admin-panel-head">
-            <h2>Contactos do site</h2>
+            <h2>{AT('contactsTitle')}</h2>
             <SaveHint state={saveState} />
           </div>
           <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>
-            Estes contactos aparecem na secção Contacto, no rodapé, no botão de WhatsApp e nos formulários. Guardados automaticamente.
+            {AT('contactsNote')}
           </p>
           <div style={{display:'grid',gap:12,maxWidth:560}}>
-            {CONTACT_FIELDS.map((f) => (
-              <div className="field" key={f.k}>
-                <label>{f.label}</label>
-                <input value={local[f.k] || ''} placeholder={f.ph}
-                  onChange={(e) => setLocal({ ...local, [f.k]: e.target.value })}
-                  onBlur={() => commit(f.k)} />
-                <div className="field-error"/>
-              </div>
+            {CONTACT_FIELDS.map((f, i) => (
+              <React.Fragment key={f.k}>
+                {f.social && (!CONTACT_FIELDS[i-1] || !CONTACT_FIELDS[i-1].social) && (
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:'var(--ink-muted)',marginTop:8}}>
+                    <FA name="share-nodes" s={11} /> {AT('cfSocial')}
+                  </div>
+                )}
+                <div className="field">
+                  <label>{f.icon ? <i className={`fa-brands fa-${f.icon}`} style={{marginRight:8,width:16,textAlign:'center'}} aria-hidden="true" /> : null}{AT(f.lk)}</label>
+                  <input value={local[f.k] || ''} placeholder={f.ph}
+                    onChange={(e) => setLocal({ ...local, [f.k]: e.target.value })}
+                    onBlur={() => commit(f.k)} />
+                  <div className="field-error"/>
+                </div>
+              </React.Fragment>
             ))}
           </div>
         </div>
@@ -608,9 +619,9 @@
     function SaveHint({ state }) {
       if (!state) return null;
       const map = {
-        saving: { c: 'var(--ink-muted)', i: 'spinner', t: 'A guardar…' },
-        saved:  { c: 'var(--success, #30a46c)', i: 'circle-check', t: 'Guardado' },
-        error:  { c: 'var(--danger, #e5484d)', i: 'triangle-exclamation', t: 'Erro ao guardar' },
+        saving: { c: 'var(--ink-muted)', i: 'spinner', t: AT('saving') },
+        saved:  { c: 'var(--success, #30a46c)', i: 'circle-check', t: AT('saved') },
+        error:  { c: 'var(--danger, #e5484d)', i: 'triangle-exclamation', t: AT('saveErr') },
       };
       const s = map[state] || map.saving;
       return <span style={{fontSize:12,fontWeight:600,color:s.c,display:'inline-flex',alignItems:'center',gap:6}}><FA name={s.i} s={12} />{s.t}</span>;
@@ -623,12 +634,12 @@
       return (
         <div className="admin-panel" style={{marginBottom:16,background:'var(--bg-soft)'}}>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',color:'var(--ink-muted)',marginBottom:12}}>
-            <FA name="heading" s={12} /> Cabeçalho da secção (aparece no site)
+            <FA name="heading" s={12} /> {AT('sectionHeading')}
           </div>
           <div style={{display:'grid',gap:10,maxWidth:640}}>
-            <div className="field"><label>Rótulo (eyebrow)</label><input value={local.eyebrow || ''} onChange={(e) => setLocal({...local, eyebrow: e.target.value})} onBlur={() => commit('eyebrow')} /><div className="field-error"/></div>
-            <div className="field"><label>Título</label><input value={local.title || ''} onChange={(e) => setLocal({...local, title: e.target.value})} onBlur={() => commit('title')} /><div className="field-error"/></div>
-            <div className="field"><label>Descrição</label><input value={local.lede || ''} onChange={(e) => setLocal({...local, lede: e.target.value})} onBlur={() => commit('lede')} /><div className="field-error"/></div>
+            <div className="field"><label>{AT('fEyebrow')}</label><input value={local.eyebrow || ''} onChange={(e) => setLocal({...local, eyebrow: e.target.value})} onBlur={() => commit('eyebrow')} /><div className="field-error"/></div>
+            <div className="field"><label>{AT('fTitle')}</label><input value={local.title || ''} onChange={(e) => setLocal({...local, title: e.target.value})} onBlur={() => commit('title')} /><div className="field-error"/></div>
+            <div className="field"><label>{AT('fDesc')}</label><input value={local.lede || ''} onChange={(e) => setLocal({...local, lede: e.target.value})} onBlur={() => commit('lede')} /><div className="field-error"/></div>
           </div>
         </div>
       );
@@ -650,7 +661,7 @@
         const fd = new FormData(); fd.append('image', f);
         const r = await apiUpload('upload-image', fd);
         setBusy(false);
-        if (r.ok) onChange(r.url); else setErr(r.message || 'Erro ao carregar.');
+        if (r.ok) onChange(r.url); else setErr(r.message || AT('upError'));
       };
       return (
         <div className="field">
@@ -661,9 +672,9 @@
               : <div style={{height:48,width:48,borderRadius:10,background:'var(--bg-soft)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}><FA name="image" s={16} /></div>}
             <input ref={ref} type="file" accept="image/*" style={{display:'none'}} onChange={(e) => up(e.target.files[0])} />
             <button type="button" className="btn btn-ghost" onClick={() => ref.current && ref.current.click()} disabled={busy}>
-              {busy ? 'A enviar…' : (value ? 'Trocar imagem' : 'Carregar imagem')}
+              {busy ? AT('upSending') : (value ? AT('upChange') : AT('upLoad'))}
             </button>
-            {value && <button type="button" className="btn btn-ghost" onClick={() => onChange('')}>Remover</button>}
+            {value && <button type="button" className="btn btn-ghost" onClick={() => onChange('')}>{AT('btnRemove')}</button>}
           </div>
           {hint && <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{hint}</div>}
           <div className="field-error">{err}</div>
@@ -683,19 +694,19 @@
         setBusy(true); setMsg(null);
         const r = await api('change-credentials', 'POST', { current_password: cur, username: nu, new_password: np });
         setBusy(false);
-        if (r.ok) { setMsg({ ok: true, text: 'Credenciais actualizadas.' }); setCur(''); setNp(''); onChanged && onChanged(nu); }
-        else setMsg({ ok: false, text: r.message || 'Erro.' });
+        if (r.ok) { setMsg({ ok: true, text: AT('credsSaved') }); setCur(''); setNp(''); onChanged && onChanged(nu); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
       };
       return (
         <div className="admin-panel" style={{marginBottom:16}}>
-          <h2 style={{marginBottom:6}}>Conta de acesso</h2>
-          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Altere o utilizador e a palavra-passe deste painel. É pedida a palavra-passe actual por segurança.</p>
+          <h2 style={{marginBottom:6}}>{AT('accTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('accNote')}</p>
           <form onSubmit={submit} style={{display:'grid',gap:12,maxWidth:420}}>
-            <div className="field"><label>Palavra-passe actual</label><input type="password" value={cur} onChange={(e) => setCur(e.target.value)} /><div className="field-error"/></div>
-            <div className="field"><label>Novo utilizador</label><input value={nu} onChange={(e) => setNu(e.target.value)} placeholder="admin" /><div className="field-error"/></div>
-            <div className="field"><label>Nova palavra-passe (mín. 6 caracteres)</label><input type="password" value={np} onChange={(e) => setNp(e.target.value)} /><div className="field-error"/></div>
+            <div className="field"><label>{AT('fCurPass')}</label><input type="password" value={cur} onChange={(e) => setCur(e.target.value)} /><div className="field-error"/></div>
+            <div className="field"><label>{AT('fNewUser')}</label><input value={nu} onChange={(e) => setNu(e.target.value)} placeholder="admin" /><div className="field-error"/></div>
+            <div className="field"><label>{AT('fNewPass')}</label><input type="password" value={np} onChange={(e) => setNp(e.target.value)} /><div className="field-error"/></div>
             <button type="submit" className="btn btn-accent" disabled={busy || !cur || !nu || np.length < 6} style={{justifySelf:'start'}}>
-              {busy ? 'A guardar…' : 'Guardar credenciais'}
+              {busy ? AT('saving') : AT('btnSaveCreds')}
             </button>
           </form>
           <Aviso msg={msg} />
@@ -726,14 +737,14 @@
         <div style={{flex:'1 1 240px'}}>
           <div style={{fontSize:12,fontWeight:600,color:'var(--ink-soft)',marginBottom:8}}>{label}</div>
           <div style={{height:64,background:bg,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px',border:'1px solid var(--line)'}}>
-            {logo ? <img src={logo} alt="logótipo" style={{height:42,width:'auto',maxWidth:'100%'}} /> : <span style={{color: bg === 'var(--brand-deep)' ? '#fff' : 'var(--ink-muted)',fontWeight:700,fontSize:12}}>Símbolo padrão</span>}
+            {logo ? <img src={logo} alt="logótipo" style={{height:42,width:'auto',maxWidth:'100%'}} /> : <span style={{color: bg === 'var(--brand-deep)' ? '#fff' : 'var(--ink-muted)',fontWeight:700,fontSize:12}}>{AT('logoDefault')}</span>}
           </div>
           <div style={{display:'flex',gap:8,marginTop:10}}>
             <input ref={ref} type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style={{display:'none'}} onChange={(e) => upload(e.target.files[0])} />
             <button type="button" className="btn btn-ghost" onClick={() => ref.current && ref.current.click()} disabled={busy}>
-              <FA name="image" s={13} /> {busy ? 'A enviar…' : (logo ? 'Trocar' : 'Carregar')}
+              <FA name="image" s={13} /> {busy ? AT('upSending') : (logo ? AT('btnChange') : AT('btnLoad'))}
             </button>
-            {logo && <button type="button" className="btn btn-ghost" onClick={remove} disabled={busy}>Remover</button>}
+            {logo && <button type="button" className="btn btn-ghost" onClick={remove} disabled={busy}>{AT('btnRemove')}</button>}
           </div>
           <Aviso msg={msg} />
         </div>
@@ -744,14 +755,13 @@
       branding = branding || {};
       return (
         <div className="admin-panel" style={{marginBottom:16}}>
-          <h2 style={{marginBottom:6}}>Logótipo do site</h2>
+          <h2 style={{marginBottom:6}}>{AT('logoTitle')}</h2>
           <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:18}}>
-            Carregue duas versões (PNG/SVG até 2 MB). O site escolhe automaticamente conforme o fundo,
-            e o logótipo passa também a ser o <strong>ícone (favicon)</strong> do site. Sem logótipo, é usado o símbolo padrão.
+            {AT('logoNote')}
           </p>
           <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
-            <LogoSlot variant="light" label="Para fundo claro (cores escuras)" bg="var(--bg-soft)" logo={branding.light} onChanged={onChange} />
-            <LogoSlot variant="dark" label="Para fundo escuro (cores claras)" bg="var(--brand-deep)" logo={branding.dark} onChanged={onChange} />
+            <LogoSlot variant="light" label={AT('logoLight')} bg="var(--bg-soft)" logo={branding.light} onChanged={onChange} />
+            <LogoSlot variant="dark" label={AT('logoDark')} bg="var(--brand-deep)" logo={branding.dark} onChanged={onChange} />
           </div>
         </div>
       );
@@ -761,33 +771,58 @@
       const [busy, setBusy] = useState(false);
       const [msg, setMsg] = useState(null);
       const [file, setFile] = useState(null);
+      const [log, setLog] = useState(null);
+      const loadLog = () => api('update-log').then((r) => { if (r.ok) setLog(r.log || []); else setLog([]); });
+      useEffect(() => { loadLog(); }, []);
       const submit = async () => {
         if (!file) return;
-        if (!window.confirm('Atualizar o site com este ZIP? Os ficheiros serão substituídos. config.php, a pasta dados/ e uploads/ são preservados.')) return;
+        if (!window.confirm(AT('updConfirm'))) return;
         setBusy(true); setMsg(null);
         const fd = new FormData(); fd.append('zip', file);
         const r = await apiUpload('update-zip', fd);
         setBusy(false);
-        setMsg(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.message || 'Erro ao atualizar.' });
-        if (r.ok) setFile(null);
+        setMsg(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.message || AT('updError') });
+        if (r.ok) { setFile(null); loadLog(); }
       };
       return (
         <div className="admin-panel" style={{marginBottom:16}}>
-          <h2 style={{marginBottom:6}}>Atualizar o site (ZIP)</h2>
+          <h2 style={{marginBottom:6}}>{AT('updTitle')}</h2>
           <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:14}}>
-            Envie um <code>.zip</code> com a nova versão. Os ficheiros são substituídos, mas
-            <strong> config.php</strong>, a pasta <strong>dados/</strong> (leads e conteúdo) e
-            <strong> uploads/</strong> (imagens/logótipo) são <strong>sempre preservados</strong>.
+            {AT('updNote')}
           </p>
           <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
             <input type="file" accept=".zip,application/zip" onChange={(e) => setFile(e.target.files[0] || null)} />
             <button type="button" className="btn btn-accent" onClick={submit} disabled={busy || !file}>
-              <FA name="upload" s={13} /> {busy ? 'A atualizar…' : 'Atualizar site'}
+              <FA name="upload" s={13} /> {busy ? AT('updating') : AT('btnUpdateSite')}
             </button>
           </div>
           <Aviso msg={msg} />
           <div style={{marginTop:12,background:'#fff8e6',border:'1px solid #ffe08a',borderRadius:10,padding:'10px 14px',fontSize:12.5,color:'#7a5b00'}}>
-            <strong>Dica:</strong> faça um backup (hPanel → Backups) antes de atualizar, por precaução.
+            {AT('updTip')}
+          </div>
+          <div style={{marginTop:16,borderTop:'1px solid var(--line)',paddingTop:14}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+              <h3 style={{margin:0,fontSize:14,display:'flex',alignItems:'center',gap:8}}><FA name="clock-rotate-left" s={13} /> {AT('updLogTitle')}</h3>
+              {log && log.length > 0 && <span style={{fontSize:12,color:'var(--ink-muted)'}}>{log.length}</span>}
+            </div>
+            {log === null ? (
+              <p style={{color:'var(--ink-muted)',fontSize:13}}>{AT('loading')}</p>
+            ) : log.length === 0 ? (
+              <div style={{border:'1px dashed var(--line)',borderRadius:10,padding:'16px',textAlign:'center',color:'var(--ink-muted)',fontSize:13}}>{AT('updLogEmpty')}</div>
+            ) : (
+              <div style={{display:'grid',gap:8}}>
+                {log.map((e, i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:11,padding:'9px 12px',border:'1px solid var(--line)',borderRadius:10,fontSize:13}}>
+                    <span style={{width:32,height:32,flex:'none',borderRadius:8,display:'grid',placeItems:'center',background:'var(--bg-soft)',color:'var(--accent)'}}><FA name="box-open" s={13} /></span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{e.ficheiro || 'ZIP'}</div>
+                      <div style={{fontSize:11.5,color:'var(--ink-muted)'}}>{fmtData(e.data)}</div>
+                    </div>
+                    <span style={{fontSize:12,fontWeight:700,color:'var(--success)',whiteSpace:'nowrap'}}>{(e.count || 0)} {AT('updLogFiles')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       );
@@ -803,29 +838,388 @@
         setBusy(true); setMsg(null);
         const r = await api('payments-save', 'POST', { payments: p });
         setBusy(false);
-        if (r.ok) { setMsg({ ok: true, text: 'Pagamentos guardados.' }); onSaved && onSaved(p); }
-        else setMsg({ ok: false, text: r.message || 'Erro.' });
+        if (r.ok) { setMsg({ ok: true, text: AT('paySaved') }); onSaved && onSaved(p); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
       };
       return (
         <div className="admin-panel" style={{marginBottom:16}}>
-          <h2 style={{marginBottom:6}}>Pagamentos (checkout)</h2>
-          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>Métodos mostrados ao cliente ao finalizar o pedido. Active e preencha só os que usa. O link online pode ser um pagamento hospedado (ex.: PayPal, Stripe, Paysuite).</p>
+          <h2 style={{marginBottom:6}}>{AT('payTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('payNote')}</p>
           <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,fontWeight:600,fontSize:14,cursor:'pointer'}}>
             <input type="checkbox" checked={!!p.enabled} onChange={(e) => f('enabled', e.target.checked)} style={{width:18,height:18,accentColor:'var(--accent)'}} />
-            Mostrar formas de pagamento no checkout
+            {AT('payShow')}
           </label>
           <div style={{display:'grid',gap:12,maxWidth:520}}>
-            <div className="field"><label>M-Pesa (número / nome)</label><input value={p.mpesa || ''} onChange={(e) => f('mpesa', e.target.value)} placeholder="84 000 0000 · Nome" /><div className="field-error"/></div>
-            <div className="field"><label>e-Mola (número / nome)</label><input value={p.emola || ''} onChange={(e) => f('emola', e.target.value)} placeholder="86 000 0000 · Nome" /><div className="field-error"/></div>
-            <div className="field"><label>Transferência bancária</label><input value={p.bank || ''} onChange={(e) => f('bank', e.target.value)} placeholder="Banco · NIB / conta" /><div className="field-error"/></div>
-            <div className="field"><label>Link de pagamento online (opcional)</label><input value={p.onlineLink || ''} onChange={(e) => f('onlineLink', e.target.value)} placeholder="https://…" /><div className="field-error"/></div>
-            <div className="field"><label>Nota (opcional)</label><input value={p.note || ''} onChange={(e) => f('note', e.target.value)} placeholder="Ex.: Envie o comprovativo por WhatsApp." /><div className="field-error"/></div>
-            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? 'A guardar…' : 'Guardar pagamentos'}</button>
+            <div className="field"><label>{AT('payMpesa')}</label><input value={p.mpesa || ''} onChange={(e) => f('mpesa', e.target.value)} placeholder="84 000 0000 · Nome" /><div className="field-error"/></div>
+            <div className="field"><label>{AT('payEmola')}</label><input value={p.emola || ''} onChange={(e) => f('emola', e.target.value)} placeholder="86 000 0000 · Nome" /><div className="field-error"/></div>
+            <div className="field"><label>{AT('payBank')}</label><input value={p.bank || ''} onChange={(e) => f('bank', e.target.value)} placeholder="Banco · NIB / conta" /><div className="field-error"/></div>
+            <div className="field"><label>{AT('payOnline')}</label><input value={p.onlineLink || ''} onChange={(e) => f('onlineLink', e.target.value)} placeholder="https://…" /><div className="field-error"/></div>
+            <div className="field"><label>{AT('payNoteField')}</label><input value={p.note || ''} onChange={(e) => f('note', e.target.value)} placeholder={AT('phPayNote')} /><div className="field-error"/></div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSavePay')}</button>
           </div>
           <Aviso msg={msg} />
         </div>
       );
     }
+
+    function SocialEditor({ social, onSaved }) {
+      const [s, setS] = useState(social || {});
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setS(social || {}); }, [social]);
+      const f = (k, v) => setS((x) => ({ ...x, [k]: v }));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('social-save', 'POST', { social: s });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: AT('socialSaved') }); onSaved && onSaved(r.social || s); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>{AT('socialTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('socialNote')}</p>
+          <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,fontWeight:600,fontSize:14,cursor:'pointer'}}>
+            <input type="checkbox" checked={!!s.enabled} onChange={(e) => f('enabled', e.target.checked)} style={{width:18,height:18,accentColor:'var(--accent)'}} />
+            {AT('socialEnable')}
+          </label>
+          <div style={{display:'grid',gap:14,maxWidth:560}}>
+            <div className="field">
+              <label><i className="fa-brands fa-google" aria-hidden="true" style={{marginRight:8,color:'#EA4335'}} />{AT('socialGoogleId')}</label>
+              <input value={s.google_client_id || ''} onChange={(e) => f('google_client_id', e.target.value)} placeholder="XXXX.apps.googleusercontent.com" />
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{AT('socialGoogleHint')}</div>
+            </div>
+            <div className="field">
+              <label><i className="fa-brands fa-facebook" aria-hidden="true" style={{marginRight:8,color:'#1877F2'}} />{AT('socialFbId')}</label>
+              <input value={s.facebook_app_id || ''} onChange={(e) => f('facebook_app_id', e.target.value)} placeholder="1234567890" />
+            </div>
+            <div className="field">
+              <label><i className="fa-brands fa-facebook" aria-hidden="true" style={{marginRight:8,color:'#1877F2'}} />{AT('socialFbSecret')}</label>
+              <input type="password" value={s.facebook_app_secret || ''} onChange={(e) => f('facebook_app_secret', e.target.value)} placeholder="••••••••••••••••" />
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{AT('socialFbHint')}</div>
+            </div>
+            <div className="field">
+              <label><FA name="user-shield" s={13} style={{marginRight:8}} />{AT('socialAdminEmail')}</label>
+              <input value={s.admin_email || ''} onChange={(e) => f('admin_email', e.target.value)} placeholder="voce@gmail.com" />
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{AT('socialAdminHint')}</div>
+            </div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveSocial')}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function SitesEditor({ sites, onSaved }) {
+      const [list, setList] = useState(Array.isArray(sites) ? sites : []);
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setList(Array.isArray(sites) ? sites : []); }, [sites]);
+      const upd = (i, k, v) => setList((L) => L.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
+      const add = () => setList((L) => [...L, { id: 'n' + Date.now(), nome: '', url: '', desc: '', status: 'active' }]);
+      const del = (i) => setList((L) => L.filter((_, idx) => idx !== i));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('sites-save', 'POST', { sites: list });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: AT('sitesSaved') }); if (r.sites) setList(r.sites); onSaved && onSaved(r.sites || list); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <div className="admin-panel-head">
+            <h2>{AT('sitesTitle')}</h2>
+            <button className="btn-add" onClick={add}><Plus />{AT('sitesAdd')}</button>
+          </div>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('sitesNote')}</p>
+          {list.length === 0 ? (
+            <div style={{border:'1px dashed var(--line)',borderRadius:12,padding:'22px',textAlign:'center',color:'var(--ink-muted)',fontSize:13}}>{AT('sitesEmpty')}</div>
+          ) : (
+            <div style={{display:'grid',gap:12}}>
+              {list.map((it, i) => (
+                <div key={it.id || i} style={{border:'1px solid var(--line)',borderRadius:12,padding:'12px 14px',display:'grid',gap:8}}>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                    <input value={it.nome || ''} onChange={(e) => upd(i, 'nome', e.target.value)} placeholder={AT('sitesName')}
+                      style={{flex:'1 1 160px',minWidth:0,padding:'8px 11px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                    <select value={it.status || 'active'} onChange={(e) => upd(i, 'status', e.target.value)}
+                      style={{padding:'8px 10px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--bg-soft)',color:'var(--ink)'}}>
+                      <option value="active">{AT('sitesActive')}</option><option value="draft">{AT('sitesDraft')}</option>
+                    </select>
+                    <button type="button" className="ra-btn danger" onClick={() => del(i)} title={AT('btnRemove')}><Trash s={12} /></button>
+                  </div>
+                  <input value={it.url || ''} onChange={(e) => upd(i, 'url', e.target.value)} placeholder="https://exemplo.com"
+                    style={{padding:'8px 11px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                  <input value={it.desc || ''} onChange={(e) => upd(i, 'desc', e.target.value)} placeholder={AT('sitesDesc')}
+                    style={{padding:'8px 11px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                </div>
+              ))}
+            </div>
+          )}
+          <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{marginTop:14}}>{busy ? AT('saving') : AT('btnSaveSites')}</button>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function SegEditor({ seg, onSaved }) {
+      const [slug, setSlug] = useState((seg && seg.admin_slug) || '');
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setSlug((seg && seg.admin_slug) || ''); }, [seg]);
+      const clean = (v) => (v || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40);
+      const gerar = () => setSlug(Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('seg-save', 'POST', { admin_slug: slug });
+        setBusy(false);
+        if (r.ok) { setSlug(r.admin_slug || ''); setMsg({ ok: true, text: AT('segSaved') }); onSaved && onSaved({ admin_slug: r.admin_slug || '' }); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      const link = slug ? `painel.php?k=${slug}` : 'painel.php';
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}><FA name="shield-halved" s={15} /> {AT('segTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('segNote')}</p>
+          <div style={{display:'grid',gap:10,maxWidth:520}}>
+            <div className="field">
+              <label>{AT('segSlug')}</label>
+              <div style={{display:'flex',gap:8}}>
+                <input value={slug} onChange={(e) => setSlug(clean(e.target.value))} placeholder="ex.: g7x2k9" style={{flex:1}} />
+                <button type="button" className="btn btn-ghost" onClick={gerar}><FA name="dice" s={13} /> {AT('segGenerate')}</button>
+              </div>
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{slug ? '' : AT('segEmpty')}</div>
+            </div>
+            <div style={{background:'var(--bg-soft)',border:'1px solid var(--line)',borderRadius:10,padding:'12px 14px'}}>
+              <div style={{fontSize:12,color:'var(--ink-muted)',marginBottom:4}}>{AT('segLinkLabel')}</div>
+              <code style={{fontSize:13,fontWeight:700,color:'var(--brand-mid)',wordBreak:'break-all'}}>{link}</code>
+              <div style={{marginTop:8}}><a className="btn btn-ghost" href={link} target="_blank" rel="noreferrer"><FA name="up-right-from-square" s={12} /> {AT('segOpen')}</a></div>
+            </div>
+            <div style={{background:'#fff8e6',border:'1px solid #ffe08a',borderRadius:10,padding:'10px 14px',fontSize:12.5,color:'#7a5b00'}}>
+              <FA name="triangle-exclamation" s={12} /> {AT('segWarn')}
+            </div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveSeg')}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function SmtpEditor({ smtp, onSaved }) {
+      const [s, setS] = useState(smtp || {});
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setS(smtp || {}); }, [smtp]);
+      const f = (k, v) => setS((x) => ({ ...x, [k]: v }));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('smtp-save', 'POST', { smtp: s });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: AT('smtpSaved') }); onSaved && onSaved(s); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}><FA name="envelope" s={15} /> {AT('smtpTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:14}}>{AT('smtpNote')}</p>
+          <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,fontWeight:600,fontSize:14,cursor:'pointer'}}>
+            <input type="checkbox" checked={!!s.smtp_enabled} onChange={(e) => f('smtp_enabled', e.target.checked)} style={{width:18,height:18,accentColor:'var(--accent)'}} />
+            {AT('smtpEnable')}
+          </label>
+          <div style={{display:'grid',gap:12,maxWidth:520}}>
+            <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+              <div className="field" style={{flex:'2 1 220px'}}><label>{AT('smtpHost')}</label><input value={s.smtp_host || ''} onChange={(e) => f('smtp_host', e.target.value)} placeholder="smtp.hostinger.com" /></div>
+              <div className="field" style={{flex:'1 1 90px'}}><label>{AT('smtpPort')}</label><input value={s.smtp_port || ''} onChange={(e) => f('smtp_port', e.target.value)} placeholder="465" /></div>
+              <div className="field" style={{flex:'1 1 90px'}}><label>{AT('smtpSecure')}</label>
+                <select value={s.smtp_secure || 'ssl'} onChange={(e) => f('smtp_secure', e.target.value)}><option value="ssl">SSL (465)</option><option value="tls">TLS (587)</option></select>
+              </div>
+            </div>
+            <div className="field"><label>{AT('smtpUser')}</label><input value={s.smtp_user || ''} onChange={(e) => f('smtp_user', e.target.value)} placeholder="no-reply@seudominio.com" /></div>
+            <div className="field"><label>{AT('smtpPass')}</label><input type="password" value={s.smtp_pass || ''} onChange={(e) => f('smtp_pass', e.target.value)} placeholder="••••••••••••" /></div>
+            <div className="field"><label>{AT('smtpFrom')}</label><input value={s.from_email || ''} onChange={(e) => f('from_email', e.target.value)} placeholder="no-reply@seudominio.com" /></div>
+            <div style={{background:'#eef7f7',border:'1px solid var(--line)',borderRadius:10,padding:'10px 14px',fontSize:12.5,color:'var(--ink-soft)',lineHeight:1.55}}>
+              <FA name="circle-info" s={12} /> {AT('smtpGuide')}
+            </div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveSmtp')}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function FinancasView() {
+      const [list, setList] = useState(null);
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      const [periodo, setPeriodo] = useState('all'); // all | mes | 3meses | ano | custom
+      const [de, setDe] = useState('');
+      const [ate, setAte] = useState('');
+      const [limite, setLimite] = useState(0);        // 0 = todos; N = últimos N movimentos
+      useEffect(() => {
+        api('financas').then((r) => {
+          const arr = (r.ok ? (r.financas || []) : []).map((m, i) => (m.id ? m : { ...m, id: 'f' + i + '-' + Date.now() }));
+          setList(arr);
+        });
+      }, []);
+      // Filtro por período (e por quantidade) aplicado a KPIs, gráfico, exportação e tabela.
+      const noPeriodo = (m) => {
+        const d = (m.data || '');
+        if (periodo === 'custom') { if (de && d < de) return false; if (ate && d > ate) return false; return true; }
+        if (periodo === 'all') return true;
+        if (!/^\d{4}-\d{2}/.test(d)) return false;
+        const hoje = new Date();
+        if (periodo === 'mes') return d.slice(0, 7) === hoje.toISOString().slice(0, 7);
+        if (periodo === 'ano') return d.slice(0, 4) === String(hoje.getFullYear());
+        if (periodo === '3meses') { const lim = new Date(hoje); lim.setMonth(lim.getMonth() - 3); return new Date(d) >= lim; }
+        return true;
+      };
+      let L = (list || []).filter(noPeriodo);
+      if (limite > 0) L = [...L].sort((a, b) => String(b.data).localeCompare(String(a.data))).slice(0, limite);
+      const totalRaw = (list || []).length;
+      const totais = L.reduce((a, m) => {
+        const v = parseFloat(String(m.valor).replace(',', '.')) || 0;
+        if (m.tipo === 'saida') a.saidas += v; else a.entradas += v;
+        return a;
+      }, { entradas: 0, saidas: 0 });
+      const saldo = totais.entradas - totais.saidas;
+      const fmt = (n) => (n || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MZN';
+      // Agrega por mês (YYYY-MM) para o gráfico — últimos 8 meses com dados.
+      const meses = (() => {
+        const map = {};
+        L.forEach((m) => {
+          const k = (m.data || '').slice(0, 7);
+          if (!/^\d{4}-\d{2}$/.test(k)) return;
+          if (!map[k]) map[k] = { ent: 0, sai: 0 };
+          const v = parseFloat(String(m.valor).replace(',', '.')) || 0;
+          if (m.tipo === 'saida') map[k].sai += v; else map[k].ent += v;
+        });
+        const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        return Object.keys(map).sort().slice(-8).map((k) => ({
+          k, label: nomes[parseInt(k.slice(5, 7), 10) - 1] + '/' + k.slice(2, 4), ent: map[k].ent, sai: map[k].sai,
+        }));
+      })();
+      const maxV = Math.max(1, ...meses.map((m) => Math.max(m.ent, m.sai)));
+      const exportCSV = () => {
+        const rows = [['Data','Descrição','Categoria','Tipo','Valor (MZN)']];
+        L.forEach((m) => rows.push([m.data || '', m.desc || '', m.categoria || '', (m.tipo === 'saida' ? AT('finExpenseOpt') : AT('finIncomeOpt')), String(m.valor)]));
+        rows.push([]); rows.push(['', '', '', AT('finIncome'), String(totais.entradas)]);
+        rows.push(['', '', '', AT('finExpense'), String(totais.saidas)]);
+        rows.push(['', '', '', AT('finBalance'), String(saldo)]);
+        const csv = '﻿' + rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        a.download = 'financas-cari-tech-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a); a.click(); a.remove();
+      };
+      const upd = (id, k, v) => setList((x) => x.map((m) => m.id === id ? { ...m, [k]: v } : m));
+      const add = () => setList((x) => [{ id: 'n' + Date.now(), data: new Date().toISOString().slice(0, 10), desc: '', tipo: 'entrada', valor: '', categoria: '' }, ...(x || [])]);
+      const del = (id) => setList((x) => x.filter((m) => m.id !== id));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('financas-save', 'POST', { financas: list || [] });
+        setBusy(false);
+        if (r.ok) { setList((r.financas || []).map((m, i) => (m.id ? m : { ...m, id: 'f' + i + '-' + Date.now() }))); setMsg({ ok: true, text: AT('finSaved') }); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      if (list === null) return <div className="admin-panel"><p style={{color:'var(--ink-muted)'}}>{T_loading()}</p></div>;
+      return (
+        <>
+          <div className="admin-panel" style={{marginBottom:16,display:'flex',alignItems:'flex-end',gap:14,flexWrap:'wrap'}}>
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-muted)',marginBottom:6}}><FA name="calendar-days" s={12} /> {AT('finPeriod')}</label>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {[['all','finPall'],['mes','finPmes'],['3meses','finP3'],['ano','finPano'],['custom','finPcustom']].map(([v,k]) => (
+                  <button key={v} type="button" onClick={() => setPeriodo(v)}
+                    style={{padding:'7px 12px',borderRadius:8,fontSize:12.5,fontWeight:600,cursor:'pointer',
+                      border: periodo===v ? '1.5px solid var(--accent)' : '1px solid var(--line)',
+                      background: periodo===v ? 'var(--accent)' : 'var(--card,#fff)', color: periodo===v ? '#fff' : 'var(--ink)'}}>{AT(k)}</button>
+                ))}
+              </div>
+            </div>
+            {periodo === 'custom' && (
+              <div style={{display:'flex',gap:10,alignItems:'flex-end'}}>
+                <div><label style={{display:'block',fontSize:11,color:'var(--ink-muted)',marginBottom:6}}>{AT('finFrom')}</label><input type="date" value={de} onChange={(e) => setDe(e.target.value)} style={fInput} /></div>
+                <div><label style={{display:'block',fontSize:11,color:'var(--ink-muted)',marginBottom:6}}>{AT('finTo')}</label><input type="date" value={ate} onChange={(e) => setAte(e.target.value)} style={fInput} /></div>
+              </div>
+            )}
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-muted)',marginBottom:6}}><FA name="list-ol" s={12} /> {AT('finQty')}</label>
+              <select value={limite} onChange={(e) => setLimite(parseInt(e.target.value, 10))} style={fInput}>
+                <option value={0}>{AT('finQtyAll')}</option>
+                <option value={10}>10</option><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option>
+              </select>
+            </div>
+            <div style={{marginLeft:'auto',fontSize:12,color:'var(--ink-muted)',fontWeight:600}}>{AT('finShowing').replace('{n}', L.length).replace('{t}', totalRaw)}</div>
+          </div>
+          <div className="kpi-row" style={{marginBottom:16}}>
+            <div className="kpi"><div className="kpi-ico" style={{color:'var(--success)'}}><FA name="arrow-trend-up" s={17} /></div><div className="kpi-label">{AT('finIncome')}</div><div className="kpi-num" style={{fontSize:22}}>{fmt(totais.entradas)}</div></div>
+            <div className="kpi"><div className="kpi-ico" style={{color:'var(--danger,#e5484d)'}}><FA name="arrow-trend-down" s={17} /></div><div className="kpi-label">{AT('finExpense')}</div><div className="kpi-num" style={{fontSize:22}}>{fmt(totais.saidas)}</div></div>
+            <div className="kpi"><div className="kpi-ico"><FA name="scale-balanced" s={17} /></div><div className="kpi-label">{AT('finBalance')}</div><div className="kpi-num" style={{fontSize:22,color: saldo < 0 ? 'var(--danger,#e5484d)' : 'var(--success)'}}>{fmt(saldo)}</div></div>
+          </div>
+          <div className="admin-panel" style={{marginBottom:16}}>
+            <div className="admin-panel-head"><h2>{AT('finChart')}</h2>
+              <div style={{display:'flex',alignItems:'center',gap:16,fontSize:12,color:'var(--ink-muted)'}}>
+                <span><span style={{display:'inline-block',width:11,height:11,borderRadius:3,background:'var(--success)',marginRight:6,verticalAlign:'-1px'}} />{AT('finIncome')}</span>
+                <span><span style={{display:'inline-block',width:11,height:11,borderRadius:3,background:'var(--danger,#e5484d)',marginRight:6,verticalAlign:'-1px'}} />{AT('finExpense')}</span>
+              </div>
+            </div>
+            {meses.length === 0 ? (
+              <div style={{color:'var(--ink-muted)',fontSize:13,padding:'20px 0',textAlign:'center'}}>{AT('finNoData')}</div>
+            ) : (
+              <div style={{display:'flex',alignItems:'flex-end',gap:18,height:200,padding:'10px 4px 0',overflowX:'auto'}}>
+                {meses.map((m) => (
+                  <div key={m.k} style={{flex:'1 0 54px',display:'flex',flexDirection:'column',alignItems:'center',height:'100%'}}>
+                    <div style={{flex:1,display:'flex',alignItems:'flex-end',gap:5,width:'100%',justifyContent:'center'}}>
+                      <div title={fmt(m.ent)} style={{width:16,borderRadius:'5px 5px 0 0',background:'var(--success)',height:`${Math.max(2,(m.ent/maxV)*100)}%`,transition:'height .3s'}} />
+                      <div title={fmt(m.sai)} style={{width:16,borderRadius:'5px 5px 0 0',background:'var(--danger,#e5484d)',height:`${Math.max(2,(m.sai/maxV)*100)}%`,transition:'height .3s'}} />
+                    </div>
+                    <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:8,fontWeight:600,whiteSpace:'nowrap'}}>{m.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <h2>{AT('financeTitle')}</h2>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <button className="btn-add" onClick={exportCSV} disabled={!L.length} style={{background:'var(--bg-soft)',color:'var(--ink)'}}><FA name="file-arrow-down" s={13} />{AT('finExport')}</button>
+                <button className="btn-add" onClick={add}><Plus />{AT('finAdd')}</button>
+              </div>
+            </div>
+            <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('financeNote')}</p>
+            {L.length === 0 ? (
+              <div style={{border:'1px dashed var(--line)',borderRadius:12,padding:'22px',textAlign:'center',color:'var(--ink-muted)',fontSize:13}}>{AT('finEmpty')}</div>
+            ) : (
+              <div style={{overflowX:'auto'}}>
+                <table className="admin-table">
+                  <thead><tr><th>{AT('finDate')}</th><th>{AT('finDesc')}</th><th>{AT('finCategory')}</th><th>{AT('finType')}</th><th>{AT('finAmount')}</th><th></th></tr></thead>
+                  <tbody>
+                    {L.map((m, i) => (
+                      <tr key={m.id || i}>
+                        <td><input type="date" value={m.data || ''} onChange={(e) => upd(m.id, 'data', e.target.value)} style={fInput} /></td>
+                        <td><input value={m.desc || ''} onChange={(e) => upd(m.id, 'desc', e.target.value)} placeholder="—" style={{...fInput, minWidth:160}} /></td>
+                        <td><input value={m.categoria || ''} onChange={(e) => upd(m.id, 'categoria', e.target.value)} placeholder="—" style={{...fInput, width:120}} /></td>
+                        <td>
+                          <select value={m.tipo || 'entrada'} onChange={(e) => upd(m.id, 'tipo', e.target.value)} style={{...fInput, fontWeight:600, color: m.tipo === 'saida' ? 'var(--danger,#e5484d)' : 'var(--success)'}}>
+                            <option value="entrada">{AT('finIncomeOpt')}</option><option value="saida">{AT('finExpenseOpt')}</option>
+                          </select>
+                        </td>
+                        <td><input value={m.valor} onChange={(e) => upd(m.id, 'valor', e.target.value)} placeholder="0.00" style={{...fInput, width:110, textAlign:'right'}} /></td>
+                        <td><button className="ra-btn danger" onClick={() => del(m.id)}><Trash s={12} /></button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{marginTop:16}}>{busy ? AT('saving') : AT('btnSaveFin')}</button>
+            <Aviso msg={msg} />
+          </div>
+        </>
+      );
+    }
+    const fInput = { padding:'7px 9px', border:'1px solid var(--line)', borderRadius:8, fontSize:13, background:'var(--card,#fff)', color:'var(--ink)', fontFamily:'inherit' };
+    function T_loading() { return (ADMIN_I18N[ADMIN_LANG] || ADMIN_I18N.pt).loading; }
 
     const ADMIN_I18N = {
       pt: {
@@ -840,13 +1234,137 @@
         sNew:'Novos', sContacted:'Contactados', sWon:'Ganhos', sLost:'Perdidos',
         svcTitle:'Serviços oferecidos', newSvc:'Novo serviço', portTitle:'Projectos do portfólio', newPort:'Novo projecto',
         testTitle:'Testemunhos de clientes', newTest:'Novo testemunho', leadsTitle:'Pedidos dos clientes', refresh:'Actualizar',
-        svcNote:'{T.svcNote}',
-        portNote:'{T.portNote}',
-        testNote:'{T.testNote}',
+        svcNote:'Estes serviços aparecem no site público. As alterações são guardadas automaticamente.',
+        portNote:'Estes projectos aparecem no site público. As alterações são guardadas automaticamente.',
+        testNote:'Os 3 primeiros testemunhos activos aparecem no site. Guardados automaticamente.',
         thService:'Serviço', thCategory:'Categoria', thPrice:'Preço', thState:'Estado', thProject:'Projecto', thDesc:'Descrição', thYear:'Ano',
         thTestimonial:'Depoimento', thClient:'Cliente', thRole:'Cargo', thName:'Nome', thContact:'Contacto', thMessage:'Mensagem', thDate:'Data',
         stActiveT:'Activo', stDraftT:'Rascunho', stPub:'Publicado',
         loadingReq:'A carregar pedidos…', noReqT:'Ainda não há pedidos.', noReqS:'Os contactos enviados pelo formulário do site aparecem aqui.',
+        // Modal de edição
+        mSvc:'Serviço', mPort:'Projecto', mTest:'Testemunho',
+        fSvcName:'Nome do serviço', phSvcName:'Ex.: Design Gráfico',
+        fDescSite:'Descrição (aparece no site)', phSvcDesc:'Uma frase que descreve o serviço.',
+        fImgOpt:'Imagem (opcional)', hintSvcImg:'Se definir, substitui o ícone no cartão do serviço.',
+        fCategory:'Categoria', fPriceRef:'Preço (referência interna)', phPrice:'Ex.: 15.000 MZN',
+        fStatus:'Estado', optActiveSite:'Activo (visível no site)', optDraftHidden:'Rascunho (oculto)',
+        fPortTitle:'Título do projecto', phPortTitle:'Ex.: Banco Horizonte', phPortDesc:'Ex.: Plataforma de banking digital',
+        fPortImg:'Imagem do projecto', hintPortImg:'Aparece no cartão e na janela de detalhe. Recomendado: 16:10.',
+        fSiteLink:'Link do site (opcional)', hintSiteLink:'Se for um site ao vivo, mostra uma pré-visualização e um botão "Visitar site".',
+        fYear:'Ano', optPublishedSite:'Publicado (visível no site)',
+        fTestimonial:'Depoimento', phTestimonial:'O que o cliente disse sobre o vosso trabalho.',
+        fClientName:'Nome do cliente', phClientName:'Ex.: Aida M.',
+        fRoleCompany:'Cargo / empresa', phRoleCompany:'Ex.: CEO, Horizonte Lda.',
+        fClientPhoto:'Foto do cliente (opcional)', hintClientPhoto:'Aparece no cartão do testemunho.',
+        btnSave:'Guardar', btnCancel:'Cancelar',
+        // Upload de imagem
+        upSending:'A enviar…', upChange:'Trocar imagem', upLoad:'Carregar imagem', btnRemove:'Remover', upError:'Erro ao carregar.',
+        // Contactos
+        contactsTitle:'Contactos do site',
+        contactsNote:'Estes contactos aparecem na secção Contacto, no rodapé, no botão de WhatsApp e nos formulários. Guardados automaticamente.',
+        cfEmail:'E-mail', cfPhone:'Telefone (como aparece no site)', cfWhats:'WhatsApp (só dígitos, formato internacional)', cfAddress:'Morada', cfHours:'Horário',
+        cfSocial:'Redes sociais (links — aparecem no rodapé do site)',
+        cfInstagram:'Instagram', cfFacebook:'Facebook', cfTwitter:'X (Twitter)', cfYoutube:'YouTube', cfLinkedin:'LinkedIn', cfTiktok:'TikTok',
+        // Cabeçalho de secção
+        sectionHeading:'Cabeçalho da secção (aparece no site)', fEyebrow:'Rótulo (eyebrow)', fTitle:'Título', fDesc:'Descrição',
+        // Estado de gravação
+        saving:'A guardar…', saved:'Guardado', saveErr:'Erro ao guardar',
+        // Conta
+        accTitle:'Conta de acesso', accNote:'Altere o utilizador e a palavra-passe deste painel. É pedida a palavra-passe actual por segurança.',
+        fCurPass:'Palavra-passe actual', fNewUser:'Novo utilizador', fNewPass:'Nova palavra-passe (mín. 6 caracteres)',
+        btnSaveCreds:'Guardar credenciais', credsSaved:'Credenciais actualizadas.', genErr:'Erro.',
+        // Logótipo
+        logoTitle:'Logótipo do site',
+        logoNote:'Carregue duas versões (PNG/SVG até 2 MB). O site escolhe automaticamente conforme o fundo, e o logótipo passa também a ser o ícone (favicon) do site. Sem logótipo, é usado o símbolo padrão.',
+        logoLight:'Para fundo claro (cores escuras)', logoDark:'Para fundo escuro (cores claras)', logoDefault:'Símbolo padrão',
+        btnChange:'Trocar', btnLoad:'Carregar',
+        // Atualização por ZIP
+        updTitle:'Atualizar o site (ZIP)',
+        updNote:'Envie um .zip com a nova versão. Os ficheiros são substituídos, mas config.php, a pasta dados/ (leads e conteúdo) e uploads/ (imagens/logótipo) são sempre preservados.',
+        updConfirm:'Atualizar o site com este ZIP? Os ficheiros serão substituídos. config.php, a pasta dados/ e uploads/ são preservados.',
+        updating:'A atualizar…', btnUpdateSite:'Atualizar site', updError:'Erro ao atualizar.',
+        updTip:'Dica: faça um backup (hPanel → Backups) antes de atualizar, por precaução.',
+        updLogTitle:'Histórico de atualizações', updLogEmpty:'Ainda não há atualizações registadas.', updLogFiles:'ficheiros',
+        // Pagamentos
+        payTitle:'Pagamentos (checkout)',
+        payNote:'Métodos mostrados ao cliente ao finalizar o pedido. Active e preencha só os que usa. O link online pode ser um pagamento hospedado (ex.: PayPal, Stripe, Paysuite).',
+        payShow:'Mostrar formas de pagamento no checkout',
+        payMpesa:'M-Pesa (número / nome)', payEmola:'e-Mola (número / nome)', payBank:'Transferência bancária',
+        payOnline:'Link de pagamento online (opcional)', payNoteField:'Nota (opcional)', phPayNote:'Ex.: Envie o comprovativo por WhatsApp.',
+        btnSavePay:'Guardar pagamentos', paySaved:'Pagamentos guardados.',
+        // Login social
+        socialTitle:'Login social (Google / Facebook)',
+        socialNote:'Deixe os clientes entrarem na Área de Cliente com a conta Google ou Facebook. Os botões aparecem na página de entrada assim que preencher os IDs abaixo. O cliente entra se o e-mail da conta coincidir com um pedido.',
+        socialEnable:'Activar login social na página de entrada',
+        socialGoogleId:'Google — Client ID',
+        socialGoogleHint:'console.cloud.google.com → APIs e Serviços → Credenciais → “ID de cliente OAuth” (Aplicação Web). Em Origens autorizadas ponha o endereço do seu site.',
+        socialFbId:'Facebook — App ID',
+        socialFbSecret:'Facebook — App Secret',
+        socialFbHint:'developers.facebook.com → crie uma app → adicione “Facebook Login”. O App Secret fica só no servidor (nunca é mostrado no site).',
+        socialAdminEmail:'E-mail de administrador (opcional)',
+        socialAdminHint:'Se entrar com uma conta social com este e-mail, acede ao painel de administração em vez da Área de Cliente.',
+        btnSaveSocial:'Guardar login social', socialSaved:'Login social guardado.',
+        // Sites & Sistemas
+        sitesTitle:'Sites & Sistemas (secção do site)',
+        sitesNote:'Adicione links de sites ou sistemas que criou. Cada um aparece no site com uma pré-visualização ao vivo. "Rascunho" fica oculto.',
+        sitesName:'Nome', sitesUrl:'Link (URL)', sitesDesc:'Descrição (opcional)',
+        sitesAdd:'Adicionar site', btnSaveSites:'Guardar sites', sitesSaved:'Sites guardados.',
+        sitesEmpty:'Ainda sem sites. Clique em "Adicionar site".', sitesDraft:'Rascunho', sitesActive:'Activo',
+        // Segurança (endereço secreto do painel)
+        segTitle:'Segurança — endereço secreto do painel',
+        segNote:'Oculte o endereço do painel para despistar ataques automáticos. Defina uma palavra secreta (ou gere uma) e o painel passa a abrir só nesse endereço. O acesso directo a admin.html deixa de funcionar.',
+        segSlug:'Palavra secreta (só letras/números)', segGenerate:'Gerar',
+        segLinkLabel:'O seu painel fica em:', segOpen:'Abrir painel',
+        btnSaveSeg:'Guardar segurança', segSaved:'Segurança guardada.',
+        segWarn:'Guarde este endereço num sítio seguro. Se o esquecer, entre sempre por entrar.html — será encaminhado automaticamente.',
+        segEmpty:'(vazio = painel aberto em painel.php, sem segredo)',
+        // E-mail / SMTP
+        smtpTitle:'E-mail (SMTP) — melhor entrega',
+        smtpNote:'Active o SMTP para os e-mails (recibos, entregas, respostas) chegarem à caixa de entrada e não ao spam. Use a sua caixa @seudominio.com da Hostinger.',
+        smtpEnable:'Activar envio por SMTP', smtpHost:'Servidor (host)', smtpPort:'Porta', smtpSecure:'Segurança',
+        smtpUser:'Utilizador (e-mail completo)', smtpPass:'Palavra-passe da caixa de e-mail', smtpFrom:'Remetente (from)',
+        btnSaveSmtp:'Guardar e-mail', smtpSaved:'Definições de e-mail guardadas.',
+        smtpGuide:'Como obter a palavra-passe: hPanel → E-mails → Contas de E-mail → crie/abra a caixa (ex.: no-reply@seudominio.com) → a palavra-passe é a dessa caixa. Servidor: smtp.hostinger.com · Porta 465 (SSL).',
+        // Finanças
+        finance:'Finanças', financeTitle:'Finanças internas', financeNote:'Controlo interno de valores (só o administrador vê). Registe entradas e saídas para acompanhar o saldo.',
+        finIncome:'Entradas', finExpense:'Saídas', finBalance:'Saldo',
+        finDate:'Data', finDesc:'Descrição', finType:'Tipo', finAmount:'Valor (MZN)', finCategory:'Categoria',
+        finAdd:'Adicionar movimento', finIncomeOpt:'Entrada', finExpenseOpt:'Saída',
+        btnSaveFin:'Guardar finanças', finSaved:'Finanças guardadas.', finEmpty:'Sem movimentos. Clique em "Adicionar movimento".',
+        finChart:'Entradas vs Saídas por mês', finExport:'Exportar CSV', finNoData:'Registe movimentos para ver o gráfico.',
+        finPeriod:'Período', finPall:'Tudo', finPmes:'Este mês', finP3:'Últimos 3 meses', finPano:'Este ano', finPcustom:'Personalizado',
+        finFrom:'De', finTo:'Até', finQty:'Quantidade', finQtyAll:'Todos', finShowing:'A mostrar {n} de {t} movimentos',
+        // Relatórios
+        downloadReport:'Descarregar relatório', thRequests:'Pedidos', svcReport:'Pedidos por serviço',
+        // Login
+        loginPanelTag:'Painel de gestão', loginWelcome1:'Bem-vindo', loginWelcome2:'de volta',
+        loginHeroSub:'Faça login para gerir os pedidos, serviços, portfólio, testemunhos e contactos do seu site.',
+        loginLocation:'Cari Tech Graphic · Nampula, Moçambique',
+        loginEnter:'Entrar', loginReserved:'Acesso reservado à administração.',
+        loginUser:'Utilizador', loginPass:'Palavra-passe', loginBusy:'A entrar…',
+        loginErr:'Não foi possível entrar. Verifique a ligação ao servidor.', loginShowPass:'Mostrar palavra-passe',
+        // Sobre o painel
+        aboutTitle:'Sobre o painel',
+        aboutP1:'Tudo é guardado no servidor e reflectido no site: Serviços, Projectos e Testemunhos (com cabeçalhos editáveis), os Contactos, o Logótipo e os Leads do formulário. Itens em "Rascunho" ficam ocultos no site.',
+        aboutP2:'O e-mail que recebe os pedidos, o SMTP e a base de dados configuram-se no ficheiro config.php no servidor.',
+        // Acções nos leads
+        actReplyMail:'Responder por e-mail', actRemove:'Remover', actDeliver:'Entregar', thCode:'Código',
+        // Entrega (Área de Cliente)
+        dlvTitle:'Entregar ao cliente', dlvFor:'Para', dlvCode:'Código de acesso',
+        dlvCodeHint:'O cliente usa o e-mail + este código para aceder à Área de Cliente.',
+        dlvMsg:'Mensagem para o cliente (opcional)', phDlvMsg:'Ex.: Aqui está o seu logótipo final. Obrigado!',
+        dlvFiles:'Ficheiros e links', dlvAddFile:'Carregar ficheiro', dlvAddLink:'Adicionar link', dlvUploading:'A carregar…',
+        dlvItemName:'Nome', dlvItemNote:'Nota (opcional)', dlvLinkUrl:'URL do link', dlvFile:'Ficheiro', dlvLink:'Link',
+        dlvNoItems:'Ainda sem ficheiros nem links. Carregue um ficheiro ou adicione um link para entregar.',
+        dlvSave:'Guardar entrega', dlvSaved:'Entrega guardada.', dlvNotify:'Notificar cliente', dlvOpenClient:'Abrir Área de Cliente',
+        dlvDelivered:'Entregue', dlvPending:'Sem entrega', dlvErr:'Erro ao guardar a entrega.',
+        dlvComments:'Comentários', dlvNoComments:'Sem comentários do cliente.', dlvReplyPh:'Responder ao cliente…',
+        dlvPay:'Estado de pagamento', dlvPayHint:'Enquanto não estiver «Pago», as imagens aparecem ao cliente com marca de água (demo) e as descargas ficam bloqueadas.',
+        payNao:'Por pagar', payParcial:'Parcial', payPago:'Pago',
+        dlvClientFiles:'Ficheiros enviados pelo cliente', dlvNoClientFiles:'O cliente ainda não enviou ficheiros.',
+        dlvNotifyMsg:'Olá {nome}! O seu pedido na Cari Tech Graphic está pronto. Aceda às suas entregas em {url}/cliente.html — E-mail: {email} · Código: {codigo}',
+        loading:'A carregar…', confirmDelLead:'Remover este lead? Esta acção não pode ser desfeita.',
+        notifNewTitle:'Novo pedido de cliente', notifNewBody:'Recebeu um novo contacto.',
       },
       en: {
         overview:'Overview', leads:'Leads', services:'Services', portfolio:'Portfolio', testimonials:'Testimonials', contact:'Contacts', settings:'Settings', logout:'Log out',
@@ -867,8 +1385,136 @@
         thTestimonial:'Testimonial', thClient:'Client', thRole:'Role', thName:'Name', thContact:'Contact', thMessage:'Message', thDate:'Date',
         stActiveT:'Active', stDraftT:'Draft', stPub:'Published',
         loadingReq:'Loading requests…', noReqT:'No requests yet.', noReqS:'Contacts sent via the site form appear here.',
+        // Edit modal
+        mSvc:'Service', mPort:'Project', mTest:'Testimonial',
+        fSvcName:'Service name', phSvcName:'e.g. Graphic Design',
+        fDescSite:'Description (shown on site)', phSvcDesc:'A sentence describing the service.',
+        fImgOpt:'Image (optional)', hintSvcImg:'If set, it replaces the icon on the service card.',
+        fCategory:'Category', fPriceRef:'Price (internal reference)', phPrice:'e.g. 15,000 MZN',
+        fStatus:'Status', optActiveSite:'Active (visible on site)', optDraftHidden:'Draft (hidden)',
+        fPortTitle:'Project title', phPortTitle:'e.g. Horizonte Bank', phPortDesc:'e.g. Digital banking platform',
+        fPortImg:'Project image', hintPortImg:'Shown on the card and in the detail window. Recommended: 16:10.',
+        fSiteLink:'Site link (optional)', hintSiteLink:'If it is a live site, it shows a preview and a "Visit site" button.',
+        fYear:'Year', optPublishedSite:'Published (visible on site)',
+        fTestimonial:'Testimonial', phTestimonial:'What the client said about your work.',
+        fClientName:'Client name', phClientName:'e.g. Aida M.',
+        fRoleCompany:'Role / company', phRoleCompany:'e.g. CEO, Horizonte Ltd.',
+        fClientPhoto:'Client photo (optional)', hintClientPhoto:'Shown on the testimonial card.',
+        btnSave:'Save', btnCancel:'Cancel',
+        // Image upload
+        upSending:'Uploading…', upChange:'Change image', upLoad:'Upload image', btnRemove:'Remove', upError:'Upload error.',
+        // Contacts
+        contactsTitle:'Site contacts',
+        contactsNote:'These contacts appear in the Contact section, footer, WhatsApp button and forms. Saved automatically.',
+        cfEmail:'Email', cfPhone:'Phone (as shown on site)', cfWhats:'WhatsApp (digits only, international format)', cfAddress:'Address', cfHours:'Hours',
+        cfSocial:'Social media (links — shown in the site footer)',
+        cfInstagram:'Instagram', cfFacebook:'Facebook', cfTwitter:'X (Twitter)', cfYoutube:'YouTube', cfLinkedin:'LinkedIn', cfTiktok:'TikTok',
+        // Section heading
+        sectionHeading:'Section heading (shown on site)', fEyebrow:'Label (eyebrow)', fTitle:'Title', fDesc:'Description',
+        // Save state
+        saving:'Saving…', saved:'Saved', saveErr:'Save error',
+        // Account
+        accTitle:'Access account', accNote:'Change this panel’s username and password. Your current password is required for security.',
+        fCurPass:'Current password', fNewUser:'New username', fNewPass:'New password (min. 6 characters)',
+        btnSaveCreds:'Save credentials', credsSaved:'Credentials updated.', genErr:'Error.',
+        // Logo
+        logoTitle:'Site logo',
+        logoNote:'Upload two versions (PNG/SVG up to 2 MB). The site picks the right one automatically based on the background, and the logo also becomes the site icon (favicon). Without a logo, the default symbol is used.',
+        logoLight:'For light background (dark colours)', logoDark:'For dark background (light colours)', logoDefault:'Default symbol',
+        btnChange:'Change', btnLoad:'Upload',
+        // ZIP update
+        updTitle:'Update site (ZIP)',
+        updNote:'Upload a .zip with the new version. Files are replaced, but config.php, the dados/ folder (leads and content) and uploads/ (images/logo) are always preserved.',
+        updConfirm:'Update the site with this ZIP? Files will be replaced. config.php, the dados/ folder and uploads/ are preserved.',
+        updating:'Updating…', btnUpdateSite:'Update site', updError:'Update error.',
+        updLogTitle:'Update history', updLogEmpty:'No updates recorded yet.', updLogFiles:'files',
+        updTip:'Tip: make a backup (hPanel → Backups) before updating, just in case.',
+        // Payments
+        payTitle:'Payments (checkout)',
+        payNote:'Methods shown to the client at checkout. Enable and fill in only the ones you use. The online link can be a hosted payment (e.g. PayPal, Stripe, Paysuite).',
+        payShow:'Show payment methods at checkout',
+        payMpesa:'M-Pesa (number / name)', payEmola:'e-Mola (number / name)', payBank:'Bank transfer',
+        payOnline:'Online payment link (optional)', payNoteField:'Note (optional)', phPayNote:'e.g. Send the receipt via WhatsApp.',
+        btnSavePay:'Save payments', paySaved:'Payments saved.',
+        // Social login
+        socialTitle:'Social login (Google / Facebook)',
+        socialNote:'Let clients sign in to the Client Area with their Google or Facebook account. The buttons appear on the login page once you fill in the IDs below. A client signs in if their account email matches an order.',
+        socialEnable:'Enable social login on the sign-in page',
+        socialGoogleId:'Google — Client ID',
+        socialGoogleHint:'console.cloud.google.com → APIs & Services → Credentials → “OAuth client ID” (Web application). Add your site address to Authorized origins.',
+        socialFbId:'Facebook — App ID',
+        socialFbSecret:'Facebook — App Secret',
+        socialFbHint:'developers.facebook.com → create an app → add “Facebook Login”. The App Secret stays on the server only (never shown on the site).',
+        socialAdminEmail:'Administrator email (optional)',
+        socialAdminHint:'If you sign in with a social account using this email, you reach the admin panel instead of the Client Area.',
+        btnSaveSocial:'Save social login', socialSaved:'Social login saved.',
+        // Sites & Systems
+        sitesTitle:'Sites & Systems (site section)',
+        sitesNote:'Add links to sites or systems you built. Each one appears on the site with a live preview. "Draft" stays hidden.',
+        sitesName:'Name', sitesUrl:'Link (URL)', sitesDesc:'Description (optional)',
+        sitesAdd:'Add site', btnSaveSites:'Save sites', sitesSaved:'Sites saved.',
+        sitesEmpty:'No sites yet. Click "Add site".', sitesDraft:'Draft', sitesActive:'Active',
+        // Security (secret panel address)
+        segTitle:'Security — secret panel address',
+        segNote:'Hide the panel address to throw off automated attacks. Set a secret word (or generate one) and the panel opens only at that address. Direct access to admin.html stops working.',
+        segSlug:'Secret word (letters/numbers only)', segGenerate:'Generate',
+        segLinkLabel:'Your panel is at:', segOpen:'Open panel',
+        btnSaveSeg:'Save security', segSaved:'Security saved.',
+        segWarn:'Keep this address somewhere safe. If you forget it, always sign in via entrar.html — you will be redirected automatically.',
+        segEmpty:'(empty = panel open at painel.php, no secret)',
+        // Email / SMTP
+        smtpTitle:'Email (SMTP) — better delivery',
+        smtpNote:'Enable SMTP so emails (receipts, deliveries, replies) reach the inbox and not spam. Use your Hostinger @yourdomain.com mailbox.',
+        smtpEnable:'Enable SMTP sending', smtpHost:'Server (host)', smtpPort:'Port', smtpSecure:'Security',
+        smtpUser:'Username (full email)', smtpPass:'Mailbox password', smtpFrom:'Sender (from)',
+        btnSaveSmtp:'Save email', smtpSaved:'Email settings saved.',
+        smtpGuide:'How to get the password: hPanel → Emails → Email Accounts → create/open the mailbox (e.g. no-reply@yourdomain.com) → the password is that mailbox’s. Server: smtp.hostinger.com · Port 465 (SSL).',
+        // Finance
+        finance:'Finance', financeTitle:'Internal finance', financeNote:'Internal control of values (admin only). Record income and expenses to track the balance.',
+        finIncome:'Income', finExpense:'Expenses', finBalance:'Balance',
+        finDate:'Date', finDesc:'Description', finType:'Type', finAmount:'Amount (MZN)', finCategory:'Category',
+        finAdd:'Add entry', finIncomeOpt:'Income', finExpenseOpt:'Expense',
+        btnSaveFin:'Save finance', finSaved:'Finance saved.', finEmpty:'No entries. Click "Add entry".',
+        finChart:'Income vs Expenses by month', finExport:'Export CSV', finNoData:'Add entries to see the chart.',
+        finPeriod:'Period', finPall:'All', finPmes:'This month', finP3:'Last 3 months', finPano:'This year', finPcustom:'Custom',
+        finFrom:'From', finTo:'To', finQty:'Quantity', finQtyAll:'All', finShowing:'Showing {n} of {t} entries',
+        // Reports
+        downloadReport:'Download report', thRequests:'Requests', svcReport:'Requests per service',
+        // Login
+        loginPanelTag:'Management panel', loginWelcome1:'Welcome', loginWelcome2:'back',
+        loginHeroSub:'Sign in to manage your site’s requests, services, portfolio, testimonials and contacts.',
+        loginLocation:'Cari Tech Graphic · Nampula, Mozambique',
+        loginEnter:'Sign in', loginReserved:'Access restricted to administrators.',
+        loginUser:'Username', loginPass:'Password', loginBusy:'Signing in…',
+        loginErr:'Could not sign in. Check the server connection.', loginShowPass:'Show password',
+        // About panel
+        aboutTitle:'About the panel',
+        aboutP1:'Everything is stored on the server and reflected on the site: Services, Projects and Testimonials (with editable headings), Contacts, the Logo and the form Leads. "Draft" items are hidden on the site.',
+        aboutP2:'The email that receives requests, SMTP and the database are configured in the config.php file on the server.',
+        // Lead actions
+        actReplyMail:'Reply by email', actRemove:'Remove', actDeliver:'Deliver', thCode:'Code',
+        // Delivery (Client Area)
+        dlvTitle:'Deliver to client', dlvFor:'For', dlvCode:'Access code',
+        dlvCodeHint:'The client uses their email + this code to access the Client Area.',
+        dlvMsg:'Message to the client (optional)', phDlvMsg:'e.g. Here is your final logo. Thank you!',
+        dlvFiles:'Files and links', dlvAddFile:'Upload file', dlvAddLink:'Add link', dlvUploading:'Uploading…',
+        dlvItemName:'Name', dlvItemNote:'Note (optional)', dlvLinkUrl:'Link URL', dlvFile:'File', dlvLink:'Link',
+        dlvNoItems:'No files or links yet. Upload a file or add a link to deliver.',
+        dlvSave:'Save delivery', dlvSaved:'Delivery saved.', dlvNotify:'Notify client', dlvOpenClient:'Open Client Area',
+        dlvDelivered:'Delivered', dlvPending:'No delivery', dlvErr:'Error saving the delivery.',
+        dlvComments:'Comments', dlvNoComments:'No comments from the client.', dlvReplyPh:'Reply to the client…',
+        dlvPay:'Payment status', dlvPayHint:'Until it is “Paid”, images are shown to the client with a watermark (demo) and downloads stay locked.',
+        payNao:'Unpaid', payParcial:'Partial', payPago:'Paid',
+        dlvClientFiles:'Files uploaded by the client', dlvNoClientFiles:'The client hasn\'t uploaded files yet.',
+        dlvNotifyMsg:'Hi {nome}! Your request at Cari Tech Graphic is ready. Access your deliveries at {url}/cliente.html — Email: {email} · Code: {codigo}',
+        loading:'Loading…', confirmDelLead:'Remove this lead? This action cannot be undone.',
+        notifNewTitle:'New client request', notifNewBody:'You received a new contact.',
       },
     };
+
+    // Idioma activo (global) para as componentes fora de App usarem AT().
+    let ADMIN_LANG = localStorage.getItem('ctg_admin_lang') || 'pt';
+    const AT = (k) => (ADMIN_I18N[ADMIN_LANG] || ADMIN_I18N.pt)[k] || k;
 
     function App() {
       const [authed, setAuthed] = useState(null); // null = a verificar
@@ -879,6 +1525,7 @@
       const [notifOpen, setNotifOpen] = useState(false);
       const prevNewRef = React.useRef(-1);
       const T = ADMIN_I18N[lang] || ADMIN_I18N.pt;
+      ADMIN_LANG = lang; // mantém as componentes fora de App (AT) no mesmo idioma
       const [tab, setTab] = useState('overview');
       const [services, setServices] = useState(SEED_SERVICES);
       const [portfolio, setPortfolio] = useState(SEED_PORTFOLIO);
@@ -887,12 +1534,23 @@
       const [testimonials, setTestimonials] = useState(SEED_TESTIMONIALS);
       const [branding, setBranding] = useState({});
       const [payments, setPayments] = useState({});
+      const [social, setSocial] = useState({});
+      const [sites, setSites] = useState([]);
+      const [seg, setSeg] = useState({});
+      const [smtp, setSmtp] = useState({});
       const [username, setUsername] = useState('admin');
       const [leads, setLeads] = useState([]);
       const [leadsLoading, setLeadsLoading] = useState(false);
       const [editing, setEditing] = useState(null);
       const [editType, setEditType] = useState('');
       const [saveState, setSaveState] = useState(''); // '' | 'saving' | 'saved' | 'error'
+      const [deliveries, setDeliveries] = useState({});       // { leadId: entrega }
+      const [delivering, setDelivering] = useState(null);     // lead a ser entregue
+      const [dForm, setDForm] = useState({ msg: '', entregas: [] });
+      const [dBusy, setDBusy] = useState(false);
+      const [dSaved, setDSaved] = useState(false);
+      const [dReply, setDReply] = useState('');
+      const [dPago, setDPago] = useState('nao');           // estado de pagamento: nao | parcial | pago
 
       // Tema (claro/escuro) e idioma do painel — persistidos no navegador.
       useEffect(() => { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('ctg_admin_theme', theme); }, [theme]);
@@ -915,7 +1573,7 @@
         const n = leads.filter((l) => (l.status || 'new') === 'new').length;
         if (prevNewRef.current >= 0 && n > prevNewRef.current && 'Notification' in window && Notification.permission === 'granted') {
           const latest = leads.find((l) => (l.status || 'new') === 'new');
-          try { new Notification('Novo pedido de cliente', { body: latest ? `${latest.nome} — ${latest.servico || latest.email}` : 'Recebeu um novo contacto.' }); } catch (e) {}
+          try { new Notification(T.notifNewTitle, { body: latest ? `${latest.nome} — ${latest.servico || latest.email}` : T.notifNewBody }); } catch (e) {}
         }
         prevNewRef.current = n;
       }, [leads]);
@@ -926,6 +1584,11 @@
         setLeadsLoading(false);
         if (r.ok) setLeads(r.leads || []);
         else if (r.status === 401) setAuthed(false);
+      };
+
+      const loadDeliveries = async () => {
+        const r = await api('deliveries');
+        if (r.ok) setDeliveries(r.deliveries || {});
       };
 
       // Carrega o conteúdo gerido (Serviços/Portfólio). Se ainda não houver
@@ -944,6 +1607,10 @@
           }
           if (r.branding) setBranding(r.branding);
           if (r.payments) setPayments(r.payments);
+          if (r.social) setSocial(r.social);
+          if (Array.isArray(r.sites)) setSites(r.sites);
+          if (r.seg) setSeg(r.seg);
+          if (r.smtp) setSmtp(r.smtp);
           if (r.username) setUsername(r.username);
         }
       };
@@ -982,7 +1649,7 @@
         api('session').then((r) => {
           const ok = !!r.authenticated;
           setAuthed(ok);
-          if (ok) { loadLeads(); loadContent(); }
+          if (ok) { loadLeads(); loadContent(); loadDeliveries(); }
         });
       }, []);
 
@@ -993,18 +1660,92 @@
         const r = await api('lead-status', 'POST', { id, status });
         if (!r.ok) loadLeads();
       };
+      // Relatório de leads em CSV (abre no Excel/Sheets).
+      const downloadLeadsCSV = () => {
+        const rows = [['Data','Nome','E-mail','Telefone','Serviço','Estado','Código','Mensagem']];
+        const estados = { new: T.sNew, contacted: T.sContacted, won: T.sWon, lost: T.sLost };
+        leads.forEach((l) => rows.push([
+          fmtData(l.data), l.nome || '', l.email || '', l.telefone || '', l.servico || '',
+          estados[l.status || 'new'] || (l.status || ''), l.codigo || '', (l.mensagem || '').replace(/\s+/g, ' ').trim(),
+        ]));
+        const csv = '﻿' + rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `leads-cari-tech-${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a); a.click(); a.remove();
+      };
+
       const deleteLead = async (id) => {
-        if (!window.confirm('Remover este lead? Esta acção não pode ser desfeita.')) return;
+        if (!window.confirm(T.confirmDelLead)) return;
         setLeads((ls) => ls.filter((l) => l.id !== id));
         const r = await api('lead-delete', 'POST', { id });
         if (!r.ok) loadLeads();
       };
 
+      // ---- Entregas (Área de Cliente) ----
+      const siteBase = () => window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+      const openDeliver = (lead) => {
+        const ex = deliveries[lead.id];
+        setDForm({ msg: (ex && ex.msg) || '', entregas: (ex && ex.entregas) ? ex.entregas.map((e) => ({ ...e })) : [] });
+        setDPago((ex && ex.pago) || 'nao');
+        setDSaved(false);
+        setDReply('');
+        setDelivering(lead);
+      };
+      // Actualiza o estado de pagamento (habilita/bloqueia descargas na Área de Cliente)
+      const dSetPago = async (estado) => {
+        setDPago(estado);
+        const r = await api('lead-pago', 'POST', { leadId: delivering.id, pago: estado });
+        if (r.ok) setDeliveries((d) => ({ ...d, [delivering.id]: { ...(d[delivering.id] || { leadId: delivering.id }), pago: estado } }));
+      };
+      const dUploadFile = async (file) => {
+        if (!file) return;
+        setDBusy(true);
+        const fd = new FormData(); fd.append('file', file);
+        const r = await apiUpload('upload-file', fd);
+        setDBusy(false);
+        if (r.ok) setDForm((f) => ({ ...f, entregas: [...f.entregas, { tipo: 'file', url: r.url, nome: r.nome, note: '' }] }));
+        else window.alert(r.message || AT('upError'));
+      };
+      const dAddLink = () => setDForm((f) => ({ ...f, entregas: [...f.entregas, { tipo: 'link', url: '', nome: '', note: '' }] }));
+      const dUpdateItem = (i, k, v) => setDForm((f) => ({ ...f, entregas: f.entregas.map((e, idx) => idx === i ? { ...e, [k]: v } : e) }));
+      const dRemoveItem = (i) => setDForm((f) => ({ ...f, entregas: f.entregas.filter((_, idx) => idx !== i) }));
+      const dSave = async () => {
+        const entregas = dForm.entregas.filter((e) => (e.url || '').trim());
+        setDBusy(true);
+        const r = await api('lead-deliver', 'POST', { leadId: delivering.id, msg: dForm.msg, entregas, pago: dPago });
+        setDBusy(false);
+        if (r.ok) {
+          setDeliveries((d) => ({ ...d, [delivering.id]: r.delivery }));
+          if (entregas.length) setLeads((ls) => ls.map((l) => l.id === delivering.id ? { ...l, status: 'won' } : l));
+          setDSaved(true);
+        } else window.alert(r.message || T.dlvErr);
+      };
+      const dSendReply = async () => {
+        const texto = dReply.trim();
+        if (!texto || !delivering) return;
+        setDBusy(true);
+        const r = await api('lead-comment', 'POST', { leadId: delivering.id, texto });
+        setDBusy(false);
+        if (r.ok) {
+          setDeliveries((d) => ({ ...d, [delivering.id]: { ...(d[delivering.id] || { leadId: delivering.id }), comentarios: r.comentarios } }));
+          setDReply('');
+        } else window.alert(r.message || T.genErr);
+      };
+      const dNotifyMsg = (l) => T.dlvNotifyMsg
+        .replace('{nome}', l.nome || '').replace('{url}', siteBase())
+        .replace('{email}', l.email || '').replace('{codigo}', l.codigo || '');
+      const dNotifyWhats = (l) => window.open(`https://wa.me/${String(l.telefone || '').replace(/\D/g, '')}?text=${encodeURIComponent(dNotifyMsg(l))}`, '_blank', 'noopener');
+      const dNotifyMail = (l) => window.open(`mailto:${l.email}?subject=${encodeURIComponent('Cari Tech Graphic — a sua entrega está pronta')}&body=${encodeURIComponent(dNotifyMsg(l))}`, '_blank');
+
       if (authed === null) {
-        return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}>A carregar…</div>;
+        return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}>{T.loading}</div>;
       }
       if (!authed) {
-        return <Login onOk={() => { setAuthed(true); loadLeads(); loadContent(); }} />;
+        // Login unificado: o acesso ao painel faz-se sempre por entrar.html.
+        window.location.replace('entrar.html');
+        return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--ink-muted)'}}>{T.loading}</div>;
       }
 
       const NEW_ITEM = {
@@ -1059,7 +1800,7 @@
       const NAV = [
         { grp: T.geral, items: [ ['overview','gauge-high'], ['leads','inbox'] ] },
         { grp: T.conteudo, items: [ ['services','layer-group'], ['portfolio','folder-open'], ['testimonials','quote-right'], ['contact','address-book'] ] },
-        { grp: T.sistema, items: [ ['settings','gear'] ] },
+        { grp: T.sistema, items: [ ['finance','wallet'], ['settings','gear'] ] },
       ];
 
       return (
@@ -1162,9 +1903,11 @@
                 <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{T.svcNote}</p>
                 <div style={{overflowX:'auto'}}>
                   <table className="admin-table">
-                    <thead><tr><th>{T.thService}</th><th>{T.thCategory}</th><th>{T.thPrice}</th><th>{T.thState}</th><th></th></tr></thead>
+                    <thead><tr><th>{T.thService}</th><th>{T.thCategory}</th><th>{T.thPrice}</th><th style={{textAlign:'center'}}>{T.thRequests}</th><th>{T.thState}</th><th></th></tr></thead>
                     <tbody>
-                      {fServices.map((s) => (
+                      {fServices.map((s) => {
+                        const nPed = leads.filter((l) => (l.servico || '').trim().toLowerCase() === (s.t || '').trim().toLowerCase()).length;
+                        return (
                         <tr key={s.id}>
                           <td>
                             <div style={{fontWeight:600}}>{s.t}</div>
@@ -1172,13 +1915,14 @@
                           </td>
                           <td><span className={`table-tag tag-${s.category}`}>{s.category}</span></td>
                           <td style={{whiteSpace:'nowrap'}}>{s.price}</td>
+                          <td style={{textAlign:'center'}}><span className="table-tag" style={{background: nPed ? 'var(--accent)' : 'var(--bg-soft)', color: nPed ? '#fff' : 'var(--ink-muted)', fontWeight:700}}>{nPed}</span></td>
                           <td><span className={`table-tag tag-${s.status}`}>{s.status === 'active' ? T.stActiveT : T.stDraftT}</span></td>
                           <td><div className="row-actions">
                             <button className="ra-btn" onClick={() => openEdit('service', s)}><Pencil /></button>
                             <button className="ra-btn danger" onClick={() => remove('service', s.id)}><Trash /></button>
                           </div></td>
                         </tr>
-                      ))}
+                      );})}
                     </tbody>
                   </table>
                 </div>
@@ -1261,9 +2005,14 @@
               <div className="admin-panel">
                 <div className="admin-panel-head">
                   <h2>{T.leadsTitle}</h2>
-                  <button className="btn-add" onClick={loadLeads} style={{background:'var(--bg-soft)',color:'var(--ink)'}}>
-                    <FA name="rotate" s={13} />{T.refresh}
-                  </button>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                    <button className="btn-add" onClick={downloadLeadsCSV} disabled={!leads.length}>
+                      <FA name="file-arrow-down" s={13} />{T.downloadReport}
+                    </button>
+                    <button className="btn-add" onClick={loadLeads} style={{background:'var(--bg-soft)',color:'var(--ink)'}}>
+                      <FA name="rotate" s={13} />{T.refresh}
+                    </button>
+                  </div>
                 </div>
                 {leadsLoading ? (
                   <p style={{color:'var(--ink-muted)',fontSize:14,padding:'20px 0'}}>{T.loadingReq}</p>
@@ -1301,12 +2050,28 @@
                             </td>
                             <td>
                               <div className="row-actions">
+                                {(() => {
+                                  const cs = (deliveries[l.id] && deliveries[l.id].comentarios) || [];
+                                  const nCli = cs.filter((c) => c.de === 'cliente').length;
+                                  if (!nCli) return null;
+                                  return (
+                                    <button className="ra-btn" title={T.dlvComments} onClick={() => openDeliver(l)}
+                                      style={{color:'var(--accent)',position:'relative',fontWeight:700}}>
+                                      <FA name="comment-dots" s={13} />
+                                      <span style={{position:'absolute',top:-4,right:-4,background:'var(--accent)',color:'#fff',fontSize:9,fontWeight:700,borderRadius:999,minWidth:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'0 3px'}}>{nCli}</span>
+                                    </button>
+                                  );
+                                })()}
+                                <button className="ra-btn" title={T.actDeliver} onClick={() => openDeliver(l)}
+                                  style={deliveries[l.id] && deliveries[l.id].entregue ? {color:'var(--success,#30a46c)'} : {}}>
+                                  <FA name={deliveries[l.id] && deliveries[l.id].entregue ? 'box-open' : 'box'} s={13} />
+                                </button>
                                 {l.telefone && (
                                   <a className="ra-btn" title="WhatsApp" target="_blank" rel="noreferrer"
                                      href={`https://wa.me/${(l.telefone||'').replace(/\D/g,'')}`}><i className="fa-brands fa-whatsapp" style={{fontSize:13,lineHeight:1}} aria-hidden="true" /></a>
                                 )}
-                                <a className="ra-btn" title="Responder por e-mail" href={`mailto:${l.email}?subject=${encodeURIComponent('Cari Tech Graphic — o seu pedido')}`}><FA name="reply" s={13} /></a>
-                                <button className="ra-btn danger" title="Remover" onClick={() => deleteLead(l.id)}><Trash /></button>
+                                <a className="ra-btn" title={T.actReplyMail} href={`mailto:${l.email}?subject=${encodeURIComponent('Cari Tech Graphic — o seu pedido')}`}><FA name="reply" s={13} /></a>
+                                <button className="ra-btn danger" title={T.actRemove} onClick={() => deleteLead(l.id)}><Trash /></button>
                               </div>
                             </td>
                           </tr>
@@ -1321,6 +2086,8 @@
             {tab === 'contact' && (
               <ContactEditor contact={contact} onCommit={updateContact} saveState={saveState} />
             )}
+
+            {tab === 'finance' && <FinancasView />}
 
             {tab === 'overview' && (() => {
               const seg = [
@@ -1396,18 +2163,15 @@
                 <AccountEditor username={username} onChanged={setUsername} />
                 <LogoManager branding={branding} onChange={setBranding} />
                 <PaymentsEditor payments={payments} onSaved={setPayments} />
+                <SitesEditor sites={sites} onSaved={setSites} />
+                <SocialEditor social={social} onSaved={setSocial} />
+                <SmtpEditor smtp={smtp} onSaved={setSmtp} />
+                <SegEditor seg={seg} onSaved={setSeg} />
                 <SiteUpdater />
                 <div className="admin-panel">
-                  <h2 style={{marginBottom:12}}>Sobre o painel</h2>
-                  <p style={{color:'var(--ink-muted)',fontSize:13,lineHeight:1.6,marginBottom:12}}>
-                    Tudo é guardado no servidor e reflectido no site: <strong>Serviços</strong>, <strong>Projectos</strong> e
-                    <strong> Testemunhos</strong> (com cabeçalhos editáveis), os <strong>Contactos</strong>, o <strong>Logótipo</strong>
-                    e os <strong>Leads</strong> do formulário. Itens em "Rascunho" ficam ocultos no site.
-                  </p>
-                  <p style={{color:'var(--ink-muted)',fontSize:13,lineHeight:1.6}}>
-                    O e-mail que recebe os pedidos, o SMTP e a base de dados configuram-se no ficheiro
-                    <code> config.php</code> no servidor.
-                  </p>
+                  <h2 style={{marginBottom:12}}>{T.aboutTitle}</h2>
+                  <p style={{color:'var(--ink-muted)',fontSize:13,lineHeight:1.6,marginBottom:12}}>{T.aboutP1}</p>
+                  <p style={{color:'var(--ink-muted)',fontSize:13,lineHeight:1.6}}>{T.aboutP2}</p>
                 </div>
               </>
             )}
@@ -1417,64 +2181,213 @@
             <div className="form-modal show" onClick={() => setEditing(null)}>
               <div className="form-shell" onClick={(e) => e.stopPropagation()}>
                 <button className="form-close" onClick={() => setEditing(null)}><FA name="xmark" s={14} /></button>
-                <h3>{editType === 'service' ? 'Serviço' : editType === 'portfolio' ? 'Projecto' : 'Testemunho'}</h3>
+                <h3>{editType === 'service' ? T.mSvc : editType === 'portfolio' ? T.mPort : T.mTest}</h3>
                 <div style={{display:'grid',gap:12}}>
                   {editType === 'service' ? (
                     <>
-                      <div className="field"><label>Nome do serviço</label><input value={editing.t} onChange={(e) => setEditing({...editing, t: e.target.value})} placeholder="Ex.: Design Gráfico" /><div className="field-error"/></div>
-                      <div className="field"><label>Descrição (aparece no site)</label><textarea rows="3" value={editing.d} onChange={(e) => setEditing({...editing, d: e.target.value})} placeholder="Uma frase que descreve o serviço." /><div className="field-error"/></div>
-                      <ImageUploadField label="Imagem (opcional)" hint="Se definir, substitui o ícone no cartão do serviço." value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
-                      <div className="field"><label>Categoria</label>
+                      <div className="field"><label>{T.fSvcName}</label><input value={editing.t} onChange={(e) => setEditing({...editing, t: e.target.value})} placeholder={T.phSvcName} /><div className="field-error"/></div>
+                      <div className="field"><label>{T.fDescSite}</label><textarea rows="3" value={editing.d} onChange={(e) => setEditing({...editing, d: e.target.value})} placeholder={T.phSvcDesc} /><div className="field-error"/></div>
+                      <ImageUploadField label={T.fImgOpt} hint={T.hintSvcImg} value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
+                      <div className="field"><label>{T.fCategory}</label>
                         <select value={editing.category} onChange={(e) => setEditing({...editing, category: e.target.value})}>
                           <option value="design">Design</option><option value="web">Web</option><option value="marketing">Marketing</option>
                         </select>
                         <div className="field-error"/>
                       </div>
-                      <div className="field"><label>Preço (referência interna)</label><input value={editing.price} onChange={(e) => setEditing({...editing, price: e.target.value})} placeholder="Ex.: 15.000 MZN" /><div className="field-error"/></div>
-                      <div className="field"><label>Estado</label>
+                      <div className="field"><label>{T.fPriceRef}</label><input value={editing.price} onChange={(e) => setEditing({...editing, price: e.target.value})} placeholder={T.phPrice} /><div className="field-error"/></div>
+                      <div className="field"><label>{T.fStatus}</label>
                         <select value={editing.status} onChange={(e) => setEditing({...editing, status: e.target.value})}>
-                          <option value="active">Activo (visível no site)</option><option value="draft">Rascunho (oculto)</option>
+                          <option value="active">{T.optActiveSite}</option><option value="draft">{T.optDraftHidden}</option>
                         </select>
                         <div className="field-error"/>
                       </div>
                     </>
                   ) : editType === 'portfolio' ? (
                     <>
-                      <div className="field"><label>Título do projecto</label><input value={editing.t} onChange={(e) => setEditing({...editing, t: e.target.value})} placeholder="Ex.: Banco Horizonte" /><div className="field-error"/></div>
-                      <div className="field"><label>Descrição (aparece no site)</label><input value={editing.c} onChange={(e) => setEditing({...editing, c: e.target.value})} placeholder="Ex.: Plataforma de banking digital" /><div className="field-error"/></div>
-                      <ImageUploadField label="Imagem do projecto" hint="Aparece no cartão e na janela de detalhe. Recomendado: 16:10." value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
-                      <div className="field"><label>Link do site (opcional)</label><input value={editing.url || ''} onChange={(e) => setEditing({...editing, url: e.target.value})} placeholder="https://exemplo.com" /><div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>Se for um site ao vivo, mostra uma pré-visualização e um botão "Visitar site".</div><div className="field-error"/></div>
-                      <div className="field"><label>Categoria</label>
+                      <div className="field"><label>{T.fPortTitle}</label><input value={editing.t} onChange={(e) => setEditing({...editing, t: e.target.value})} placeholder={T.phPortTitle} /><div className="field-error"/></div>
+                      <div className="field"><label>{T.fDescSite}</label><input value={editing.c} onChange={(e) => setEditing({...editing, c: e.target.value})} placeholder={T.phPortDesc} /><div className="field-error"/></div>
+                      <ImageUploadField label={T.fPortImg} hint={T.hintPortImg} value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
+                      <div className="field"><label>{T.fSiteLink}</label><input value={editing.url || ''} onChange={(e) => setEditing({...editing, url: e.target.value})} placeholder="https://exemplo.com" /><div style={{fontSize:11,color:'var(--ink-muted)',marginTop:4}}>{T.hintSiteLink}</div><div className="field-error"/></div>
+                      <div className="field"><label>{T.fCategory}</label>
                         <select value={editing.tag} onChange={(e) => setEditing({...editing, tag: e.target.value})}>
                           <option value="web">Web</option><option value="design">Design</option><option value="marketing">Marketing</option>
                         </select>
                         <div className="field-error"/>
                       </div>
-                      <div className="field"><label>Ano</label><input type="number" value={editing.year} onChange={(e) => setEditing({...editing, year: +e.target.value})} /><div className="field-error"/></div>
-                      <div className="field"><label>Estado</label>
+                      <div className="field"><label>{T.fYear}</label><input type="number" value={editing.year} onChange={(e) => setEditing({...editing, year: +e.target.value})} /><div className="field-error"/></div>
+                      <div className="field"><label>{T.fStatus}</label>
                         <select value={editing.status} onChange={(e) => setEditing({...editing, status: e.target.value})}>
-                          <option value="active">Publicado (visível no site)</option><option value="draft">Rascunho (oculto)</option>
+                          <option value="active">{T.optPublishedSite}</option><option value="draft">{T.optDraftHidden}</option>
                         </select>
                         <div className="field-error"/>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="field"><label>Depoimento</label><textarea rows="4" value={editing.q} onChange={(e) => setEditing({...editing, q: e.target.value})} placeholder="O que o cliente disse sobre o vosso trabalho." /><div className="field-error"/></div>
-                      <div className="field"><label>Nome do cliente</label><input value={editing.n} onChange={(e) => setEditing({...editing, n: e.target.value})} placeholder="Ex.: Aida M." /><div className="field-error"/></div>
-                      <div className="field"><label>Cargo / empresa</label><input value={editing.r} onChange={(e) => setEditing({...editing, r: e.target.value})} placeholder="Ex.: CEO, Horizonte Lda." /><div className="field-error"/></div>
-                      <ImageUploadField label="Foto do cliente (opcional)" hint="Aparece no cartão do testemunho." value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
-                      <div className="field"><label>Estado</label>
+                      <div className="field"><label>{T.fTestimonial}</label><textarea rows="4" value={editing.q} onChange={(e) => setEditing({...editing, q: e.target.value})} placeholder={T.phTestimonial} /><div className="field-error"/></div>
+                      <div className="field"><label>{T.fClientName}</label><input value={editing.n} onChange={(e) => setEditing({...editing, n: e.target.value})} placeholder={T.phClientName} /><div className="field-error"/></div>
+                      <div className="field"><label>{T.fRoleCompany}</label><input value={editing.r} onChange={(e) => setEditing({...editing, r: e.target.value})} placeholder={T.phRoleCompany} /><div className="field-error"/></div>
+                      <ImageUploadField label={T.fClientPhoto} hint={T.hintClientPhoto} value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
+                      <div className="field"><label>{T.fStatus}</label>
                         <select value={editing.status} onChange={(e) => setEditing({...editing, status: e.target.value})}>
-                          <option value="active">Activo (visível no site)</option><option value="draft">Rascunho (oculto)</option>
+                          <option value="active">{T.optActiveSite}</option><option value="draft">{T.optDraftHidden}</option>
                         </select>
                         <div className="field-error"/>
                       </div>
                     </>
                   )}
                   <div style={{display:'flex',gap:8,marginTop:8}}>
-                    <button className="btn btn-accent" onClick={save}>Guardar</button>
-                    <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancelar</button>
+                    <button className="btn btn-accent" onClick={save}>{T.btnSave}</button>
+                    <button className="btn btn-ghost" onClick={() => setEditing(null)}>{T.btnCancel}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {delivering && (
+            <div className="form-modal show" onClick={() => setDelivering(null)}>
+              <div className="form-shell" onClick={(e) => e.stopPropagation()} style={{maxWidth:560}}>
+                <button className="form-close" onClick={() => setDelivering(null)}><FA name="xmark" s={14} /></button>
+                <h3>{T.dlvTitle}</h3>
+                <div style={{fontSize:13,color:'var(--ink-muted)',marginBottom:14}}>
+                  {T.dlvFor}: <strong style={{color:'var(--ink)'}}>{delivering.nome}</strong> · {delivering.email}
+                </div>
+
+                <div style={{background:'var(--bg-soft)',border:'1px solid var(--line)',borderRadius:10,padding:'10px 14px',marginBottom:16,fontSize:13}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',color:'var(--ink-muted)',marginBottom:4}}>{T.dlvCode}</div>
+                  <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,letterSpacing:'0.15em',color:'var(--accent-2, var(--accent))'}}>{delivering.codigo || '—'}</div>
+                  <div style={{fontSize:12,color:'var(--ink-muted)',marginTop:4}}>{T.dlvCodeHint}</div>
+                </div>
+
+                <div style={{marginBottom:16}}>
+                  <label style={{marginBottom:8,display:'block'}}><FA name="money-bill-wave" s={13} /> {T.dlvPay}</label>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                    {[['nao','lock','#c0392b'],['parcial','clock','#b9770e'],['pago','circle-check','#166c46']].map(([est,ic,cor]) => (
+                      <button key={est} type="button" onClick={() => dSetPago(est)}
+                        style={{flex:'1 1 90px',display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7,padding:'9px 10px',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',
+                          border: dPago===est ? `1.5px solid ${cor}` : '1px solid var(--line)',
+                          background: dPago===est ? cor : 'var(--card,#fff)', color: dPago===est ? '#fff' : 'var(--ink)'}}>
+                        <FA name={ic} s={12} /> {est==='nao'?T.payNao:(est==='parcial'?T.payParcial:T.payPago)}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{fontSize:11.5,color:'var(--ink-muted)',marginTop:6,lineHeight:1.45}}>{T.dlvPayHint}</div>
+                </div>
+
+                <div style={{display:'grid',gap:12}}>
+                  <div className="field">
+                    <label>{T.dlvMsg}</label>
+                    <textarea rows="2" value={dForm.msg} onChange={(e) => setDForm({...dForm, msg: e.target.value})} placeholder={T.phDlvMsg} />
+                    <div className="field-error"/>
+                  </div>
+
+                  <div>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                      <label style={{margin:0}}>{T.dlvFiles}</label>
+                      <div style={{display:'flex',gap:8}}>
+                        <label className="btn btn-ghost" style={{cursor:'pointer',margin:0}}>
+                          <FA name="upload" s={12} /> {dBusy ? T.dlvUploading : T.dlvAddFile}
+                          <input type="file" style={{display:'none'}} disabled={dBusy} onChange={(e) => { dUploadFile(e.target.files[0]); e.target.value=''; }} />
+                        </label>
+                        <button type="button" className="btn btn-ghost" onClick={dAddLink}><FA name="link" s={12} /> {T.dlvAddLink}</button>
+                      </div>
+                    </div>
+
+                    {dForm.entregas.length === 0 ? (
+                      <div style={{border:'1px dashed var(--line)',borderRadius:10,padding:'18px',textAlign:'center',color:'var(--ink-muted)',fontSize:13}}>{T.dlvNoItems}</div>
+                    ) : (
+                      <div style={{display:'grid',gap:10}}>
+                        {dForm.entregas.map((it, i) => (
+                          <div key={i} style={{border:'1px solid var(--line)',borderRadius:10,padding:'10px 12px',display:'grid',gap:8}}>
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span className={`table-tag ${it.tipo === 'file' ? 'tag-active' : 'tag-marketing'}`}>
+                                <FA name={it.tipo === 'file' ? 'file' : 'link'} s={10} /> {it.tipo === 'file' ? T.dlvFile : T.dlvLink}
+                              </span>
+                              <input value={it.nome} onChange={(e) => dUpdateItem(i, 'nome', e.target.value)} placeholder={T.dlvItemName}
+                                style={{flex:1,minWidth:0,padding:'6px 10px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                              <button type="button" className="ra-btn danger" onClick={() => dRemoveItem(i)} title={T.btnRemove}><Trash s={12} /></button>
+                            </div>
+                            {it.tipo === 'link' && (
+                              <input value={it.url} onChange={(e) => dUpdateItem(i, 'url', e.target.value)} placeholder={T.dlvLinkUrl}
+                                style={{padding:'6px 10px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                            )}
+                            {it.tipo === 'file' && (
+                              <div style={{fontSize:12,color:'var(--ink-muted)',wordBreak:'break-all'}}><FA name="paperclip" s={11} /> {it.url}</div>
+                            )}
+                            <input value={it.note} onChange={(e) => dUpdateItem(i, 'note', e.target.value)} placeholder={T.dlvItemNote}
+                              style={{padding:'6px 10px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {(() => {
+                    const cf = (deliveries[delivering.id] && deliveries[delivering.id].cliente_ficheiros) || [];
+                    return (
+                      <div style={{borderTop:'1px solid var(--line)',paddingTop:14}}>
+                        <label style={{marginBottom:8,display:'block'}}><FA name="paperclip" s={13} /> {T.dlvClientFiles} {cf.length ? `(${cf.length})` : ''}</label>
+                        {cf.length === 0 ? (
+                          <div style={{fontSize:13,color:'var(--ink-muted)'}}>{T.dlvNoClientFiles}</div>
+                        ) : (
+                          <div style={{display:'grid',gap:7}}>
+                            {cf.map((f, i) => (
+                              <a key={i} href={f.url} target="_blank" rel="noopener" download
+                                style={{display:'flex',alignItems:'center',gap:9,padding:'8px 11px',border:'1px solid var(--line)',borderRadius:9,fontSize:13,color:'var(--ink)'}}>
+                                <FA name="file-arrow-down" s={13} />
+                                <span style={{flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.nome || f.url}</span>
+                                <span style={{fontSize:11,color:'var(--ink-muted)'}}>{fmtData(f.data)}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {dSaved && (
+                    <div style={{background:'#e9f8f0',border:'1px solid #b6e6cf',borderRadius:10,padding:'10px 14px',fontSize:13,color:'#166c46',fontWeight:600}}>
+                      <FA name="circle-check" s={13} /> {T.dlvSaved}
+                    </div>
+                  )}
+
+                  {(() => {
+                    const coments = (deliveries[delivering.id] && deliveries[delivering.id].comentarios) || [];
+                    return (
+                      <div style={{borderTop:'1px solid var(--line)',paddingTop:14}}>
+                        <label style={{marginBottom:8,display:'block'}}><FA name="comments" s={13} /> {T.dlvComments} {coments.length ? `(${coments.length})` : ''}</label>
+                        {coments.length === 0 ? (
+                          <div style={{fontSize:13,color:'var(--ink-muted)',marginBottom:10}}>{T.dlvNoComments}</div>
+                        ) : (
+                          <div style={{display:'grid',gap:8,marginBottom:10,maxHeight:200,overflowY:'auto'}}>
+                            {coments.map((c, i) => {
+                              const studio = c.de === 'studio' || c.de === 'admin';
+                              return (
+                                <div key={i} style={{display:'flex',gap:8,flexDirection: studio ? 'row-reverse' : 'row'}}>
+                                  <div style={{background: studio ? 'var(--brand-mid,#036C6F)' : 'var(--accent)',color:'#fff',borderRadius:10,padding:'8px 11px',fontSize:13,maxWidth:'82%',lineHeight:1.45}}>
+                                    {c.texto}
+                                    <div style={{fontSize:10.5,opacity:0.75,marginTop:3}}>{studio ? 'Cari Tech' : (c.nome || 'Cliente')} · {fmtData(c.data)}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <div style={{display:'flex',gap:8,alignItems:'flex-end'}}>
+                          <textarea rows="1" value={dReply} onChange={(e) => setDReply(e.target.value)} placeholder={T.dlvReplyPh}
+                            style={{flex:1,minHeight:40,resize:'vertical',padding:'9px 11px',border:'1px solid var(--line)',borderRadius:10,fontSize:13,fontFamily:'inherit',background:'var(--card,#fff)',color:'var(--ink)'}} />
+                          <button type="button" className="btn btn-accent" onClick={dSendReply} disabled={dBusy || !dReply.trim()}><FA name="paper-plane" s={13} /></button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div style={{display:'flex',gap:8,marginTop:4,flexWrap:'wrap'}}>
+                    <button className="btn btn-accent" onClick={dSave} disabled={dBusy}>{dBusy ? T.saving : T.dlvSave}</button>
+                    {delivering.telefone && <button className="btn btn-ghost" onClick={() => dNotifyWhats(delivering)}><i className="fa-brands fa-whatsapp" aria-hidden="true" /> {T.dlvNotify}</button>}
+                    <button className="btn btn-ghost" onClick={() => dNotifyMail(delivering)}><FA name="paper-plane" s={12} /> {T.dlvNotify}</button>
+                    <a className="btn btn-ghost" href="cliente.html" target="_blank" rel="noopener" style={{marginLeft:'auto'}}><FA name="up-right-from-square" s={12} /> {T.dlvOpenClient}</a>
                   </div>
                 </div>
               </div>

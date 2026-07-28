@@ -29,6 +29,20 @@ return [
     // resposta para oferecer continuação da conversa.
     'whatsapp'    => '258834157731',
 
+    // Endereço público do site (sem barra no fim). Usado no recibo automático
+    // para indicar ao cliente o link da Área de Cliente (cliente.html).
+    'site_url'    => 'https://caritechgraphic.com',
+
+    // Enviar recibo automático (confirmação) ao cliente quando ele faz um
+    // pedido. Deixe true para confirmar a receção e enviar o código de acesso
+    // à Área de Cliente.
+    'send_receipt' => true,
+
+    // Notificar o cliente por e-mail quando houver uma NOVA ENTREGA ou uma
+    // RESPOSTA do estúdio na Área de Cliente. Deixe true para manter o cliente
+    // informado automaticamente.
+    'notify_client' => true,
+
     // ---- Painel de administração (admin.html) ------------------------------
     // Credenciais INICIAIS de acesso. Depois de entrar, pode alterar o
     // utilizador e a palavra-passe directamente no painel (Definições → Conta),
@@ -40,6 +54,25 @@ return [
     //   php -r 'echo password_hash("A_SUA_SENHA", PASSWORD_DEFAULT), PHP_EOL;'
     'admin_user'          => 'admin',
     'admin_password_hash' => '$2y$12$X.Q5w2g879KLOCGa9daRReVzTHnGCdfluiLK.MRxwfLPTy1ny2f1S',
+
+    // ---- Login social (Google / Facebook) — OPCIONAL ---------------------
+    // RECOMENDADO: configure isto no PAINEL (Definições → Login social) — é
+    // mais fácil e fica guardado no servidor. Os valores abaixo servem apenas
+    // como padrão/recuperação; o que estiver no painel tem prioridade.
+    //
+    // Google (só precisa do Client ID):
+    //   console.cloud.google.com → APIs e Serviços → Credenciais →
+    //   "ID de cliente OAuth" → Aplicação Web → Origens: https://seudominio.com
+    // Facebook (precisa de App ID + App Secret):
+    //   developers.facebook.com → Criar app → "Facebook Login" →
+    //   Definições → domínios/URL do site.
+    //
+    // Um cliente entra pela conta social se o e-mail coincidir com um pedido.
+    // Ponha o seu e-mail em 'admin_email' para entrar como administrador.
+    'google_client_id'    => '',
+    'facebook_app_id'     => '',
+    'facebook_app_secret' => '',
+    'admin_email'         => '',
 
     // Onde ficam guardados os leads em JSON (usado pelo painel admin).
     'leads_json' => __DIR__ . '/dados/leads.json',

@@ -18,8 +18,17 @@ DirectoryIndex index.html
   Require all denied
 </FilesMatch>
 
+# --- Ocultar o painel: o acesso ao painel faz-se por painel.php?k=SLUG ------
+# (o admin.html real deixa de ser acessível directamente, para despistar bots)
+<Files "admin.html">
+  Require all denied
+</Files>
+
 # --- Proteger a pasta de dados (leads.csv) ---------------------------------
 RedirectMatch 403 ^/dados/.*$
+
+# --- Entregas: acesso só através de demo.php (protecção por pagamento) ------
+RedirectMatch 403 ^/uploads/entregas/.*$
 
 # --- Segurança: cabeçalhos -------------------------------------------------
 <IfModule mod_headers.c>
@@ -48,7 +57,8 @@ RedirectMatch 403 ^/dados/.*$
 </IfModule>
 
 # --- Páginas de erro -------------------------------------------------------
-ErrorDocument 404 /index.html
+ErrorDocument 404 /erro.html
+ErrorDocument 403 /erro.html
 
 # --- MIME correcto para .jsx (servidos como texto p/ Babel no browser) -----
 <IfModule mod_mime.c>

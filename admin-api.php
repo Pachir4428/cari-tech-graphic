@@ -14,10 +14,12 @@
  */
 
 /* --- Sessão segura --------------------------------------------------------- */
+/* Cookie persistente (7 dias) com inatividade máxima de 15 min. */
+define('CTG_IDLE_MAX', 900);
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_set_cookie_params([
-    'lifetime' => 0,
+    'lifetime' => 7 * 86400,
     'path'     => '/',
     'httponly' => true,
     'secure'   => $https,
@@ -25,6 +27,16 @@ session_set_cookie_params([
 ]);
 session_name('CTG_ADMIN');
 session_start();
+
+/* Termina a sessão após 15 min de inatividade; senão, renova a marca. */
+if (!empty($_SESSION['ctg_admin'])) {
+    if (isset($_SESSION['ctg_last']) && (time() - $_SESSION['ctg_last']) > CTG_IDLE_MAX) {
+        $_SESSION = [];
+        session_destroy();
+    } else {
+        $_SESSION['ctg_last'] = time();
+    }
+}
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -45,11 +57,55 @@ function exigir_login() {
 }
 
 require_once __DIR__ . '/armazenamento.php';
+require_once __DIR__ . '/email-enviar.php';
+require_once __DIR__ . '/email-template.php';
+$config = ctg_apply_smtp($config); // definições SMTP do painel (se existirem)
 
 /* Utilizador em vigor: o guardado no painel, ou o padrão do config. */
 function ctg_admin_user($config) {
     $cred = store_get_admin($config);
     return ($cred && !empty($cred['user'])) ? $cred['user'] : ($config['admin_user'] ?? 'admin');
+}
+
+/* Devolve o lead pelo id (ou null). */
+function ctg_lead_por_id($config, $leadId) {
+    foreach (store_get_leads($config) as $l) {
+        if (($l['id'] ?? '') === $leadId) return $l;
+    }
+    return null;
+}
+
+/* Notifica o cliente por e-mail de uma nova entrega ou resposta do estúdio.
+   Silencioso: nunca interrompe a acção principal se o e-mail falhar. */
+function ctg_notificar_cliente($config, $lead, $tipo, $texto) {
+    if (($config['notify_client'] ?? true) !== true) return false;
+    $email = trim((string) ($lead['email'] ?? ''));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+    $marca   = $config['from_name'] ?? 'Cari Tech Graphic';
+    $servico = (string) ($lead['servico'] ?? '');
+    $codigo  = (string) ($lead['codigo'] ?? '');
+    $nome    = (string) ($lead['nome'] ?? '');
+    $site    = rtrim((string) ($config['site_url'] ?? ''), '/');
+
+    if ($tipo === 'pago') {
+        $assunto = 'Pagamento confirmado — ficheiros disponíveis — Cari Tech Graphic';
+        $corpo  = "Olá {$nome},\n\nO pagamento do seu pedido" . ($servico !== '' ? " de {$servico}" : '') . " foi confirmado. Os seus ficheiros já estão disponíveis para descarregar (sem marca de água) na Área de Cliente.\n";
+    } elseif ($tipo === 'entrega') {
+        $assunto = 'Nova entrega disponível — Cari Tech Graphic';
+        $corpo  = "Olá {$nome},\n\nO seu pedido" . ($servico !== '' ? " de {$servico}" : '') . " tem uma nova entrega disponível.\n";
+    } else {
+        $assunto = 'Nova resposta ao seu pedido — Cari Tech Graphic';
+        $corpo  = "Olá {$nome},\n\nA {$marca} respondeu ao seu pedido" . ($servico !== '' ? " de {$servico}" : '') . ":\n\n{$texto}\n";
+    }
+    $corpo .= "\nAceda à sua Área de Cliente: {$site}/cliente.html?email=" . rawurlencode($email) . "&codigo=" . rawurlencode($codigo) . "\n";
+    $corpo .= "(E-mail: {$email} · Código: {$codigo})\n";
+
+    $branding = store_get_branding($config);
+    $html = email_notificacao_html($config, [
+        'tipo' => $tipo, 'nome' => $nome, 'servico' => $servico, 'texto' => $texto,
+        'codigo' => $codigo, 'email' => $email, 'logo' => $branding['light'] ?? ($branding['dark'] ?? ''),
+    ]);
+    return enviar_email($config, $email, $assunto, $corpo, $config['to_email'] ?? '', $marca, $html);
 }
 
 /* Verifica utilizador + palavra-passe contra as credenciais guardadas
@@ -86,6 +142,43 @@ function guardar_imagem($file, $prefixo, $maxMB = 3) {
     return ['ok' => true, 'path' => 'uploads/' . $nome];
 }
 
+/* Guarda um ficheiro de entrega (qualquer tipo permitido); devolve
+   ['ok'=>true,'path'=>'uploads/entregas/…','nome'=>'original.ext']. */
+function guardar_ficheiro_entrega($file, $maxMB = 25) {
+    if (empty($file) || ($file['error'] ?? 1) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => 'Nenhum ficheiro recebido (ou demasiado grande para o servidor).'];
+    }
+    if ($file['size'] > $maxMB * 1024 * 1024) {
+        return ['ok' => false, 'message' => "O ficheiro não pode exceder {$maxMB} MB."];
+    }
+    $nomeOrig = (string) ($file['name'] ?? 'ficheiro');
+    $ext = strtolower(pathinfo($nomeOrig, PATHINFO_EXTENSION));
+    // Extensões permitidas para entrega de trabalhos (design, docs, media, código).
+    $permitidas = [
+        'pdf','doc','docx','xls','xlsx','ppt','pptx','txt','csv','rtf',
+        'png','jpg','jpeg','gif','webp','svg','bmp','tiff','ico',
+        'ai','psd','eps','indd','cdr','sketch','fig','xd',
+        'zip','rar','7z',
+        'mp4','mov','webm','mp3','wav','ogg',
+        'html','css','js','json',
+    ];
+    // Extensões perigosas — nunca permitidas em hospedagem partilhada.
+    $proibidas = ['php','phtml','php3','php4','php5','php7','phps','pht','htaccess','cgi','pl','py','sh','exe','asp','aspx','jsp'];
+    if ($ext === '' || in_array($ext, $proibidas, true) || !in_array($ext, $permitidas, true)) {
+        return ['ok' => false, 'message' => 'Tipo de ficheiro não permitido.'];
+    }
+    $dir = __DIR__ . '/uploads/entregas';
+    @mkdir($dir, 0755, true);
+    // Nome no disco: aleatório (evita colisões e path traversal); guarda o nome original nos metadados.
+    $slug = preg_replace('/[^a-zA-Z0-9._-]+/', '-', pathinfo($nomeOrig, PATHINFO_FILENAME));
+    $slug = trim(substr($slug, 0, 40), '-') ?: 'ficheiro';
+    $nomeDisco = $slug . '-' . bin2hex(random_bytes(5)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $nomeDisco)) {
+        return ['ok' => false, 'message' => 'Não foi possível guardar o ficheiro.'];
+    }
+    return ['ok' => true, 'path' => 'uploads/entregas/' . $nomeDisco, 'nome' => $nomeOrig];
+}
+
 /* --- Entrada --------------------------------------------------------------- */
 $action = $_GET['action'] ?? '';
 $body   = json_decode(file_get_contents('php://input'), true);
@@ -99,6 +192,7 @@ switch ($action) {
         if (credenciais_validas($config, $user, $senha)) {
             session_regenerate_id(true);
             $_SESSION['ctg_admin'] = true;
+            $_SESSION['ctg_last'] = time();
             responder(true, ['message' => 'Autenticado.']);
         }
         usleep(600000); // atrasa tentativas de força bruta
@@ -163,6 +257,21 @@ switch ($action) {
             'contact'      => $c['contact']      ?? null,
             'branding'     => store_get_branding($config),
             'payments'     => store_get_payments($config),
+            'social'       => ctg_social($config),
+            'sites'        => store_get_sites($config),
+            'seg'          => ['admin_slug' => ctg_admin_slug($config)],
+            'smtp'         => (function () use ($config) {
+                $s = store_get_smtp($config);
+                return [
+                    'smtp_enabled' => array_key_exists('smtp_enabled', $s) ? !empty($s['smtp_enabled']) : !empty($config['smtp_enabled']),
+                    'smtp_host'    => $s['smtp_host']   ?? ($config['smtp_host']   ?? 'smtp.hostinger.com'),
+                    'smtp_port'    => $s['smtp_port']   ?? ($config['smtp_port']   ?? 465),
+                    'smtp_secure'  => $s['smtp_secure'] ?? ($config['smtp_secure'] ?? 'ssl'),
+                    'smtp_user'    => $s['smtp_user']   ?? ($config['smtp_user']   ?? ($config['from_email'] ?? '')),
+                    'smtp_pass'    => $s['smtp_pass']   ?? '',
+                    'from_email'   => $s['from_email']  ?? ($config['from_email']  ?? ''),
+                ];
+            })(),
             'username'     => ctg_admin_user($config),
         ]);
 
@@ -172,6 +281,95 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         store_set_payments($config, $p);
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'smtp-save':
+        exigir_login();
+        $s = $body['smtp'] ?? null;
+        if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        store_set_smtp($config, [
+            'smtp_enabled' => !empty($s['smtp_enabled']),
+            'smtp_host'    => trim((string) ($s['smtp_host']   ?? '')),
+            'smtp_port'    => (int) ($s['smtp_port'] ?? 465),
+            'smtp_secure'  => (($s['smtp_secure'] ?? 'ssl') === 'tls') ? 'tls' : 'ssl',
+            'smtp_user'    => trim((string) ($s['smtp_user']   ?? '')),
+            'smtp_pass'    => (string) ($s['smtp_pass'] ?? ''),
+            'from_email'   => trim((string) ($s['from_email']  ?? ($s['smtp_user'] ?? ''))),
+        ]);
+        responder(true, ['message' => 'E-mail (SMTP) guardado.']);
+
+    case 'financas':
+        exigir_login();
+        $lista = store_get_financas($config);
+        $entradas = 0; $saidas = 0;
+        foreach ($lista as $m) {
+            $v = (float) ($m['valor'] ?? 0);
+            if (($m['tipo'] ?? 'entrada') === 'saida') $saidas += $v; else $entradas += $v;
+        }
+        responder(true, ['financas' => $lista, 'totais' => [
+            'entradas' => round($entradas, 2), 'saidas' => round($saidas, 2), 'saldo' => round($entradas - $saidas, 2),
+        ]]);
+
+    case 'financas-save':
+        exigir_login();
+        $itens = $body['financas'] ?? null;
+        if (!is_array($itens)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        $limpos = [];
+        foreach ($itens as $m) {
+            $valor = (float) str_replace([' ', ','], ['', '.'], (string) ($m['valor'] ?? 0));
+            $desc = trim((string) ($m['desc'] ?? ''));
+            if ($desc === '' && $valor == 0) continue;
+            $limpos[] = [
+                'id'        => (string) ($m['id'] ?? uniqid()),
+                'data'      => trim((string) ($m['data'] ?? date('Y-m-d'))),
+                'desc'      => $desc,
+                'tipo'      => (($m['tipo'] ?? 'entrada') === 'saida') ? 'saida' : 'entrada',
+                'valor'     => round($valor, 2),
+                'categoria' => trim((string) ($m['categoria'] ?? '')),
+            ];
+        }
+        store_set_financas($config, $limpos);
+        responder(true, ['message' => 'Finanças guardadas.', 'financas' => $limpos]);
+
+    case 'seg-save':
+        exigir_login();
+        $slug = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($body['admin_slug'] ?? ''));
+        $slug = substr($slug, 0, 40);
+        store_set_seg($config, ['admin_slug' => $slug]);
+        responder(true, ['message' => 'Segurança guardada.', 'admin_slug' => $slug, 'painel' => ctg_painel_url($config)]);
+
+    case 'sites-save':
+        exigir_login();
+        $s = $body['sites'] ?? null;
+        if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        $limpos = [];
+        foreach ($s as $it) {
+            $url = trim((string) ($it['url'] ?? ''));
+            $nome = trim((string) ($it['nome'] ?? ''));
+            if ($url === '' && $nome === '') continue;
+            if ($url !== '' && !preg_match('~^https?://~i', $url)) $url = 'https://' . $url;
+            $limpos[] = [
+                'id'     => (string) ($it['id'] ?? uniqid()),
+                'nome'   => $nome,
+                'url'    => $url,
+                'desc'   => trim((string) ($it['desc'] ?? '')),
+                'status' => (($it['status'] ?? 'active') === 'draft') ? 'draft' : 'active',
+            ];
+        }
+        store_set_sites($config, $limpos);
+        responder(true, ['message' => 'Sites guardados.', 'sites' => $limpos]);
+
+    case 'social-save':
+        exigir_login();
+        $s = $body['social'] ?? null;
+        if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        store_set_social($config, [
+            'enabled'             => !empty($s['enabled']),
+            'google_client_id'    => trim((string) ($s['google_client_id']    ?? '')),
+            'facebook_app_id'     => trim((string) ($s['facebook_app_id']      ?? '')),
+            'facebook_app_secret' => trim((string) ($s['facebook_app_secret']  ?? '')),
+            'admin_email'         => trim((string) ($s['admin_email']          ?? '')),
+        ]);
+        responder(true, ['message' => 'Login social guardado.', 'social' => ctg_social($config)]);
 
     case 'content-save':
         exigir_login();
@@ -233,6 +431,94 @@ switch ($action) {
         if (!$r['ok']) responder(false, ['message' => $r['message']], 422);
         responder(true, ['message' => 'Imagem carregada.', 'url' => $r['path']]);
 
+    case 'deliveries':
+        exigir_login();
+        responder(true, ['deliveries' => store_get_deliveries($config)]);
+
+    case 'lead-comment':
+        exigir_login();
+        $leadId = (string) ($body['leadId'] ?? '');
+        $texto  = trim((string) ($body['texto'] ?? ''));
+        if ($leadId === '' || $texto === '') responder(false, ['message' => 'Escreva um comentário.'], 422);
+        if (mb_strlen($texto) > 1000) $texto = mb_substr($texto, 0, 1000);
+        $comentarios = store_add_comment($config, $leadId, [
+            'de' => 'studio', 'nome' => 'Cari Tech', 'texto' => $texto, 'data' => date('c'),
+        ]);
+        // Notifica o cliente por e-mail da nova resposta.
+        $leadC = ctg_lead_por_id($config, $leadId);
+        $notificado = $leadC ? ctg_notificar_cliente($config, $leadC, 'resposta', $texto) : false;
+        responder(true, ['message' => 'Comentário enviado.', 'comentarios' => $comentarios, 'notified' => $notificado]);
+
+    case 'lead-pago':
+        exigir_login();
+        $leadId = (string) ($body['leadId'] ?? '');
+        $estado = (string) ($body['pago'] ?? 'nao');
+        if ($leadId === '') responder(false, ['message' => 'Lead em falta.'], 422);
+        $anterior = store_get_delivery($config, $leadId);
+        $estadoAnt = $anterior['pago'] ?? 'nao';
+        $novo = store_set_pagamento($config, $leadId, $estado);
+        // Ao passar para "pago" (e só na transição), avisa o cliente que já pode descarregar.
+        $notificado = false;
+        if ($novo === 'pago' && $estadoAnt !== 'pago') {
+            $leadP = ctg_lead_por_id($config, $leadId);
+            if ($leadP) $notificado = ctg_notificar_cliente($config, $leadP, 'pago', '');
+        }
+        responder(true, ['message' => 'Pagamento actualizado.', 'pago' => $novo, 'notified' => $notificado]);
+
+    case 'upload-file':
+        exigir_login();
+        $r = guardar_ficheiro_entrega($_FILES['file'] ?? null, 25);
+        if (!$r['ok']) responder(false, ['message' => $r['message']], 422);
+        responder(true, ['message' => 'Ficheiro carregado.', 'url' => $r['path'], 'nome' => $r['nome']]);
+
+    case 'lead-deliver':
+        exigir_login();
+        $leadId = (string) ($body['leadId'] ?? '');
+        if ($leadId === '') responder(false, ['message' => 'Lead em falta.'], 422);
+        // Confirma que o lead existe.
+        $lead = null;
+        foreach (store_get_leads($config) as $l) { if (($l['id'] ?? '') === $leadId) { $lead = $l; break; } }
+        if (!$lead) responder(false, ['message' => 'Lead não encontrado.'], 404);
+
+        $itens = $body['entregas'] ?? [];
+        $limpos = [];
+        if (is_array($itens)) {
+            foreach ($itens as $it) {
+                $tipo = ($it['tipo'] ?? 'link') === 'file' ? 'file' : 'link';
+                $url  = trim((string) ($it['url'] ?? ''));
+                if ($url === '') continue;
+                $limpos[] = [
+                    'tipo' => $tipo,
+                    'url'  => $url,
+                    'nome' => trim((string) ($it['nome'] ?? '')) ?: $url,
+                    'note' => trim((string) ($it['note'] ?? '')),
+                ];
+            }
+        }
+        $anterior = store_get_delivery($config, $leadId);
+        $pagoIn = (string) ($body['pago'] ?? ($anterior['pago'] ?? 'nao'));
+        $entrega = [
+            'leadId'      => $leadId,
+            'msg'         => trim((string) ($body['msg'] ?? '')),
+            'entregas'    => $limpos,
+            'entregue'    => !empty($limpos),
+            'data'        => date('c'),
+            'pago'        => in_array($pagoIn, ['nao', 'parcial', 'pago'], true) ? $pagoIn : 'nao',
+            'comentarios' => ($anterior && !empty($anterior['comentarios'])) ? $anterior['comentarios'] : [],
+            'cliente_ficheiros' => ($anterior && !empty($anterior['cliente_ficheiros'])) ? $anterior['cliente_ficheiros'] : [],
+        ];
+        if (!store_set_delivery($config, $leadId, $entrega)) {
+            responder(false, ['message' => 'Falha ao guardar a entrega.'], 500);
+        }
+        // Marca o lead como ganho e notifica o cliente da nova entrega.
+        $notificado = false;
+        if (!empty($limpos)) {
+            store_set_lead_status($config, $leadId, 'won');
+            $leadD = ctg_lead_por_id($config, $leadId);
+            if ($leadD) $notificado = ctg_notificar_cliente($config, $leadD, 'entrega', $entrega['msg']);
+        }
+        responder(true, ['message' => 'Entrega guardada.', 'delivery' => $entrega, 'notified' => $notificado]);
+
     case 'update-zip':
         exigir_login();
         if (!class_exists('ZipArchive')) {
@@ -246,7 +532,16 @@ switch ($action) {
         }
         $resultado = atualizar_por_zip(__DIR__, $_FILES['zip']['tmp_name']);
         if (!$resultado['ok']) responder(false, ['message' => $resultado['message']], 500);
+        store_add_update_log($config, [
+            'data'    => date('c'),
+            'count'   => (int) $resultado['count'],
+            'ficheiro'=> (string) ($_FILES['zip']['name'] ?? ''),
+        ]);
         responder(true, ['message' => "Site actualizado. {$resultado['count']} ficheiro(s) actualizado(s).", 'count' => $resultado['count']]);
+
+    case 'update-log':
+        exigir_login();
+        responder(true, ['log' => store_get_update_log($config)]);
 
     default:
         responder(false, ['message' => 'Acção desconhecida.'], 400);

@@ -16,3 +16,7 @@ Thumbs.db
 # Imagens carregadas no servidor (logótipos e imagens de conteúdo)
 uploads/logo-*
 uploads/img-*
+
+# Ficheiros carregados em tempo de execução (entregas e briefs de clientes)
+uploads/entregas/
+uploads/cliente/

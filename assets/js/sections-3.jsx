@@ -42,26 +42,11 @@ function LogoMark({ branding }) {
   if (logo) {
     return <img src={logo} alt="Cari Tech Graphic" className="logo-img" style={{ height: 40, width: 'auto', display: 'block' }} />;
   }
+  // Sem logótipo carregado: mostra apenas o nome do site (sem símbolo).
   return (
-    <>
-      <div className="logo-mark">
-        <svg viewBox="0 0 32 32" fill="none">
-          <defs>
-            <linearGradient id="lm" x1="0" x2="1">
-              <stop offset="0" stopColor="var(--accent)" />
-              <stop offset="1" stopColor="var(--accent-2)" />
-            </linearGradient>
-          </defs>
-          <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" fill="url(#lm)" opacity="0.18" />
-          <path d="M16 4 L28 11 L28 21 L16 28 L4 21 L4 11 Z" stroke="url(#lm)" strokeWidth="1.6" fill="none" />
-          <text x="16" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="currentColor">C</text>
-        </svg>
-      </div>
-      <span className="logo-text">
-        <span className="logo-name">Cari Tech</span>
-        <span className="logo-sub">Graphic</span>
-      </span>
-    </>
+    <span className="logo-text logo-text-only">
+      <span className="logo-name">Cari Tech Graphic</span>
+    </span>
   );
 }
 
@@ -86,7 +71,8 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
   ];
 
   return (
-    <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
+    <header className={`site-header ${scrolled ? 'scrolled' : ''} ${open ? 'nav-open' : ''}`}>
+      {open && <div className="nav-scrim" onClick={() => setOpen(false)} aria-hidden="true" />}
       <div className="container site-header-inner">
         <a href="#home" className="logo" onClick={() => setOpen(false)}>
           <LogoMark branding={branding} />
@@ -95,6 +81,9 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
           {links.map((l) => (
             <a key={l.id} href={l.href} onClick={() => setOpen(false)}>{l.label}</a>
           ))}
+          <a href="entrar.html" className="nav-login" onClick={() => setOpen(false)}>
+            <i className="fa-solid fa-right-to-bracket" aria-hidden="true" style={{ marginRight: 8 }} />{t.nav.login}
+          </a>
         </nav>
         <div className="site-actions">
           <button
@@ -112,6 +101,10 @@ function Header({ t, lang, setLang, theme, setTheme, onStart }) {
           >
             {theme === 'light' ? <Icon.Moon size={16} /> : <Icon.Sun size={16} />}
           </button>
+          <a href="entrar.html" className="action-btn login-btn" aria-label={t.nav.login} title={t.nav.login}>
+            <i className="fa-solid fa-right-to-bracket" aria-hidden="true" />
+            <span>{t.nav.login}</span>
+          </a>
           <button type="button" className="btn btn-primary header-cta" onClick={() => onStart('')}>
             {t.nav.cta}<Icon.Arrow size={14} />
           </button>
@@ -337,9 +330,18 @@ function Footer({ t }) {
             </div>
             <p>{t.footer.tagline}</p>
             <div className="socials">
-              <a href="#" aria-label="Instagram"><Icon.Instagram size={16} /></a>
-              <a href="#" aria-label="Facebook"><Icon.Facebook size={16} /></a>
-              <a href="#" aria-label="LinkedIn"><Icon.LinkedIn size={16} /></a>
+              {[
+                { k: 'instagram', icon: 'instagram', label: 'Instagram' },
+                { k: 'facebook', icon: 'facebook-f', label: 'Facebook' },
+                { k: 'twitter', icon: 'x-twitter', label: 'X' },
+                { k: 'youtube', icon: 'youtube', label: 'YouTube' },
+                { k: 'linkedin', icon: 'linkedin-in', label: 'LinkedIn' },
+                { k: 'tiktok', icon: 'tiktok', label: 'TikTok' },
+              ].filter((s) => c[s.k]).map((s) => (
+                <a key={s.k} href={c[s.k]} target="_blank" rel="noreferrer noopener" aria-label={s.label}>
+                  <i className={`fa-brands fa-${s.icon}`} aria-hidden="true" />
+                </a>
+              ))}
             </div>
           </div>
           <div className="footer-col">
@@ -348,6 +350,7 @@ function Footer({ t }) {
             <a href="#about">{t.nav.about}</a>
             <a href="#portfolio">{t.nav.portfolio}</a>
             <a href="#testimonials">{t.testimonials.eyebrow}</a>
+            <a href="cliente.html">{t.footer.clientArea || 'Área de Cliente'}</a>
           </div>
           <div className="footer-col">
             <div className="fc-title">{t.footer.services}</div>

@@ -48,7 +48,10 @@ function ctg_ensure_schema($pdo) {
         criado_em DATETIME NOT NULL,
         nome VARCHAR(200), email VARCHAR(200), telefone VARCHAR(80),
         servico VARCHAR(200), mensagem TEXT, ip VARCHAR(64),
+        codigo VARCHAR(16),
         status VARCHAR(20) NOT NULL DEFAULT 'new')$suf");
+    /* Coluna 'codigo' para instalações antigas (ignora erro se já existir). */
+    try { $pdo->exec("ALTER TABLE leads ADD COLUMN codigo VARCHAR(16)"); } catch (\Throwable $e) {}
     $pdo->exec("CREATE TABLE IF NOT EXISTS content_items (
         id VARCHAR(40) PRIMARY KEY,
         tipo VARCHAR(20) NOT NULL,
@@ -66,12 +69,12 @@ function store_add_lead($config, $lead) {
     $pdo = ctg_pdo($config);
     if ($pdo) {
         $st = $pdo->prepare("INSERT INTO leads
-            (id, criado_em, nome, email, telefone, servico, mensagem, ip, status)
-            VALUES (?,?,?,?,?,?,?,?,?)");
+            (id, criado_em, nome, email, telefone, servico, mensagem, ip, codigo, status)
+            VALUES (?,?,?,?,?,?,?,?,?,?)");
         return $st->execute([
             $lead['id'], date('Y-m-d H:i:s'), $lead['nome'], $lead['email'],
             $lead['telefone'], $lead['servico'], $lead['mensagem'],
-            $lead['ip'], $lead['status'] ?? 'new',
+            $lead['ip'], $lead['codigo'] ?? '', $lead['status'] ?? 'new',
         ]);
     }
     return file_add_lead($config, $lead);
@@ -87,6 +90,7 @@ function store_get_leads($config) {
                 'data' => str_replace(' ', 'T', $r['criado_em']),
                 'nome' => $r['nome'], 'email' => $r['email'], 'telefone' => $r['telefone'],
                 'servico' => $r['servico'], 'mensagem' => $r['mensagem'], 'ip' => $r['ip'],
+                'codigo' => $r['codigo'] ?? '',
                 'status' => $r['status'],
             ];
         }, $rows);
@@ -230,6 +234,186 @@ function store_set_branding($config, $b) { return _meta_set($config, 'branding',
 /* Pagamentos: métodos mostrados no checkout (público). */
 function store_get_payments($config)   { return _meta_get($config, 'payments', 'payments.json') ?: []; }
 function store_set_payments($config, $p) { return _meta_set($config, 'payments', 'payments.json', $p); }
+
+/* Login social: IDs/segredos do Google e Facebook, geridos no painel. */
+function store_get_social($config)    { return _meta_get($config, 'social', 'social.json') ?: []; }
+function store_set_social($config, $s) { return _meta_set($config, 'social', 'social.json', $s); }
+
+/* Sites & Sistemas: trabalhos publicados (link + pré-visualização). Público. */
+function store_get_sites($config)    { $v = _meta_get($config, 'sites', 'sites.json'); return is_array($v) ? $v : []; }
+function store_set_sites($config, $s) { return _meta_set($config, 'sites', 'sites.json', array_values($s)); }
+
+/* Segurança: slug secreto do painel (ocultar admin.html). Nunca é público. */
+function store_get_seg($config)    { return _meta_get($config, 'seg', 'seg.json') ?: []; }
+function store_set_seg($config, $s) { return _meta_set($config, 'seg', 'seg.json', $s); }
+
+/* Finanças internas (só admin). Lista de movimentos {id,data,desc,tipo,valor,categoria}. */
+function store_get_financas($config)    { $v = _meta_get($config, 'financas', 'financas.json'); return is_array($v) ? $v : []; }
+function store_set_financas($config, $f) { return _meta_set($config, 'financas', 'financas.json', array_values($f)); }
+
+/* SMTP gerido no painel (sobrepõe o config.php). Contém a palavra-passe → nunca público. */
+function store_get_smtp($config)    { return _meta_get($config, 'smtp', 'smtp.json') ?: []; }
+function store_set_smtp($config, $s) { return _meta_set($config, 'smtp', 'smtp.json', $s); }
+/* Devolve o $config com as definições SMTP do painel aplicadas por cima. */
+function ctg_apply_smtp($config) {
+    $s = store_get_smtp($config);
+    if (!empty($s) && is_array($s)) {
+        foreach (['smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass', 'from_email', 'from_name'] as $k) {
+            if (array_key_exists($k, $s) && $s[$k] !== '') $config[$k] = $s[$k];
+        }
+        if (array_key_exists('smtp_enabled', $s)) $config['smtp_enabled'] = !empty($s['smtp_enabled']);
+    }
+    return $config;
+}
+function ctg_admin_slug($config) {
+    $s = store_get_seg($config);
+    $slug = trim((string) ($s['admin_slug'] ?? ($config['admin_slug'] ?? '')));
+    /* Só letras/números/hífen, para caber num URL. */
+    return preg_replace('/[^a-zA-Z0-9_-]/', '', $slug);
+}
+/* URL do painel a que o admin deve ser encaminhado após entrar. */
+function ctg_painel_url($config) {
+    $slug = ctg_admin_slug($config);
+    return $slug !== '' ? ('painel.php?k=' . $slug) : 'painel.php';
+}
+
+/* Configuração social EFECTIVA: o que está guardado no painel tem prioridade
+   sobre os valores padrão do config.php. Usada por auth.php e conteudo.php. */
+function ctg_social($config) {
+    $s = store_get_social($config);
+    return [
+        'enabled'             => array_key_exists('enabled', $s) ? (bool) $s['enabled'] : true,
+        'google_client_id'    => trim((string) ($s['google_client_id']    ?? ($config['google_client_id']    ?? ''))),
+        'facebook_app_id'     => trim((string) ($s['facebook_app_id']      ?? ($config['facebook_app_id']     ?? ''))),
+        'facebook_app_secret' => trim((string) ($s['facebook_app_secret']  ?? ($config['facebook_app_secret'] ?? ''))),
+        'admin_email'         => strtolower(trim((string) ($s['admin_email'] ?? ($config['admin_email'] ?? '')))),
+    ];
+}
+
+/* -------------------------------------------------------------------------- */
+/* Entregas (Área de Cliente)                                                  */
+/* Mapa { leadId: { entregas:[{tipo,url,nome,note}], msg, entregue, data } }.  */
+/* Guardado fora do conteúdo público; só é lido por quem tiver e-mail+código.  */
+/* -------------------------------------------------------------------------- */
+function store_get_deliveries($config)      { return _meta_get($config, 'entregas', 'entregas.json') ?: []; }
+function store_set_deliveries($config, $d)  { return _meta_set($config, 'entregas', 'entregas.json', $d); }
+
+/* Guarda/atualiza a entrega de um lead específico. */
+function store_set_delivery($config, $leadId, $entrega) {
+    $todas = store_get_deliveries($config);
+    $todas[$leadId] = $entrega;
+    return store_set_deliveries($config, $todas);
+}
+function store_get_delivery($config, $leadId) {
+    $todas = store_get_deliveries($config);
+    return $todas[$leadId] ?? null;
+}
+
+/* Garante que existe a entrada de entrega de um lead e devolve todas. */
+function _entrega_slot(&$todas, $leadId) {
+    if (!isset($todas[$leadId]) || !is_array($todas[$leadId])) {
+        $todas[$leadId] = ['leadId' => $leadId, 'entregas' => [], 'msg' => '', 'entregue' => false];
+    }
+}
+
+/* Ficheiro carregado pelo CLIENTE num pedido (brief, referências…). */
+function store_add_cliente_ficheiro($config, $leadId, $ficheiro) {
+    $todas = store_get_deliveries($config);
+    _entrega_slot($todas, $leadId);
+    if (empty($todas[$leadId]['cliente_ficheiros']) || !is_array($todas[$leadId]['cliente_ficheiros'])) {
+        $todas[$leadId]['cliente_ficheiros'] = [];
+    }
+    $todas[$leadId]['cliente_ficheiros'][] = $ficheiro;
+    store_set_deliveries($config, $todas);
+    return $todas[$leadId]['cliente_ficheiros'];
+}
+
+/* Estado de pagamento de um pedido: 'nao' | 'parcial' | 'pago'. */
+function store_set_pagamento($config, $leadId, $estado) {
+    $todas = store_get_deliveries($config);
+    _entrega_slot($todas, $leadId);
+    $todas[$leadId]['pago'] = in_array($estado, ['nao', 'parcial', 'pago'], true) ? $estado : 'nao';
+    store_set_deliveries($config, $todas);
+    return $todas[$leadId]['pago'];
+}
+
+/* Registo (log) das actualizações do site por ZIP. */
+function store_get_update_log($config)    { $v = _meta_get($config, 'update_log', 'update_log.json'); return is_array($v) ? $v : []; }
+function store_add_update_log($config, $entry) {
+    $log = store_get_update_log($config);
+    array_unshift($log, $entry);
+    if (count($log) > 50) $log = array_slice($log, 0, 50);
+    _meta_set($config, 'update_log', 'update_log.json', $log);
+    return $log;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Limitação de tentativas (anti-força-bruta) para os logins.                 */
+/* Guarda, por chave (ex.: "login:IP"), as datas das últimas falhas dentro de */
+/* uma janela de tempo. Ao exceder o máximo, o acesso fica bloqueado até que  */
+/* a janela expire. Em sucesso, a chave é limpa.                              */
+/* -------------------------------------------------------------------------- */
+function ctg_client_ip() {
+    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $k) {
+        if (!empty($_SERVER[$k])) {
+            $ip = trim(explode(',', $_SERVER[$k])[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+        }
+    }
+    return '0.0.0.0';
+}
+function _rate_all($config)          { $v = _meta_get($config, 'ratelimit', 'ratelimit.json'); return is_array($v) ? $v : []; }
+function _rate_key($chave)           { return substr(hash('sha256', $chave), 0, 24); }
+/* Estado actual: ['bloqueado'=>bool, 'restam'=>seg, 'tentativas'=>int]. */
+function store_rate_status($config, $chave, $max = 8, $janela = 900) {
+    $todas = _rate_all($config);
+    $k = _rate_key($chave);
+    $agora = time();
+    $marcas = array_values(array_filter($todas[$k] ?? [], fn($t) => ($agora - (int) $t) < $janela));
+    $tentativas = count($marcas);
+    if ($tentativas >= $max) {
+        $restam = $janela - ($agora - (int) min($marcas));
+        return ['bloqueado' => true, 'restam' => max(1, $restam), 'tentativas' => $tentativas];
+    }
+    return ['bloqueado' => false, 'restam' => 0, 'tentativas' => $tentativas];
+}
+/* Regista uma falha (e limpa entradas antigas/outras chaves expiradas). */
+function store_rate_falha($config, $chave, $janela = 900) {
+    $todas = _rate_all($config);
+    $k = _rate_key($chave);
+    $agora = time();
+    $marcas = array_values(array_filter($todas[$k] ?? [], fn($t) => ($agora - (int) $t) < $janela));
+    $marcas[] = $agora;
+    if (count($marcas) > 50) $marcas = array_slice($marcas, -50);
+    $todas[$k] = $marcas;
+    /* Poda chaves totalmente expiradas para o ficheiro não crescer sem limite. */
+    foreach ($todas as $kk => $lista) {
+        $vivos = array_filter($lista, fn($t) => ($agora - (int) $t) < $janela);
+        if (!$vivos) unset($todas[$kk]); else $todas[$kk] = array_values($vivos);
+    }
+    _meta_set($config, 'ratelimit', 'ratelimit.json', $todas);
+}
+/* Limpa a chave após um sucesso. */
+function store_rate_limpar($config, $chave) {
+    $todas = _rate_all($config);
+    $k = _rate_key($chave);
+    if (isset($todas[$k])) { unset($todas[$k]); _meta_set($config, 'ratelimit', 'ratelimit.json', $todas); }
+}
+
+/* Adiciona um comentário a um pedido (cliente ou estúdio). Cria a entrada de
+   entrega se ainda não existir. Devolve a lista actualizada de comentários. */
+function store_add_comment($config, $leadId, $comentario) {
+    $todas = store_get_deliveries($config);
+    if (!isset($todas[$leadId]) || !is_array($todas[$leadId])) {
+        $todas[$leadId] = ['leadId' => $leadId, 'entregas' => [], 'msg' => '', 'entregue' => false];
+    }
+    if (empty($todas[$leadId]['comentarios']) || !is_array($todas[$leadId]['comentarios'])) {
+        $todas[$leadId]['comentarios'] = [];
+    }
+    $todas[$leadId]['comentarios'][] = $comentario;
+    store_set_deliveries($config, $todas);
+    return $todas[$leadId]['comentarios'];
+}
 
 /* -------------------------------------------------------------------------- */
 /* Atualização do site por ZIP                                                */

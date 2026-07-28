@@ -43,7 +43,7 @@
   line-height: 1;
 }
 .logo-name {
-  font-weight: 800;
+  font-weight: 700;
   font-size: 16px;
   letter-spacing: -0.02em;
 }
@@ -118,15 +118,15 @@
   width: 520px; height: 520px;
   background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
   top: -120px; right: -160px;
-  opacity: 0.32;
+  opacity: 0.24;
 }
 .hero-blob-b {
   width: 420px; height: 420px;
   background: radial-gradient(circle, var(--brand-mid) 0%, transparent 70%);
   bottom: -200px; left: -180px;
-  opacity: 0.18;
+  opacity: 0.16;
 }
-[data-theme="dark"] .hero-blob-a { opacity: 0.45; }
+[data-theme="dark"] .hero-blob-a { opacity: 0.34; }
 .hero-grid {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -288,7 +288,7 @@
 }
 .orbital-card-2 .oc-num {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--brand-deep);
 }
@@ -337,7 +337,7 @@
 }
 .mt-num {
   font-size: clamp(40px, 5vw, 64px);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
 }
@@ -445,7 +445,7 @@
 }
 .stat-num {
   font-size: clamp(40px, 4.4vw, 56px);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
   color: var(--ink);
@@ -523,7 +523,7 @@
 }
 .afs-num {
   font-size: 36px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
   color: var(--accent);
@@ -628,7 +628,7 @@
 }
 .service-title {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 .service-desc {

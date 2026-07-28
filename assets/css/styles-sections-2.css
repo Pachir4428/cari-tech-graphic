@@ -785,7 +785,7 @@
   color: var(--brand-deep);
   display: inline-flex;
   align-items: center; justify-content: center;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 18px;
 }
 .testimonial-name { font-weight: 700; font-size: 15px; }
@@ -993,6 +993,7 @@ a.contact-card:hover {
   display: inline-flex;
   align-items: center; justify-content: center;
   transition: all 0.2s ease;
+  font-size: 15px;
 }
 .socials a:hover {
   background: var(--accent);
@@ -1092,18 +1093,32 @@ a.contact-card:hover {
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .site-nav {
     position: fixed;
-    top: 70px; left: 0; right: 0;
+    top: 64px; left: 0; right: 0;
     background: var(--bg-elev);
     flex-direction: column;
-    padding: 24px;
-    gap: 16px;
+    padding: 20px 24px 24px;
+    gap: 14px;
     border-bottom: 1px solid var(--line);
-    transform: translateY(-120%);
-    transition: transform 0.3s ease;
-    z-index: 99;
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    /* Fechado: fora do ecrã E definitivamente inerte (não intercepta toques
+       nem fica sobreposto ao corpo do site). */
+    transform: translateY(-130%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.28s ease, visibility 0s linear 0.28s;
+    z-index: 190;
   }
-  .site-nav.open { transform: translateY(0); }
-  .header-cta { display: none; }
+  .site-nav.open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform 0.28s ease, opacity 0.28s ease, visibility 0s;
+  }
+  .header-cta, .login-btn { display: none; }
+  .nav-login { display: inline-flex !important; }
   .hamburger {
     display: flex;
     flex-direction: column;

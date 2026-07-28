@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área de Cliente — Cari Tech Graphic</title>
+  <meta name="description" content="Acompanhe os seus pedidos e receba as suas entregas na Área de Cliente da Cari Tech Graphic." />
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root{
+      /* Paleta viva mas profissional */
+      --brand-deep:#0B4E50; --brand-mid:#148486; --brand-soft:#e4f1f1;
+      --accent:#F5791C; --accent-2:#DB640C; --accent-soft:#fdefe1;
+      --ink:#1b2830; --muted:#6a7a80; --line:#e7edee; --card:#ffffff; --bg:#f4f7f7;
+      --ok:#2f9e6f; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;height:100%}
+    body{
+      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      color:var(--ink); background:var(--bg); min-height:100vh;
+    }
+    a{color:var(--brand-mid);text-decoration:none}
+    button{font-family:inherit}
+
+    /* ---------- Estrutura: sidebar fixo + main ---------- */
+    .app{min-height:100vh}
+    .side{
+      position:fixed; top:0; left:0; bottom:0; width:250px; z-index:20;
+      background:var(--brand-deep); color:#fff; padding:26px 20px;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .side .brand{display:flex;align-items:center;gap:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:18px;color:#fff;margin-bottom:26px}
+    .side .brand img{height:34px;width:auto;display:block;filter:brightness(0) invert(1)}
+    .side-nav{display:flex;flex-direction:column;gap:4px}
+    .side-nav .item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;color:rgba(255,255,255,.72);font-weight:600;font-size:14px;background:none;border:none;text-align:left;cursor:pointer;width:100%}
+    .side-nav .item i{width:18px;text-align:center;font-size:15px}
+    .side-nav .item.active,.side-nav .item:hover{background:rgba(255,255,255,.10);color:#fff}
+    .side-nav .item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
+    .side-foot{margin-top:auto;font-size:12px;color:rgba(255,255,255,.4);line-height:1.6}
+    .side-foot a{color:rgba(255,255,255,.6)}
+    .logout{margin-top:14px;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:none;font-weight:700;font-size:14px;cursor:pointer;width:100%}
+    .logout:hover{background:rgba(255,255,255,.16)}
+
+    .main{margin-left:250px;padding:30px 34px 60px;min-height:100vh}
+    .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+    .topbar h1{font-family:'Inter',sans-serif;font-size:26px;font-weight:700;margin:0}
+    .topbar .who{color:var(--muted);font-size:14px;margin-top:3px}
+    /* Controlos do topo: pesquisa + tema + notificações */
+    .tb-actions{display:flex;align-items:center;gap:10px}
+    .tb-search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted)}
+    .tb-search input{border:none;outline:none;background:none;font-size:13px;color:var(--ink);width:150px;font-family:inherit}
+    .tb-btn{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-size:15px;display:inline-flex;align-items:center;justify-content:center}
+    .tb-btn:hover{border-color:var(--brand-mid);color:var(--brand-mid)}
+    .tb-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+    .tb-notif{position:relative}
+    .tb-notif-panel{position:absolute;right:0;top:48px;width:300px;max-width:80vw;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(15,75,77,.5);z-index:30;overflow:hidden}
+    .tb-notif-head{padding:12px 15px;font-weight:700;font-size:13px;border-bottom:1px solid var(--line)}
+    .tb-notif-item{display:flex;gap:10px;align-items:flex-start;padding:11px 15px;border-bottom:1px solid var(--line);font-size:13px}
+    .tb-notif-item:last-child{border-bottom:none}
+    .tb-notif-item i{color:var(--ok);margin-top:2px}
+    .tb-notif-empty{padding:18px 15px;text-align:center;color:var(--muted);font-size:13px}
+    @media (max-width:560px){ .tb-search{display:none} }
+
+    /* ---------- Grid de pedidos ---------- */
+    .req-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+    .req-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;display:flex;flex-direction:column;box-shadow:0 8px 24px -18px rgba(15,75,77,.35)}
+    .req-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .req-title{font-family:'Inter',sans-serif;font-weight:700;font-size:16px;line-height:1.3}
+    .req-date{font-size:12px;color:var(--muted);margin-top:3px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-weight:700;font-size:11.5px;white-space:nowrap}
+    .pill i{font-size:9px}
+    .st-new{background:var(--brand-soft);color:var(--brand-mid)}
+    .st-contacted{background:var(--accent-soft);color:var(--accent-2)}
+    .st-won{background:#e7f5ee;color:var(--ok)}
+    .st-lost{background:#eef1f2;color:var(--muted)}
+    .req-msg{font-size:13.5px;color:var(--ink);background:#f8fafa;border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;margin:13px 0;line-height:1.55}
+    .sec-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;margin:8px 0 8px}
+    .deliver-msg{background:var(--accent-soft);border:1px solid #f4dcc7;border-radius:10px;padding:11px 13px;font-size:13px;color:#8a542a;margin-bottom:10px;line-height:1.5}
+    .dl{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;color:var(--ink);transition:border-color .15s,box-shadow .15s,transform .1s;background:#fff}
+    .dl:hover{border-color:var(--brand-mid);box-shadow:0 6px 18px -14px rgba(15,75,77,.5);transform:translateY(-1px)}
+    .dl .ic{width:38px;height:38px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:16px;background:var(--brand-soft);color:var(--brand-mid)}
+    .dl.link .ic{background:var(--accent-soft);color:var(--accent-2)}
+    .dl .tx{min-width:0}
+    .dl .tx b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+    .dl .tx small{color:var(--muted);font-size:12px}
+    .dl .go{margin-left:auto;color:var(--muted);flex:none;font-size:13px}
+    .empty{color:var(--muted);font-size:13px;background:#f8fafa;border:1px dashed var(--line);border-radius:11px;padding:14px;text-align:center;line-height:1.5}
+    .btn-all{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:4px;padding:11px;border:none;border-radius:10px;background:var(--brand-deep);color:#fff;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s}
+    .btn-all:hover{background:var(--brand-mid)}
+
+    /* Estado de pagamento + demos com marca de água */
+    .paybadge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-weight:700;font-size:11.5px;white-space:nowrap;margin-left:8px}
+    .paybadge i{font-size:9px}
+    .pay-pago{background:#e7f5ee;color:var(--ok)}
+    .pay-parcial{background:var(--accent-soft);color:var(--accent-2)}
+    .pay-nao{background:#fdeaea;color:#c0392b}
+    .demo{position:relative;border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:8px;background:#0e1719}
+    .demo img{display:block;width:100%;height:auto;max-height:280px;object-fit:cover;pointer-events:none;-webkit-user-drag:none;user-select:none}
+    .demo .demo-cap{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12.5px;color:#fff;background:linear-gradient(0deg,rgba(11,20,22,.92),rgba(11,20,22,.6))}
+    .demo .demo-cap i{color:var(--accent)}
+    .demo .demo-cap b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .locked{display:flex;align-items:center;gap:12px;padding:12px 13px;border:1px dashed var(--line);border-radius:11px;margin-bottom:8px;background:#f8fafa;color:var(--muted)}
+    .locked .ic{width:38px;height:38px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:16px;background:#fdeaea;color:#c0392b}
+    .locked .tx{min-width:0}
+    .locked .tx b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;color:var(--ink)}
+    .locked .tx small{font-size:12px}
+
+    /* Ficheiros enviados pelo cliente + upload */
+    .cfiles{margin-top:6px}
+    .cfile{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;font-size:13px;background:#fff}
+    .cfile i{color:var(--brand-mid)}
+    .cfile b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+    .cfile small{color:var(--muted);font-size:11.5px;flex:none}
+    .up-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 13px;border:1.5px dashed var(--brand-mid);border-radius:10px;background:var(--brand-soft);color:var(--brand-mid);font-weight:700;font-size:13px;cursor:pointer;width:100%;justify-content:center;transition:background .15s}
+    .up-btn:hover{background:var(--brand-soft);filter:brightness(.97)}
+    .up-btn.busy{opacity:.6;pointer-events:none}
+    :root:not([data-theme=light]) .cfile,:root[data-theme=dark] .cfile{background:#0e1719}
+    :root:not([data-theme=light]) .locked,:root[data-theme=dark] .locked{background:#0e1719}
+    :root:not([data-theme=light]) .empty{background:#0e1719}
+
+    /* Comentários */
+    .comments{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+    .cmt{display:flex;gap:9px;margin-bottom:9px}
+    .cmt .av{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+    .cmt.cliente .av{background:var(--accent)}
+    .cmt.studio .av{background:var(--brand-mid)}
+    .cmt .bd{background:#f6f9f9;border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.5;flex:1}
+    .cmt .bd .meta{font-size:11px;color:var(--muted);margin-top:3px}
+    .cmt-form{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
+    .cmt-form textarea{flex:1;min-height:40px;max-height:120px;resize:vertical;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13px;font-family:inherit;color:var(--ink);background:#fff}
+    .cmt-form textarea:focus{outline:none;border-color:var(--brand-mid);box-shadow:0 0 0 3px rgba(26,110,112,.12)}
+    .cmt-send{flex:none;width:42px;height:42px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:15px;cursor:pointer}
+    .cmt-send:hover{background:var(--accent-2)}
+    .cmt-send:disabled{opacity:.5;cursor:default}
+
+    /* ---------- Cartão de acesso (login por código) ---------- */
+    .gate-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .gate{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 28px;box-shadow:0 24px 60px -34px rgba(15,75,77,.5)}
+    .gate .brand{display:flex;align-items:center;gap:10px;justify-content:center;font-family:'Inter',sans-serif;font-weight:700;font-size:18px;color:var(--brand-deep);margin-bottom:16px}
+    .gate .brand img{height:38px;width:auto}
+    .gate h1{font-family:'Inter',sans-serif;font-size:22px;margin:0 0 6px;text-align:center}
+    .gate p.sub{color:var(--muted);font-size:14px;text-align:center;margin:0 0 20px;line-height:1.5}
+    .gate label{display:block;font-weight:600;font-size:13px;margin:0 0 6px}
+    .gate .field{margin-bottom:14px}
+    .gate input{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
+    .gate input:focus{outline:none;border-color:var(--brand-mid);box-shadow:0 0 0 4px rgba(26,110,112,.12)}
+    .gate input[readonly]{background:#f4f7f7;color:var(--muted)}
+    .gate input[name=codigo]{text-transform:uppercase;letter-spacing:.14em;font-weight:700}
+    .gate .btn{width:100%;padding:13px;border:none;border-radius:11px;cursor:pointer;font-size:15px;font-weight:700;color:#fff;background:var(--accent)}
+    .gate .btn:hover{background:var(--accent-2)}
+    .gate .btn:disabled{opacity:.6}
+    .msg{margin-top:12px;padding:11px 13px;border-radius:10px;font-size:13px;display:none}
+    .msg.err{display:block;background:#fdecec;color:#b3261e;border:1px solid #f7c9c6}
+    .msg.ok{display:block;background:#e7f5ee;color:#166c46;border:1px solid #b6e6cf}
+    .svc-thumb{border-radius:11px;overflow:hidden;aspect-ratio:16/10;background:var(--brand-soft);margin-bottom:12px}
+    .svc-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .gate .foot{text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)}
+
+    /* ---------- Mobile ---------- */
+    @media (max-width:860px){
+      .side{position:static;width:auto;flex-direction:row;align-items:center;gap:12px;padding:14px 16px}
+      .side .brand{margin-bottom:0;font-size:16px}
+      .side-nav{display:none}
+      .side-foot{display:none}
+      .logout{margin:0 0 0 auto;width:auto;padding:9px 14px}
+      .main{margin-left:0;padding:22px 16px 60px}
+      .req-grid{grid-template-columns:1fr}
+    }
+    /* Tema escuro — automático (sistema) e manual (data-theme) */
+    @media (prefers-color-scheme: dark){
+      :root:not([data-theme=light]){--ink:#e8eef0;--muted:#93a4ab;--line:#25333a;--card:#111a1c;--bg:#0b1214;--brand-soft:#12312f;--accent-soft:#2a1d12}
+      :root:not([data-theme=light]) .req-msg,:root:not([data-theme=light]) .empty,:root:not([data-theme=light]) .cmt .bd{background:#0e1719}
+      :root:not([data-theme=light]) .dl,:root:not([data-theme=light]) .gate input,:root:not([data-theme=light]) .cmt-form textarea{background:#0e1719}
+      :root:not([data-theme=light]) .gate input[readonly]{background:#0b1214}
+    }
+    :root[data-theme=dark]{--ink:#e8eef0;--muted:#93a4ab;--line:#25333a;--card:#111a1c;--bg:#0b1214;--brand-soft:#12312f;--accent-soft:#2a1d12}
+    :root[data-theme=dark] .req-msg,:root[data-theme=dark] .empty,:root[data-theme=dark] .cmt .bd{background:#0e1719}
+    :root[data-theme=dark] .dl,:root[data-theme=dark] .gate input,:root[data-theme=dark] .cmt-form textarea{background:#0e1719}
+    :root[data-theme=dark] .gate input[readonly]{background:#0b1214}
+  </style>
+</head>
+<body>
+  <!-- Portão de acesso por código (aparece com ?email= ou sem sessão) -->
+  <div class="gate-wrap" id="gateWrap" style="display:none">
+    <div class="gate">
+      <div class="brand" id="gateBrand"><span>Cari Tech Graphic</span></div>
+      <h1 id="gateTitle">A sua Área de Cliente</h1>
+      <p class="sub" id="gateSub">Introduza o código que recebeu no e-mail de confirmação do seu pedido.</p>
+      <form id="gateForm" autocomplete="off">
+        <div class="field">
+          <label for="email" id="gLabEmail">E-mail</label>
+          <input type="email" id="email" name="email" placeholder="o.seu@email.com" required />
+        </div>
+        <div class="field">
+          <label for="codigo" id="gLabCode">Código de acesso</label>
+          <input type="text" id="codigo" name="codigo" placeholder="Ex.: 3F9A2C" maxlength="16" required />
+        </div>
+        <button class="btn" type="submit" id="gateBtn">Entrar</button>
+        <div class="msg" id="msgBox"></div>
+      </form>
+      <div class="foot"><a href="entrar.html"><i class="fa-solid fa-arrow-left-long"></i> <span id="gLinkOther">Outro tipo de acesso</span></a> · <a href="index.html" id="gLinkBack">Voltar ao site</a></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="app" id="app" style="display:none">
+    <aside class="side">
+      <div class="brand" id="sideBrand"><span>Cari Tech Graphic</span></div>
+      <nav class="side-nav">
+        <button class="item active" id="navOrdersBtn" onclick="mostrarVista('orders')"><i class="fa-solid fa-box-open"></i> <span id="navMyOrders">Os meus pedidos</span> <span class="badge" id="navCount">0</span></button>
+        <button class="item" id="navServicesBtn" onclick="mostrarVista('services')"><i class="fa-solid fa-plus"></i> <span id="navServices">Serviços</span></button>
+        <button class="item" id="navContactBtn" onclick="mostrarVista('contact')"><i class="fa-solid fa-headset"></i> <span id="navTalk">Falar connosco</span></button>
+      </nav>
+      <div class="side-foot">
+        <span id="footHelp">Precisa de ajuda?</span><br><a href="index.html#contact" id="footTeam">Contacte a nossa equipa</a>
+      </div>
+      <button class="logout" onclick="sair()"><i class="fa-solid fa-right-from-bracket"></i> <span id="logoutLabel">Sair</span></button>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 id="greet">Os meus pedidos</h1>
+          <div class="who" id="who"></div>
+        </div>
+        <div class="tb-actions">
+          <label class="tb-search"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Pesquisar…" /></label>
+          <button class="tb-btn" id="langBtn" title="Idioma" aria-label="Idioma" style="width:auto;padding:0 12px;font-size:12px;font-weight:700;border-radius:999px"><i class="fa-solid fa-globe" style="margin-right:5px"></i><span id="langLabel">PT</span></button>
+          <button class="tb-btn" id="themeBtn" title="Tema" aria-label="Tema"><i class="fa-solid fa-moon"></i></button>
+          <div class="tb-notif">
+            <button class="tb-btn" id="bellBtn" title="Notificações" aria-label="Notificações"><i class="fa-solid fa-bell"></i><span class="tb-badge" id="bellBadge" style="display:none">0</span></button>
+            <div class="tb-notif-panel" id="notifPanel" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <div id="grid" class="req-grid"></div>
+      <div id="servicesView" style="display:none">
+        <p class="who" id="servicesSub" style="margin:-14px 0 18px"></p>
+        <div id="servicesGrid" class="req-grid"></div>
+      </div>
+      <div id="contactView" style="display:none;max-width:560px">
+        <p class="who" id="contactSub" style="margin:-14px 0 18px"></p>
+        <div class="req-card">
+          <textarea id="contactMsg" rows="5" style="width:100%;resize:vertical;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff"></textarea>
+          <button class="btn-all" id="contactBtn" onclick="enviarContacto()" style="margin-top:12px"><i class="fa-solid fa-paper-plane"></i> <span id="contactBtnLabel">Enviar mensagem</span></button>
+          <div id="contactMsgBox" class="msg" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    var CRED = { email:'', codigo:'' };
+    var PEDIDOS = [];
+
+    /* ---------- Idioma (PT / EN) ---------- */
+    var CI18N = {
+      pt: {
+        myOrders:'Os meus pedidos', newOrder:'Novo pedido', talkToUs:'Falar connosco', logout:'Sair',
+        needHelp:'Precisa de ajuda?', contactTeam:'Contacte a nossa equipa', searchPh:'Pesquisar…',
+        hi:'Olá', orders:'pedidos', order:'pedido',
+        deliveries:'Entregas', comments:'Comentários', noComments:'Sem comentários ainda.',
+        commentPh:'Escreva um comentário para o estúdio…', downloadAll:'Descarregar tudo',
+        transferFile:'Transferir ficheiro', openLink:'Abrir link',
+        noDeliveries:'Ainda sem entregas. Assim que este trabalho estiver pronto, aparece aqui — e será notificado.',
+        noOrders:'Ainda não encontrámos pedidos nesta conta. Faça um pedido no site e ele aparecerá aqui.',
+        noMatch:'Nenhum pedido corresponde à pesquisa.',
+        notifTitle:'Notificações', notifEmpty:'Sem novidades por agora.',
+        notifDeliveries:'Entregas disponíveis', notifReply:'Nova resposta do estúdio',
+        signout:'Sair / consultar outra conta',
+        gateTitle:'A sua Área de Cliente', gateSub:'Introduza o código que recebeu no e-mail de confirmação do seu pedido.',
+        gEmail:'E-mail', gCode:'Código de acesso', gEnter:'Entrar', gChecking:'A verificar…',
+        gOther:'Outro tipo de acesso', gBack:'Voltar ao site',
+        errLogin:'Não foi possível entrar.', errConn:'Erro de ligação. Tente novamente.',
+        stNew:'Pedido recebido', stContacted:'Em andamento', stWon:'Concluído', stLost:'Encerrado',
+        you:'Você',
+        servicesNav:'Serviços', servicesTitle:'Peça um serviço', servicesSub:'Escolha um serviço e peça sem sair da sua área.',
+        request:'Pedir', requesting:'A enviar…', requested:'Pedido!', reqSent:'Pedido enviado! Vamos entrar em contacto em breve.',
+        noServices:'Sem serviços disponíveis de momento.',
+        contactTitle:'Falar connosco', contactSub:'Envie-nos uma mensagem — respondemos por e-mail e aqui na sua área.',
+        contactMsgPh:'Escreva a sua mensagem…', contactSend:'Enviar mensagem', contactSending:'A enviar…', contactSent:'Mensagem enviada! Entraremos em contacto.',
+        payPaid:'Pago', payPartial:'Pagamento parcial', payUnpaid:'Por pagar',
+        demoTag:'Pré-visualização (demo)', afterPayment:'Descarga disponível após o pagamento', locked:'Bloqueado até ao pagamento',
+        yourFiles:'Os seus ficheiros', uploadFile:'Enviar ficheiro', uploading:'A enviar…', fileTooBig:'Ficheiro demasiado grande (máx. 15 MB).', noFilesYet:'Ainda não enviou ficheiros.',
+      },
+      en: {
+        myOrders:'My orders', newOrder:'New request', talkToUs:'Contact us', logout:'Log out',
+        needHelp:'Need help?', contactTeam:'Contact our team', searchPh:'Search…',
+        hi:'Hi', orders:'orders', order:'order',
+        deliveries:'Deliveries', comments:'Comments', noComments:'No comments yet.',
+        commentPh:'Write a comment to the studio…', downloadAll:'Download all',
+        transferFile:'Download file', openLink:'Open link',
+        noDeliveries:'No deliveries yet. As soon as this work is ready, it appears here — and you will be notified.',
+        noOrders:'We haven’t found orders on this account yet. Place a request on the site and it will appear here.',
+        noMatch:'No order matches the search.',
+        notifTitle:'Notifications', notifEmpty:'Nothing new for now.',
+        notifDeliveries:'Deliveries available', notifReply:'New reply from the studio',
+        signout:'Log out / check another account',
+        gateTitle:'Your Client Area', gateSub:'Enter the code you received in your order confirmation email.',
+        gEmail:'Email', gCode:'Access code', gEnter:'Sign in', gChecking:'Checking…',
+        gOther:'Other sign-in', gBack:'Back to site',
+        errLogin:'Could not sign in.', errConn:'Connection error. Please try again.',
+        stNew:'Order received', stContacted:'In progress', stWon:'Completed', stLost:'Closed',
+        you:'You',
+        servicesNav:'Services', servicesTitle:'Request a service', servicesSub:'Pick a service and request it without leaving your area.',
+        request:'Request', requesting:'Sending…', requested:'Requested!', reqSent:'Request sent! We will get in touch soon.',
+        noServices:'No services available right now.',
+        contactTitle:'Contact us', contactSub:'Send us a message — we reply by email and here in your area.',
+        contactMsgPh:'Write your message…', contactSend:'Send message', contactSending:'Sending…', contactSent:'Message sent! We will get in touch.',
+        payPaid:'Paid', payPartial:'Partial payment', payUnpaid:'Unpaid',
+        demoTag:'Preview (demo)', afterPayment:'Download available after payment', locked:'Locked until payment',
+        yourFiles:'Your files', uploadFile:'Upload file', uploading:'Uploading…', fileTooBig:'File too large (max 15 MB).', noFilesYet:'You haven\'t uploaded files yet.',
+      },
+    };
+    var LANG = 'pt'; try{ LANG = localStorage.getItem('ctg_cli_lang') || 'pt'; }catch(e){}
+    function T(k){ return (CI18N[LANG]||CI18N.pt)[k] || k; }
+    function estadoDe(status){ return T('st' + (status==='contacted'?'Contacted':status==='won'?'Won':status==='lost'?'Lost':'New')); }
+
+    var esc = function(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; };
+    var fmtData = function(iso){ if(!iso) return ''; var dt=new Date(iso); if(isNaN(dt)) return ''; return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}); };
+    var fmtDataHora = function(iso){ if(!iso) return ''; var dt=new Date(iso); if(isNaN(dt)) return ''; return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}); };
+    var inicial = function(s){ return (s||'?').trim().charAt(0).toUpperCase(); };
+
+    function isImage(nome){ var ext=(String(nome).split('.').pop()||'').toLowerCase(); return ['png','jpg','jpeg','gif','webp','bmp'].indexOf(ext)>=0; }
+    function demoUrl(leadId, url, dl){ return 'demo.php?lead='+encodeURIComponent(leadId)+'&file='+encodeURIComponent(url)+'&email='+encodeURIComponent(CRED.email)+'&codigo='+encodeURIComponent(CRED.codigo)+(dl?'&dl=1':''); }
+    function faFor(nome){
+      var ext=(String(nome).split('.').pop()||'').toLowerCase();
+      if(['png','jpg','jpeg','gif','webp','svg','bmp','tiff','ico'].indexOf(ext)>=0)return'fa-file-image';
+      if(ext==='pdf')return'fa-file-pdf';
+      if(['zip','rar','7z'].indexOf(ext)>=0)return'fa-file-zipper';
+      if(['mp4','mov','webm'].indexOf(ext)>=0)return'fa-file-video';
+      if(['mp3','wav','ogg'].indexOf(ext)>=0)return'fa-file-audio';
+      if(['doc','docx','txt','rtf'].indexOf(ext)>=0)return'fa-file-lines';
+      if(['xls','xlsx','csv'].indexOf(ext)>=0)return'fa-file-excel';
+      if(['ppt','pptx'].indexOf(ext)>=0)return'fa-file-powerpoint';
+      if(['ai','psd','eps','indd','cdr','sketch','fig','xd'].indexOf(ext)>=0)return'fa-swatchbook';
+      return'fa-file';
+    }
+
+    // Marca (logo do site, se existir; senão apenas o nome)
+    function aplicarMarca(branding){
+      var logo = branding && (branding.light || branding.dark);
+      if(!logo) return;
+      var side=document.getElementById('sideBrand');
+      var gate=document.getElementById('gateBrand');
+      if(side) side.innerHTML='<img src="'+logo+'" alt="Cari Tech Graphic">';
+      if(gate) gate.innerHTML='<img src="'+logo+'" alt="Cari Tech Graphic">';
+    }
+
+    // ---------- Render do dashboard ----------
+    function renderDashboard(d){
+      var cliente = d.cliente || {};
+      PEDIDOS = d.pedidos || [];
+      window.__clienteNome = cliente.email || '';
+      window.__nomeCompleto = cliente.nome || '';
+      window.__primeiroNome = (cliente.nome||'').split(' ')[0];
+      document.getElementById('greet').textContent = T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
+      document.getElementById('who').textContent = (cliente.email||'') + ' · ' + PEDIDOS.length + ' ' + (PEDIDOS.length===1?T('order'):T('orders'));
+      document.getElementById('navCount').textContent = PEDIDOS.length;
+
+      renderGrid(document.getElementById('search').value || '');
+      atualizarNotificacoes();
+
+      document.getElementById('gateWrap').style.display='none';
+      document.getElementById('app').style.display='block';
+      // Limpa o URL (esconde e-mail/código da barra de endereço).
+      if(location.search){ try{ history.replaceState(null,'','cliente.html'); }catch(e){} }
+    }
+
+    function renderGrid(q){
+      q = (q || '').trim().toLowerCase();
+      var grid = document.getElementById('grid');
+      var idxs = PEDIDOS.map(function(_,i){return i;}).filter(function(i){
+        if(!q) return true;
+        var p = PEDIDOS[i];
+        return ((p.servico||'')+' '+(p.mensagem||'')+' '+(p.estado||'')).toLowerCase().indexOf(q) >= 0;
+      });
+      if(!PEDIDOS.length){ grid.innerHTML = '<div class="empty">'+T('noOrders')+'</div>'; return; }
+      if(!idxs.length){ grid.innerHTML = '<div class="empty">'+T('noMatch')+'</div>'; return; }
+      grid.innerHTML = idxs.map(function(i){ return cardHtml(PEDIDOS[i], i); }).join('');
+    }
+
+    function atualizarNotificacoes(){
+      // Notificações = pedidos com entregas disponíveis ou resposta do estúdio
+      var novos = PEDIDOS.filter(function(p){
+        var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
+        var respStudio = (p.comentarios||[]).some(function(c){ return c.de==='studio'||c.de==='admin'; });
+        return temEntrega || respStudio;
+      });
+      var badge = document.getElementById('bellBadge');
+      if(novos.length){ badge.textContent = novos.length; badge.style.display='inline-flex'; }
+      else badge.style.display='none';
+      var panel = document.getElementById('notifPanel');
+      var html = '<div class="tb-notif-head"><i class="fa-solid fa-bell"></i> '+T('notifTitle')+'</div>';
+      if(!novos.length){ html += '<div class="tb-notif-empty">'+T('notifEmpty')+'</div>'; }
+      else {
+        html += novos.slice(0,8).map(function(p){
+          var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
+          var txt = temEntrega ? T('notifDeliveries') : T('notifReply');
+          return '<div class="tb-notif-item"><i class="fa-solid '+(temEntrega?'fa-box-open':'fa-comment-dots')+'"></i><div><b>'+esc(p.servico||'Pedido')+'</b><br><span style="color:var(--muted)">'+txt+'</span></div></div>';
+        }).join('');
+      }
+      panel.innerHTML = html;
+    }
+
+    function payInfo(pago){
+      if(pago==='pago') return {cls:'pay-pago', ic:'fa-circle-check', txt:T('payPaid')};
+      if(pago==='parcial') return {cls:'pay-parcial', ic:'fa-clock', txt:T('payPartial')};
+      return {cls:'pay-nao', ic:'fa-lock', txt:T('payUnpaid')};
+    }
+
+    function cardHtml(p, i){
+      var st = 'st-' + (p.status||'new');
+      var stIcon = p.status==='won'?'fa-circle-check':(p.status==='contacted'?'fa-spinner':(p.status==='lost'?'fa-circle-minus':'fa-circle-dot'));
+      var temEntrega = p.entrega && p.entrega.entregas && p.entrega.entregas.length;
+      var pago = p.pago || 'nao';
+      var pay = payInfo(pago);
+      var files = temEntrega ? p.entrega.entregas.filter(function(e){return e.tipo==='file';}) : [];
+      var h = '';
+      h += '<div class="req-card">';
+      h += ' <div class="req-top"><div><div class="req-title">'+esc(p.servico||'Pedido')+'</div><div class="req-date"><i class="fa-regular fa-calendar"></i> '+esc(fmtData(p.data))+'</div></div>';
+      h += '   <span class="pill '+st+'"><i class="fa-solid '+stIcon+'"></i> '+esc(estadoDe(p.status))+'</span></div>';
+      if(p.mensagem) h += ' <div class="req-msg">'+esc(p.mensagem)+'</div>';
+      h += ' <div class="sec-label"><i class="fa-solid fa-box"></i> '+T('deliveries')
+         + '<span class="paybadge '+pay.cls+'"><i class="fa-solid '+pay.ic+'"></i> '+pay.txt+'</span></div>';
+      if(temEntrega){
+        if(p.entrega.msg) h += ' <div class="deliver-msg"><i class="fa-solid fa-comment-dots"></i> '+esc(p.entrega.msg)+'</div>';
+        p.entrega.entregas.forEach(function(it){
+          var isFile = it.tipo==='file'; var nome=it.nome||it.url;
+          if(!isFile){
+            h += '<a class="dl link" href="'+esc(it.url)+'" target="_blank" rel="noopener">';
+            h += '<span class="ic"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>';
+            h += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):T('openLink'))+'</small></span>';
+            h += '<span class="go"><i class="fa-solid fa-arrow-right"></i></span></a>';
+            return;
+          }
+          if(pago==='pago'){
+            // Pago → descarga do ficheiro original (via demo.php)
+            h += '<a class="dl file" href="'+esc(demoUrl(p.id,it.url,true))+'" download>';
+            h += '<span class="ic"><i class="fa-solid '+faFor(nome)+'"></i></span>';
+            h += '<span class="tx"><b>'+esc(nome)+'</b><small>'+(it.note?esc(it.note):T('transferFile'))+'</small></span>';
+            h += '<span class="go"><i class="fa-solid fa-download"></i></span></a>';
+          } else if(isImage(nome)){
+            // Por pagar + imagem → pré-visualização com marca de água (sem descarga)
+            h += '<div class="demo"><img src="'+esc(demoUrl(p.id,it.url,false))+'" alt="'+esc(T('demoTag'))+'" loading="lazy" oncontextmenu="return false">';
+            h += '<div class="demo-cap"><i class="fa-solid fa-lock"></i> <b>'+esc(nome)+'</b> · '+esc(T('afterPayment'))+'</div></div>';
+          } else {
+            // Por pagar + outro tipo → bloqueado
+            h += '<div class="locked"><span class="ic"><i class="fa-solid fa-lock"></i></span>';
+            h += '<span class="tx"><b>'+esc(nome)+'</b><small>'+esc(T('afterPayment'))+'</small></span></div>';
+          }
+        });
+        if(pago==='pago' && files.length>1) h += '<button class="btn-all" onclick="baixarTudo('+i+')"><i class="fa-solid fa-download"></i> '+T('downloadAll')+' ('+files.length+')</button>';
+      } else {
+        h += '<div class="empty">'+T('noDeliveries')+'</div>';
+      }
+      // Ficheiros enviados pelo cliente (brief/referências) + upload
+      h += '<div class="sec-label" style="margin-top:14px"><i class="fa-solid fa-paperclip"></i> '+T('yourFiles')+'</div>';
+      h += '<div class="cfiles" id="cfiles-'+i+'">'+clienteFicheirosHtml(p.cliente_ficheiros||[])+'</div>';
+      h += '<input type="file" id="up-'+i+'" style="display:none" onchange="enviarFicheiro('+i+')">';
+      h += '<label class="up-btn" id="upbtn-'+i+'" for="up-'+i+'"><i class="fa-solid fa-cloud-arrow-up"></i> <span>'+T('uploadFile')+'</span></label>';
+      // Comentários
+      h += '<div class="comments"><div class="sec-label"><i class="fa-solid fa-comments"></i> '+T('comments')+'</div>';
+      h += '<div id="cmts-'+i+'">'+comentariosHtml(p.comentarios||[])+'</div>';
+      h += '<div class="cmt-form"><textarea id="cmt-'+i+'" placeholder="'+T('commentPh')+'"></textarea>';
+      h += '<button class="cmt-send" id="cmtbtn-'+i+'" onclick="comentar('+i+')" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button></div>';
+      h += '</div>';
+      h += '</div>';
+      return h;
+    }
+
+    function clienteFicheirosHtml(lista){
+      if(!lista || !lista.length) return '<div class="empty" style="padding:10px;font-size:12.5px">'+T('noFilesYet')+'</div>';
+      return lista.map(function(f){
+        return '<div class="cfile"><i class="fa-solid '+faFor(f.nome||f.url)+'"></i><b>'+esc(f.nome||f.url)+'</b><small>'+esc(fmtData(f.data))+'</small></div>';
+      }).join('');
+    }
+
+    function comentariosHtml(lista){
+      if(!lista || !lista.length) return '<div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">'+T('noComments')+'</div>';
+      return lista.map(function(c){
+        var studio = c.de==='studio' || c.de==='admin';
+        var quem = studio ? 'Cari Tech' : (c.nome || T('you'));
+        return '<div class="cmt '+(studio?'studio':'cliente')+'"><div class="av">'+inicial(quem)+'</div>'
+          +'<div class="bd">'+esc(c.texto)+'<div class="meta">'+esc(quem)+' · '+esc(fmtDataHora(c.data))+'</div></div></div>';
+      }).join('');
+    }
+
+    // Descarregar todos os ficheiros de um pedido (só quando pago)
+    window.baixarTudo = function(i){
+      var p = PEDIDOS[i];
+      if((p.pago||'nao')!=='pago') return;
+      var entregas = (p.entrega && p.entrega.entregas) || [];
+      var files = entregas.filter(function(e){return e.tipo==='file';});
+      files.forEach(function(f,k){
+        setTimeout(function(){
+          var a=document.createElement('a'); a.href=demoUrl(p.id,f.url,true); a.download=f.nome||''; document.body.appendChild(a); a.click(); a.remove();
+        }, k*500);
+      });
+    };
+
+    // Upload de ficheiro pelo cliente (brief/referências)
+    window.enviarFicheiro = function(i){
+      var inp=document.getElementById('up-'+i); if(!inp.files||!inp.files.length) return;
+      var file=inp.files[0];
+      if(file.size > 15*1024*1024){ alert(T('fileTooBig')); inp.value=''; return; }
+      var btn=document.getElementById('upbtn-'+i), lbl=btn.querySelector('span'), orig=lbl.textContent;
+      btn.classList.add('busy'); lbl.textContent=T('uploading');
+      var fd=new FormData();
+      fd.append('email',CRED.email); fd.append('codigo',CRED.codigo); fd.append('leadId',PEDIDOS[i].id); fd.append('file',file);
+      fetch('cliente-api.php?action=upload',{method:'POST',body:fd})
+      .then(function(r){return r.json();}).then(function(j){
+        btn.classList.remove('busy'); lbl.textContent=orig; inp.value='';
+        if(j.ok){ PEDIDOS[i].cliente_ficheiros=j.cliente_ficheiros; document.getElementById('cfiles-'+i).innerHTML=clienteFicheirosHtml(j.cliente_ficheiros); }
+        else alert(j.message||'Não foi possível enviar.');
+      }).catch(function(){ btn.classList.remove('busy'); lbl.textContent=orig; alert('Erro de ligação.'); });
+    };
+
+    // Enviar comentário
+    window.comentar = function(i){
+      var ta=document.getElementById('cmt-'+i); var texto=(ta.value||'').trim(); if(!texto) return;
+      var btn=document.getElementById('cmtbtn-'+i); btn.disabled=true;
+      fetch('cliente-api.php?action=comment',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:CRED.email,codigo:CRED.codigo,leadId:PEDIDOS[i].id,texto:texto})})
+      .then(function(r){return r.json();}).then(function(j){
+        btn.disabled=false;
+        if(j.ok){ PEDIDOS[i].comentarios=j.comentarios; document.getElementById('cmts-'+i).innerHTML=comentariosHtml(j.comentarios); ta.value=''; }
+        else alert(j.message||'Não foi possível comentar.');
+      }).catch(function(){ btn.disabled=false; alert('Erro de ligação.'); });
+    };
+
+    // ---------- Vistas: pedidos / serviços ----------
+    var SERVICOS = null;
+    window.mostrarVista = function(v){
+      window.__view = v;
+      var orders=document.getElementById('grid'), sv=document.getElementById('servicesView'), cv=document.getElementById('contactView');
+      orders.style.display='none'; sv.style.display='none'; cv.style.display='none';
+      document.getElementById('navOrdersBtn').classList.toggle('active', v==='orders');
+      document.getElementById('navServicesBtn').classList.toggle('active', v==='services');
+      document.getElementById('navContactBtn').classList.toggle('active', v==='contact');
+      if(v==='services'){
+        sv.style.display='block';
+        document.getElementById('greet').textContent=T('servicesTitle');
+        document.getElementById('servicesSub').textContent=T('servicesSub');
+        document.getElementById('who').textContent='';
+        if(SERVICOS===null){ carregarServicos(); } else renderServicos();
+      } else if(v==='contact'){
+        cv.style.display='block';
+        document.getElementById('greet').textContent=T('contactTitle');
+        document.getElementById('contactSub').textContent=T('contactSub');
+        document.getElementById('contactMsg').placeholder=T('contactMsgPh');
+        document.getElementById('contactBtnLabel').textContent=T('contactSend');
+        document.getElementById('who').textContent='';
+      } else {
+        orders.style.display='grid';
+        document.getElementById('greet').textContent=T('hi')+(window.__primeiroNome?', '+window.__primeiroNome:'');
+        document.getElementById('who').textContent=(window.__clienteNome||'')+' · '+PEDIDOS.length+' '+(PEDIDOS.length===1?T('order'):T('orders'));
+      }
+    };
+    window.enviarContacto = function(){
+      var ta=document.getElementById('contactMsg'), texto=(ta.value||'').trim();
+      var box=document.getElementById('contactMsgBox');
+      if(texto.length<10){ box.textContent=T('commentPh'); box.className='msg err'; return; }
+      var btn=document.getElementById('contactBtn'); btn.disabled=true;
+      document.getElementById('contactBtnLabel').textContent=T('contactSending');
+      box.className='msg';
+      fetch('enviar.php',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ name: window.__nomeCompleto||CRED.email, email: CRED.email, service:'Contacto (Área de Cliente)', message: texto })})
+      .then(function(r){return r.json();}).then(function(){
+        btn.disabled=false; document.getElementById('contactBtnLabel').textContent=T('contactSend');
+        ta.value=''; box.textContent=T('contactSent'); box.className='msg ok';
+      }).catch(function(){ btn.disabled=false; document.getElementById('contactBtnLabel').textContent=T('contactSend'); box.textContent=T('errConn'); box.className='msg err'; });
+    };
+    function carregarServicos(){
+      fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){
+        SERVICOS = (d && Array.isArray(d.services)) ? d.services : [];
+        renderServicos();
+      }).catch(function(){ SERVICOS=[]; renderServicos(); });
+    }
+    function renderServicos(){
+      var g=document.getElementById('servicesGrid');
+      if(!SERVICOS || !SERVICOS.length){ g.innerHTML='<div class="empty">'+T('noServices')+'</div>'; return; }
+      g.innerHTML = SERVICOS.map(function(s,i){
+        var nome = s.t || s.nome || 'Serviço';
+        var desc = s.d || s.desc || '';
+        var img = s.img || '';
+        return '<div class="req-card">'
+          + (img?'<div class="svc-thumb"><img src="'+esc(img)+'" alt="'+esc(nome)+'"></div>':'')
+          + '<div class="req-title" style="margin-bottom:6px">'+esc(nome)+'</div>'
+          + (desc?'<div class="req-date" style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">'+esc(desc)+'</div>':'')
+          + (s.price?'<div class="pill st-new" style="align-self:flex-start;margin-bottom:12px"><i class="fa-solid fa-tag"></i> '+esc(s.price)+'</div>':'')
+          + '<button class="btn-all" id="svcbtn-'+i+'" onclick="pedirServico('+i+')" style="margin-top:auto"><i class="fa-solid fa-paper-plane"></i> '+T('request')+'</button></div>';
+      }).join('');
+    }
+    window.pedirServico = function(i){
+      var s = SERVICOS[i]; if(!s) return;
+      var nome = s.t || s.nome || 'Serviço';
+      var btn = document.getElementById('svcbtn-'+i); btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> '+T('requesting');
+      fetch('enviar.php',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ name: window.__nomeCompleto || CRED.email, email: CRED.email, service: nome,
+          message: 'Pedido de "'+nome+'" feito através da Área de Cliente.' })})
+      .then(function(r){return r.json();}).then(function(j){
+        btn.innerHTML='<i class="fa-solid fa-check"></i> '+T('requested');
+        setTimeout(function(){ carregar(CRED.email, CRED.codigo, true).then(function(){ mostrarVista('orders'); }).catch(function(){}); }, 900);
+      }).catch(function(){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> '+T('request'); alert(T('errConn')); });
+    };
+
+    window.sair = function(){ try{localStorage.removeItem('ctg_cli');}catch(e){}; location.href='entrar.html'; };
+
+    // ---------- Autenticação ----------
+    var msgBox=document.getElementById('msgBox'), gateBtn=document.getElementById('gateBtn');
+    var showErr=function(t){ msgBox.textContent=t; msgBox.className='msg err'; };
+    var hideErr=function(){ msgBox.className='msg'; };
+
+    function carregar(email, codigo, auto){
+      return fetch('cliente-api.php?action=deliverables',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,codigo:codigo})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        if(!res.ok||!res.j.ok){
+          if(auto){ try{localStorage.removeItem('ctg_cli');}catch(e){} abrirPortao(email); }
+          throw res.j.message||'Credenciais incorrectas.';
+        }
+        CRED={email:email,codigo:codigo};
+        guardarSessao(true);
+        iniciarInatividade();
+        renderDashboard(res.j);
+      });
+    }
+
+    // Sessão persistente com validade de 15 min de inactividade.
+    var lastSave=0;
+    function guardarSessao(force){
+      if(!CRED.email) return;
+      var now=Date.now();
+      if(!force && now-lastSave<30000) return;
+      lastSave=now;
+      try{ localStorage.setItem('ctg_cli', JSON.stringify({email:CRED.email,codigo:CRED.codigo,ts:now})); }catch(e){}
+    }
+    var idleTimer=null;
+    function iniciarInatividade(){
+      clearTimeout(idleTimer);
+      idleTimer=setTimeout(function(){ sair(); }, 15*60*1000);
+    }
+    ['click','keydown','mousemove','scroll','touchstart'].forEach(function(ev){
+      document.addEventListener(ev, function(){ if(CRED.email){ guardarSessao(false); iniciarInatividade(); } }, {passive:true});
+    });
+
+    function abrirPortao(prefEmail){
+      document.getElementById('app').style.display='none';
+      document.getElementById('gateWrap').style.display='flex';
+      if(prefEmail){ var e=document.getElementById('email'); e.value=prefEmail; e.setAttribute('readonly','readonly'); document.getElementById('codigo').focus(); }
+    }
+
+    document.getElementById('codigo').addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
+    document.getElementById('gateForm').addEventListener('submit', function(e){
+      e.preventDefault(); hideErr(); gateBtn.disabled=true; gateBtn.textContent=T('gChecking');
+      var email=document.getElementById('email').value.trim(), codigo=document.getElementById('codigo').value.trim();
+      carregar(email,codigo,false).catch(function(msg){ gateBtn.disabled=false; gateBtn.textContent=T('gEnter'); showErr(typeof msg==='string'?msg:T('errLogin')); });
+    });
+
+    // ---------- Idioma: aplicar textos estáticos + alternar ----------
+    function applyStaticLang(){
+      var set=function(id,val){ var el=document.getElementById(id); if(el) el.textContent=val; };
+      set('navMyOrders',T('myOrders')); set('navServices',T('servicesNav')); set('navTalk',T('talkToUs'));
+      set('footHelp',T('needHelp')); set('footTeam',T('contactTeam')); set('logoutLabel',T('logout'));
+      set('gateTitle',T('gateTitle')); set('gateSub',T('gateSub')); set('gLabEmail',T('gEmail'));
+      set('gLabCode',T('gCode')); set('gLinkOther',T('gOther')); set('gLinkBack',T('gBack'));
+      set('langLabel', LANG.toUpperCase());
+      var s=document.getElementById('search'); if(s) s.placeholder=T('searchPh');
+      var gb=document.getElementById('gateBtn'); if(gb && !gb.disabled) gb.textContent=T('gEnter');
+      document.documentElement.setAttribute('lang', LANG);
+    }
+    applyStaticLang();
+    document.getElementById('langBtn').addEventListener('click', function(){
+      LANG = (LANG==='pt') ? 'en' : 'pt';
+      try{ localStorage.setItem('ctg_cli_lang', LANG); }catch(e){}
+      applyStaticLang();
+      if(document.getElementById('app').style.display!=='none'){
+        renderGrid(document.getElementById('search').value||'');
+        atualizarNotificacoes();
+        mostrarVista(window.__view||'orders');
+      }
+    });
+
+    // Pesquisa
+    document.getElementById('search').addEventListener('input', function(){ renderGrid(this.value); });
+
+    // Alternador de tema (claro/escuro), persistido
+    (function(){
+      var saved = null; try{ saved = localStorage.getItem('ctg_cli_theme'); }catch(e){}
+      if(saved){ document.documentElement.setAttribute('data-theme', saved); }
+      var setIcon = function(){
+        var dark = document.documentElement.getAttribute('data-theme')==='dark' ||
+          (!document.documentElement.getAttribute('data-theme') && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.querySelector('#themeBtn i').className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      };
+      setIcon();
+      document.getElementById('themeBtn').addEventListener('click', function(){
+        var cur = document.documentElement.getAttribute('data-theme');
+        var dark = cur==='dark' || (!cur && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+        var next = dark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try{ localStorage.setItem('ctg_cli_theme', next); }catch(e){}
+        setIcon();
+      });
+    })();
+
+    // Sino de notificações
+    document.getElementById('bellBtn').addEventListener('click', function(e){
+      e.stopPropagation();
+      var p = document.getElementById('notifPanel');
+      p.style.display = p.style.display==='none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', function(){ document.getElementById('notifPanel').style.display='none'; });
+
+    // Marca (logo)
+    fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){ aplicarMarca(d&&d.branding); }).catch(function(){});
+
+    // Fluxo de entrada:
+    //  1) link do e-mail (?email=&codigo=) → entra directo
+    //  2) sessão guardada (localStorage, dentro dos 15 min) → entra directo
+    //  3) só ?email= → portão só-código
+    //  4) nada → login unificado (entrar.html)
+    (function(){
+      var params=new URLSearchParams(location.search);
+      var emailParam=params.get('email');
+      var codigoParam=params.get('codigo');
+      if(emailParam && codigoParam){
+        carregar(emailParam, String(codigoParam).toUpperCase(), false).catch(function(){ abrirPortao(emailParam); });
+        return;
+      }
+      var raw=null; try{ raw=localStorage.getItem('ctg_cli'); }catch(e){}
+      if(raw){
+        try{
+          var c=JSON.parse(raw);
+          if(c&&c.email&&c.codigo&&c.ts&&(Date.now()-c.ts)<15*60*1000){ carregar(c.email,c.codigo,true).catch(function(){}); return; }
+          localStorage.removeItem('ctg_cli');
+        }catch(e){}
+      }
+      if(emailParam){ abrirPortao(emailParam); return; }
+      location.replace('entrar.html');
+    })();
+  </script>
+</body>
+</html>
