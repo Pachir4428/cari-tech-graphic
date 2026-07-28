@@ -173,6 +173,9 @@ function guardar_ficheiro_entrega($file, $maxMB = 25) {
     if ($ext === '' || in_array($ext, $proibidas, true) || !in_array($ext, $permitidas, true)) {
         return ['ok' => false, 'message' => 'Tipo de ficheiro não permitido.'];
     }
+    if (!ctg_ficheiro_seguro($file['tmp_name'], $ext)) {
+        return ['ok' => false, 'message' => 'Ficheiro rejeitado por segurança: o conteúdo não corresponde ao tipo declarado.'];
+    }
     $dir = __DIR__ . '/uploads/entregas';
     @mkdir($dir, 0755, true);
     // Nome no disco: aleatório (evita colisões e path traversal); guarda o nome original nos metadados.

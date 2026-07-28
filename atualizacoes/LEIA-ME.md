@@ -4,7 +4,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 `cari-tech-graphic-1.0.0.zip`, `cari-tech-graphic-1.0.1.zip`, etc.
 **Use sempre o de número mais alto.**
 
-> Versão actual: **1.7.0** — a mesma que aparece no canto do painel de administração.
+> Versão actual: **1.8.0** — a mesma que aparece no canto do painel de administração.
 
 ## Como atualizar o site (2 minutos)
 
@@ -26,6 +26,7 @@ Cada versão tem um pacote `.zip` aqui, no formato **1.0.0** (maior.menor.correc
 
 | Versão | Alterações |
 |--------|------------|
+| **1.8.0** | **Pré-visualização de imagens sem pagar (com marca de água) e de conteúdo longo.** A imagem de uma entrega por pagar pode agora ser **ampliada** (clicar para abrir em grande) — o cliente vê bem a proposta, sempre com **marca de água** e sem poder descarregar até pagar. Quando o texto de um pedido (ou a mensagem da entrega) é grande, aparece um **resumo** com «Ver mais / Ver menos». **Segurança dos uploads reforçada:** os ficheiros enviados (pelo estúdio e pelo cliente) passam a ser verificados pelo **conteúdo real** — rejeita imagens falsas e ficheiros SVG/HTML com scripts embutidos. |
 | **1.7.0** | **Segurança reforçada e reversão de atualizações.** **Token CSRF** em todas as ações do painel (impede pedidos forjados a partir de outros sites). **Content-Security-Policy** no `.htaccess` (limita a origem de scripts, estilos e ligações — reduz o risco de código malicioso injectado). **Backup automático antes de cada atualização por ZIP:** o painel guarda a versão anterior e passa a ter um botão **«Reverter»** no histórico, para repor o site num clique se algo correr mal (mantém sempre os 5 backups mais recentes; `config.php`, `dados/` e `uploads/` são sempre preservados). |
 | **1.6.0** | **Ícone de perfil na Área de Cliente:** avatar no canto superior direito com um menu rápido (nome + e-mail, "Falar connosco", "Instalar aplicação" e "Sair") — mais intuitivo. **Aplicação instalável (PWA):** o site pode agora ser **instalado como app** no telemóvel e no computador (ecrã inicial próprio, ícone da marca, arranque em ecrã cheio), com **service worker** que o torna mais resistente a falhas de ligação e mostra uma **página elegante quando está offline**. Nunca guarda em cache dados dinâmicos (pedidos/entregas) — esses são sempre obtidos em tempo real. |
 | **1.5.1** | **E-mail automático ao confirmar pagamento:** ao marcar um pedido como **Pago** no painel, o cliente recebe um e-mail (com o visual da marca) a avisar que os ficheiros já estão disponíveis para descarregar, com botão directo para a Área de Cliente. **Proteção anti-força-bruta nos logins:** o acesso fica temporariamente bloqueado (por IP) após demasiadas tentativas falhadas — no login unificado (8 tentativas/15 min), na Área de Cliente e no acesso às demos. |

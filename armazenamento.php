@@ -328,6 +328,37 @@ function store_add_cliente_ficheiro($config, $leadId, $ficheiro) {
     return $todas[$leadId]['cliente_ficheiros'];
 }
 
+/* Verificação de segurança do CONTEÚDO de um ficheiro carregado (não basta a
+   extensão). Rejeita SVG/HTML/XML com scripts embutidos (risco de XSS) e
+   ficheiros que dizem ser imagem mas não são. Devolve true se for seguro. */
+function ctg_ficheiro_seguro($tmp, $ext) {
+    $ext = strtolower((string) $ext);
+    if (!is_file($tmp)) return false;
+    // Formatos que podem conter código activo → verifica o conteúdo.
+    if (in_array($ext, ['svg', 'html', 'htm', 'xml', 'xhtml'], true)) {
+        $c = @file_get_contents($tmp, false, null, 0, 300000);
+        if ($c !== false && preg_match('/<script\b|javascript:|\son\w+\s*=|<iframe\b|<embed\b|<object\b|<!ENTITY/i', $c)) {
+            return false;
+        }
+    }
+    // Extensão de imagem tem mesmo de ser uma imagem válida.
+    if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'], true) && function_exists('getimagesize')) {
+        if (@getimagesize($tmp) === false) return false;
+    }
+    // Coerência com o MIME real (quando o finfo está disponível): nunca aceitar
+    // conteúdo executável (PHP, scripts, ELF) seja qual for a extensão.
+    if (function_exists('finfo_open')) {
+        $fi = finfo_open(FILEINFO_MIME_TYPE);
+        if ($fi) {
+            $mime = (string) finfo_file($fi, $tmp);
+            finfo_close($fi);
+            $perigosos = ['text/x-php', 'application/x-php', 'application/x-httpd-php', 'application/x-executable', 'application/x-dosexec', 'application/x-sh', 'text/x-shellscript'];
+            if (in_array($mime, $perigosos, true)) return false;
+        }
+    }
+    return true;
+}
+
 /* Estado de pagamento de um pedido: 'nao' | 'parcial' | 'pago'. */
 function store_set_pagamento($config, $leadId, $estado) {
     $todas = store_get_deliveries($config);
