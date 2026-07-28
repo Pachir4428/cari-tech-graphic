@@ -13,7 +13,7 @@
  */
 'use strict';
 
-const CACHE = 'ctg-v114';
+const CACHE = 'ctg-v115';
 const APP_SHELL = [
   './',
   './index.html',

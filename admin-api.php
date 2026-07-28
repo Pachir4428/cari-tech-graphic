@@ -38,6 +38,12 @@ if (!empty($_SESSION['ctg_admin'])) {
     }
 }
 
+/* Token CSRF por sessão (defesa em profundidade, para além do SameSite=Strict).
+   Gerado assim que a sessão de admin existe; enviado ao cliente via ?action=session. */
+if (!empty($_SESSION['ctg_admin']) && empty($_SESSION['ctg_csrf'])) {
+    $_SESSION['ctg_csrf'] = bin2hex(random_bytes(32));
+}
+
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store');
@@ -184,6 +190,17 @@ $action = $_GET['action'] ?? '';
 $body   = json_decode(file_get_contents('php://input'), true);
 if (!is_array($body)) $body = $_POST;
 
+/* --- Protecção CSRF -------------------------------------------------------- */
+/* Qualquer pedido POST autenticado (excepto o próprio login, que ainda não tem
+   sessão) tem de trazer o token CSRF da sessão, no cabeçalho X-CSRF-Token ou no
+   campo _csrf. Bloqueia pedidos forjados a partir de outros sites. */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && autenticado() && $action !== 'login') {
+    $tok = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? (is_array($body) ? ($body['_csrf'] ?? '') : '');
+    if (empty($_SESSION['ctg_csrf']) || !is_string($tok) || !hash_equals($_SESSION['ctg_csrf'], $tok)) {
+        responder(false, ['message' => 'Sessão expirada ou pedido inválido. Recarregue a página e tente novamente.'], 403);
+    }
+}
+
 /* --- Rotas ----------------------------------------------------------------- */
 switch ($action) {
     case 'login':
@@ -219,7 +236,7 @@ switch ($action) {
         responder(true, ['message' => 'Sessão terminada.']);
 
     case 'session':
-        responder(true, ['authenticated' => autenticado()]);
+        responder(true, ['authenticated' => autenticado(), 'csrf' => (autenticado() ? ($_SESSION['ctg_csrf'] ?? '') : '')]);
 
     case 'leads':
         exigir_login();
@@ -536,12 +553,26 @@ switch ($action) {
             'data'    => date('c'),
             'count'   => (int) $resultado['count'],
             'ficheiro'=> (string) ($_FILES['zip']['name'] ?? ''),
+            'backup'  => (string) ($resultado['backup'] ?? ''),
         ]);
         responder(true, ['message' => "Site actualizado. {$resultado['count']} ficheiro(s) actualizado(s).", 'count' => $resultado['count']]);
 
     case 'update-log':
         exigir_login();
-        responder(true, ['log' => store_get_update_log($config)]);
+        responder(true, ['log' => store_get_update_log($config), 'backups' => atualizacao_backups(__DIR__)]);
+
+    case 'update-restore':
+        exigir_login();
+        $bkp = (string) ($body['backup'] ?? '');
+        $r = atualizacao_reverter(__DIR__, $bkp);
+        if (!$r['ok']) responder(false, ['message' => $r['message']], 400);
+        store_add_update_log($config, [
+            'data'    => date('c'),
+            'count'   => (int) $r['count'],
+            'ficheiro'=> 'Reposição do backup ' . $r['backup'],
+            'backup'  => '',
+        ]);
+        responder(true, ['message' => "Reposição concluída. {$r['count']} ficheiro(s) repostos.", 'count' => $r['count']]);
 
     default:
         responder(false, ['message' => 'Acção desconhecida.'], 400);
