@@ -33,11 +33,17 @@ function App() {
   const [portfolioDetail, setPortfolioDetail] = React.useState(null);
   const [cart, setCart] = React.useState([]);
   const [cartOpen, setCartOpen] = React.useState(false);
+  const [descService, setDescService] = React.useState(''); // serviço à espera da descrição
   const t = window.I18N[lang];
 
   const openLead = (svc = '') => { setLeadService(svc); setLeadOpen(true); };
-  const addToCart = (svc) => { setCart((c) => (c.includes(svc) ? c : [...c, svc])); setCartOpen(true); };
-  const removeFromCart = (svc) => setCart((c) => c.filter((x) => x !== svc));
+  const addToCart = (svc) => setDescService(svc); // abre o popup de descrição antes de adicionar
+  const confirmAddToCart = (desc) => {
+    setCart((c) => [...c, { id: Date.now() + '-' + c.length, service: descService, desc }]);
+    setDescService('');
+    setCartOpen(true);
+  };
+  const removeFromCart = (id) => setCart((c) => c.filter((x) => x.id !== id));
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -101,6 +107,7 @@ function App() {
       <WhatsAppFab />
       <CartFab count={cart.length} onOpen={() => setCartOpen(true)} />
       <CartModal open={cartOpen} onClose={() => setCartOpen(false)} items={cart} onRemove={removeFromCart} onClear={() => setCart([])} />
+      <ServiceDescModal open={!!descService} onClose={() => setDescService('')} service={descService} onConfirm={confirmAddToCart} />
       <LeadModal open={leadOpen} onClose={() => setLeadOpen(false)} t={t} prefilledService={leadService} />
       <ServiceModal open={!!serviceDetail} service={serviceDetail} onClose={() => setServiceDetail(null)} onRequest={openLead} t={t} />
       <PortfolioModal open={!!portfolioDetail} item={portfolioDetail} onClose={() => setPortfolioDetail(null)} onRequest={openLead} />

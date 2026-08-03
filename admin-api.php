@@ -282,6 +282,7 @@ switch ($action) {
             'contact'      => $c['contact']      ?? null,
             'branding'     => store_get_branding($config),
             'payments'     => store_get_payments($config),
+            'mozpayment'   => store_get_mozpayment($config),
             'social'       => ctg_social($config),
             'sites'        => store_get_sites($config),
             'seg'          => ['admin_slug' => ctg_admin_slug($config)],
@@ -306,6 +307,18 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         store_set_payments($config, $p);
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'mozpayment-save':
+        exigir_login();
+        $m = $body['mozpayment'] ?? null;
+        if (!is_array($m)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        store_set_mozpayment($config, [
+            'mpesaEnabled'  => !empty($m['mpesaEnabled']),
+            'mpesaCarteira' => trim((string) ($m['mpesaCarteira'] ?? '')),
+            'emolaEnabled'  => !empty($m['emolaEnabled']),
+            'emolaCarteira' => trim((string) ($m['emolaCarteira'] ?? '')),
+        ]);
+        responder(true, ['message' => 'Pagamento automático guardado.']);
 
     case 'smtp-save':
         exigir_login();

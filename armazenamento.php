@@ -235,6 +235,12 @@ function store_set_branding($config, $b) { return _meta_set($config, 'branding',
 function store_get_payments($config)   { return _meta_get($config, 'payments', 'payments.json') ?: []; }
 function store_set_payments($config, $p) { return _meta_set($config, 'payments', 'payments.json', $p); }
 
+/* Gateway MozPayment (M-Pesa / e-Mola automáticos no checkout). A carteira
+   (ID da conta MozPayment) NUNCA é pública — só o admin a vê/edita; o site
+   público só sabe se cada método está activo (ver conteudo.php). */
+function store_get_mozpayment($config)   { return _meta_get($config, 'mozpayment', 'mozpayment.json') ?: []; }
+function store_set_mozpayment($config, $m) { return _meta_set($config, 'mozpayment', 'mozpayment.json', $m); }
+
 /* Login social: IDs/segredos do Google e Facebook, geridos no painel. */
 function store_get_social($config)    { return _meta_get($config, 'social', 'social.json') ?: []; }
 function store_set_social($config, $s) { return _meta_set($config, 'social', 'social.json', $s); }

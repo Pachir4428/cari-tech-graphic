@@ -429,16 +429,123 @@ function CartFab({ count, onOpen }) {
   );
 }
 
+// ---------- Popup: descrição do que o cliente quer (ao adicionar ao pedido) ----------
+function ServiceDescModal({ open, onClose, service, onConfirm }) {
+  const [desc, setDesc] = useS4('');
+  const [error, setError] = useS4('');
+  useE4(() => { if (open) { setDesc(''); setError(''); } }, [open, service]);
+  const confirmar = () => {
+    if (desc.trim().length < 5) { setError('Descreva em poucas palavras o que precisa.'); return; }
+    onConfirm(desc.trim());
+  };
+  return (
+    <Modal open={open} onClose={onClose} size="sm">
+      <div className="desc-modal">
+        <div className="eyebrow" style={{ color: 'var(--accent)' }}>Adicionar ao pedido</div>
+        <h3 className="h-section" style={{ fontSize: 24, marginTop: 6 }}>{service}</h3>
+        <p style={{ color: 'var(--ink-muted)', fontSize: 14, marginTop: 6 }}>
+          O que precisa exactamente para este serviço? Quanto mais detalhe, melhor a proposta.
+        </p>
+        <div className={`field ${error ? 'error' : ''}`} style={{ marginTop: 10 }}>
+          <label>Descrição</label>
+          <textarea
+            rows="4" value={desc} autoFocus
+            onChange={(e) => { setDesc(e.target.value); setError(''); }}
+            placeholder="Ex.: Preciso de um logótipo moderno em tons de laranja, com variante clara e escura…"
+          />
+          <div className="field-error">{error}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
+          <button type="button" className="btn btn-accent" onClick={confirmar}>
+            Adicionar ao pedido<Icon.Arrow size={14} />
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ---------- Pagamento automático (MozPayment: M-Pesa / e-Mola) ----------
+function GatewayPay({ leadId, email, codigo, gateway }) {
+  const disponiveis = [];
+  if (gateway && gateway.mpesa) disponiveis.push('mpesa');
+  if (gateway && gateway.emola) disponiveis.push('emola');
+  const [metodo, setMetodo] = useS4(disponiveis[0] || 'mpesa');
+  const [numero, setNumero] = useS4('');
+  const [valor, setValor] = useS4('');
+  const [status, setStatus] = useS4('idle'); // idle | sending | sent | error
+  const [feedback, setFeedback] = useS4('');
+  useE4(() => { if (disponiveis[0]) setMetodo(disponiveis[0]); }, [gateway]);
+  if (!disponiveis.length) return null;
+
+  const pagar = async (e) => {
+    e.preventDefault();
+    if (numero.replace(/\D/g, '').length < 9) { setFeedback('Indique um número de telemóvel válido.'); setStatus('error'); return; }
+    const v = parseFloat(String(valor).replace(',', '.'));
+    if (!v || v <= 0) { setFeedback('Indique o valor a pagar.'); setStatus('error'); return; }
+    setStatus('sending'); setFeedback('Enviámos um pedido de confirmação para o seu telemóvel — aprove-o para concluir.');
+    try {
+      const res = await window.payGateway({ leadId, email, codigo, metodo, numero: numero.replace(/\D/g, ''), valor: v });
+      setStatus('sent'); setFeedback(res.message || 'Pagamento confirmado! Obrigado.');
+    } catch (err) {
+      setStatus('error'); setFeedback(err.message || 'Não foi possível confirmar o pagamento.');
+    }
+  };
+
+  if (status === 'sent') {
+    return (
+      <div className="gateway-pay">
+        <div className="lead-success" style={{ padding: '10px 0' }}>
+          <div className="ls-icon"><Icon.Check size={22} /></div><h4>{feedback}</h4>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="gateway-pay">
+      <div className="cart-pay-head"><i className="fa-solid fa-mobile-screen-button" aria-hidden="true" /> Pagar agora (automático)</div>
+      <form onSubmit={pagar}>
+        {disponiveis.length > 1 && (
+          <div className="gw-methods">
+            {disponiveis.map((m) => (
+              <label key={m} className={`gw-method ${metodo === m ? 'active' : ''}`}>
+                <input type="radio" name="gw-metodo" value={m} checked={metodo === m} onChange={() => setMetodo(m)} />
+                {m === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
+              </label>
+            ))}
+          </div>
+        )}
+        <div className="cf-row">
+          <div className="field"><label>Número {metodo === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</label><input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" /><div className="field-error" /></div>
+          <div className="field"><label>Valor (MT)</label><input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" /><div className="field-error" /></div>
+        </div>
+        {feedback && <p style={{ fontSize: 13, fontWeight: 600, color: status === 'error' ? 'var(--danger,#e5484d)' : 'var(--ink-soft)' }}>{feedback}</p>}
+        <button type="submit" className="btn btn-accent" disabled={status === 'sending'} style={{ marginTop: 4 }}>
+          {status === 'sending' ? 'A confirmar…' : `Pagar com ${metodo === 'mpesa' ? 'M-Pesa' : 'e-Mola'}`}<Icon.Arrow size={14} />
+        </button>
+      </form>
+    </div>
+  );
+}
+
 function CartModal({ open, onClose, items, onRemove, onClear }) {
   const [form, setForm] = useS4({ name: '', email: '', phone: '' });
   const [status, setStatus] = useS4('idle');
   const [feedback, setFeedback] = useS4('');
   const [pay, setPay] = useS4({});
+  const [gateway, setGateway] = useS4({});
+  const [order, setOrder] = useS4(null); // { leadId, codigo, email } depois de enviar
   useE4(() => {
-    if (open) { setStatus('idle'); setFeedback(''); }
-    window.loadContent().then((c) => { if (c && c.payments) setPay(c.payments); });
+    if (open) { setStatus('idle'); setFeedback(''); setOrder(null); }
+    window.loadContent().then((c) => {
+      if (c && c.payments) setPay(c.payments);
+      if (c && c.gateway) setGateway(c.gateway);
+    });
   }, [open]);
   const hasPay = pay && pay.enabled && (pay.mpesa || pay.emola || pay.bank || pay.onlineLink);
+  const resumo = (it) => it.service + (it.desc ? ' — ' + it.desc : '');
 
   const submit = async (e) => {
     e.preventDefault();
@@ -446,19 +553,19 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
       setFeedback('Preencha o nome e um e-mail válido.'); return;
     }
     setStatus('sending'); setFeedback('');
-    const msg = 'Pedido de serviços:\n- ' + items.join('\n- ');
+    const msg = 'Pedido de serviços:\n- ' + items.map(resumo).join('\n- ');
     try {
-      const res = await window.sendLead({ name: form.name, email: form.email, phone: form.phone, service: items[0] || 'Vários serviços', message: msg });
+      const res = await window.sendLead({ name: form.name, email: form.email, phone: form.phone, service: (items[0] && items[0].service) || 'Vários serviços', message: msg });
       setStatus('sent'); setFeedback(res.message || 'Pedido enviado! Entraremos em contacto em breve.');
+      if (res.leadId && res.codigo) setOrder({ leadId: res.leadId, codigo: res.codigo, email: form.email });
       onClear();
-      setTimeout(() => { onClose(); setStatus('idle'); }, 2600);
     } catch (err) {
       setStatus('error'); setFeedback('Não foi possível enviar agora. Continue pelo WhatsApp.');
     }
   };
   const wa = () => window.open(window.buildWhatsAppLink({
     name: form.name, email: form.email, phone: form.phone,
-    service: 'Vários serviços', message: 'Pedido de serviços: ' + items.join(', '),
+    service: 'Vários serviços', message: 'Pedido de serviços: ' + items.map(resumo).join(', '),
   }), '_blank', 'noopener');
 
   return (
@@ -466,22 +573,28 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
       <div className="cart-modal">
         <div className="eyebrow" style={{ color: 'var(--accent)' }}>Pedido de serviços</div>
         <h3 className="h-section" style={{ fontSize: 28, marginTop: 6 }}>Finalizar pedido</h3>
-        {items.length === 0 ? (
+        {items.length === 0 && !order ? (
           <p style={{ color: 'var(--ink-muted)', marginTop: 12 }}>
             O seu pedido está vazio. Explore os serviços e clique em <strong>“Adicionar ao pedido”</strong>.
           </p>
         ) : (
           <>
-            <ul className="cart-list">
-              {items.map((s, i) => (
-                <li key={i}>
-                  <Icon.Check size={14} /><span>{s}</span>
-                  <button type="button" onClick={() => onRemove(s)} aria-label="Remover">
-                    <i className="fa-solid fa-xmark" aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {!order && (
+              <ul className="cart-list">
+                {items.map((it) => (
+                  <li key={it.id}>
+                    <Icon.Check size={14} />
+                    <div className="cart-item-info">
+                      <span>{it.service}</span>
+                      {it.desc && <div className="cart-item-desc">{it.desc}</div>}
+                    </div>
+                    <button type="button" onClick={() => onRemove(it.id)} aria-label="Remover">
+                      <i className="fa-solid fa-xmark" aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             {status === 'sent' ? (
               <div className="lead-success"><div className="ls-icon"><Icon.Check size={28} /></div><h4>{feedback}</h4></div>
             ) : (
@@ -502,6 +615,7 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                 </div>
               </form>
             )}
+            {order && <GatewayPay leadId={order.leadId} email={order.email} codigo={order.codigo} gateway={gateway} />}
             {hasPay && (
               <div className="cart-pay">
                 <div className="cart-pay-head"><i className="fa-solid fa-credit-card" aria-hidden="true" /> Formas de pagamento</div>
@@ -574,4 +688,4 @@ function SitesFeitos({ t }) {
   );
 }
 
-Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant, CartFab, CartModal, SitesFeitos });
+Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant, CartFab, CartModal, ServiceDescModal, GatewayPay, SitesFeitos });

@@ -91,11 +91,12 @@ if ($fh = @fopen($csvPath, 'a')) {
 
 /* Código de acesso do cliente (para a Área de Cliente / entregas). Curto e legível. */
 $codigo = strtoupper(bin2hex(random_bytes(3))); // 6 caracteres hex
+$leadId = bin2hex(random_bytes(8));
 
 /* Grava o lead no armazenamento (MySQL se configurado, senão dados/leads.json).
    É a fonte usada pelo painel admin (com id e estado). */
 store_add_lead($config, [
-    'id'       => bin2hex(random_bytes(8)),
+    'id'       => $leadId,
     'data'     => date('c'),
     'nome'     => $nome,
     'email'    => $email,
@@ -162,11 +163,13 @@ if (($config['send_receipt'] ?? true) && filter_var($email, FILTER_VALIDATE_EMAI
 /* devolvemos sucesso e oferecemos o WhatsApp como alternativa imediata.      */
 /* -------------------------------------------------------------------------- */
 if ($enviado) {
-    responder(true, 'Mensagem enviada com sucesso. Entraremos em contacto em breve.');
+    responder(true, 'Mensagem enviada com sucesso. Entraremos em contacto em breve.', ['leadId' => $leadId, 'codigo' => $codigo]);
 }
 
 responder(true, 'Recebemos o seu pedido. Se preferir uma resposta imediata, fale connosco pelo WhatsApp.', [
     'email_delivered' => false,
     'whatsapp'        => $config['whatsapp'] ?? null,
+    'leadId'          => $leadId,
+    'codigo'          => $codigo,
 ]);
 

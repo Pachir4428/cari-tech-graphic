@@ -232,12 +232,26 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
   font-weight: 600; font-size: 14px;
 }
 .cart-list li span { flex: 1; }
+.cart-list li .cart-item-info { flex: 1; min-width: 0; }
+.cart-item-desc { font-weight: 500; font-size: 12.5px; color: var(--ink-muted); margin-top: 3px; line-height: 1.4; }
 .cart-list li button {
   border: none; background: none; color: var(--ink-muted); cursor: pointer;
   width: 26px; height: 26px; border-radius: 8px; font-size: 14px;
 }
 .cart-list li button:hover { background: var(--danger, #ef4444); color: #fff; }
 .cart-form { display: grid; gap: 12px; }
+.desc-modal { padding: 34px 32px; }
+@media (max-width: 640px) { .desc-modal { padding: 26px 20px; } }
+.gateway-pay { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+.gateway-pay form { display: grid; gap: 12px; }
+.gw-methods { display: flex; gap: 8px; flex-wrap: wrap; }
+.gw-method {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink-soft);
+}
+.gw-method input { accent-color: var(--accent); }
+.gw-method.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
 @media (max-width: 640px) {
   .cart-fab { left: 16px; bottom: 84px; height: 46px; padding: 0 16px 0 15px; font-size: 14px; }
 }
