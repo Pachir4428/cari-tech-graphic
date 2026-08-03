@@ -34,9 +34,11 @@ function Modal({ open, onClose, children, size = 'md' }) {
 // ---------- Lead/Quote Form Modal ----------
 function LeadModal({ open, onClose, t, prefilledService = '' }) {
   const [form, setForm] = useS4({ name: '', email: '', phone: '', service: '', message: '', website: '' });
+  const [files, setFiles] = useS4([]);
   const [errors, setErrors] = useS4({});
   const [status, setStatus] = useS4('idle');
   const [feedback, setFeedback] = useS4('');
+  const [order, setOrder] = useS4(null); // { codigo, email } depois de enviar
 
   useE4(() => {
     if (open) {
@@ -44,6 +46,8 @@ function LeadModal({ open, onClose, t, prefilledService = '' }) {
       setStatus('idle');
       setErrors({});
       setFeedback('');
+      setFiles([]);
+      setOrder(null);
     }
   }, [open, prefilledService]);
 
@@ -51,6 +55,8 @@ function LeadModal({ open, onClose, t, prefilledService = '' }) {
     setForm((f) => ({ ...f, [k]: v }));
     setErrors((e) => ({ ...e, [k]: undefined }));
   };
+  const addFiles = (lista) => setFiles((f) => [...f, ...Array.from(lista || [])].slice(0, 5));
+  const removeFile = (i) => setFiles((f) => f.filter((_, idx) => idx !== i));
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = t.contact.err_name;
@@ -66,9 +72,14 @@ function LeadModal({ open, onClose, t, prefilledService = '' }) {
     setFeedback('');
     try {
       const res = await window.sendLead(form);
+      if (res.leadId && res.codigo && files.length) {
+        for (const file of files) {
+          try { await window.uploadClienteFicheiro(file, { leadId: res.leadId, email: form.email, codigo: res.codigo }); } catch (e) { /* falha isolada não bloqueia o pedido */ }
+        }
+      }
       setStatus('sent');
       setFeedback(res.message || t.contact.success);
-      setTimeout(() => { onClose(); setStatus('idle'); }, 3200);
+      if (res.codigo) setOrder({ codigo: res.codigo, email: form.email });
     } catch (err) {
       setStatus('error');
       setFeedback('Não foi possível enviar agora. Continue pelo WhatsApp.');
@@ -100,6 +111,20 @@ function LeadModal({ open, onClose, t, prefilledService = '' }) {
               <div className="ls-icon"><Icon.Check size={28} /></div>
               <h4>{t.contact.success}</h4>
               <p>Vamos contactá-lo brevemente.</p>
+              {order && (
+                <div className="order-code-box">
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>O seu código de acesso (é também a sua senha na Área de Cliente):</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+                    <code style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.05em', color: 'var(--brand-mid)' }}>{order.codigo}</code>
+                    <CopyCode codigo={order.codigo} />
+                  </div>
+                  <a className="btn btn-ghost" style={{ marginTop: 10 }}
+                    href={`cliente.html?email=${encodeURIComponent(order.email)}&codigo=${encodeURIComponent(order.codigo)}`}
+                    target="_blank" rel="noreferrer noopener">
+                    <i className="fa-solid fa-magnifying-glass" aria-hidden="true" /> Consultar o meu pedido
+                  </a>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -134,6 +159,23 @@ function LeadModal({ open, onClose, t, prefilledService = '' }) {
                 <label>{t.contact.message}</label>
                 <textarea rows="4" value={form.message} onChange={(e) => update('message', e.target.value)} placeholder={t.contact.placeholder_message} />
                 <div className="field-error">{errors.message}</div>
+              </div>
+              <div className="field">
+                <label>Anexos (opcional)</label>
+                <label className="attach-btn">
+                  <i className="fa-solid fa-paperclip" aria-hidden="true" /> Escolher ficheiros
+                  <input type="file" multiple style={{ display: 'none' }} onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
+                </label>
+                {files.length > 0 && (
+                  <ul className="attach-list">
+                    {files.map((f, i) => (
+                      <li key={i}>
+                        <i className="fa-solid fa-file" aria-hidden="true" /><span>{f.name}</span>
+                        <button type="button" onClick={() => removeFile(i)} aria-label="Remover"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               {/* Honeypot anti-spam — invisível para humanos */}
               <input
@@ -432,11 +474,14 @@ function CartFab({ count, onOpen }) {
 // ---------- Popup: descrição do que o cliente quer (ao adicionar ao pedido) ----------
 function ServiceDescModal({ open, onClose, service, onConfirm }) {
   const [desc, setDesc] = useS4('');
+  const [files, setFiles] = useS4([]);
   const [error, setError] = useS4('');
-  useE4(() => { if (open) { setDesc(''); setError(''); } }, [open, service]);
+  useE4(() => { if (open) { setDesc(''); setFiles([]); setError(''); } }, [open, service]);
+  const addFiles = (lista) => setFiles((f) => [...f, ...Array.from(lista || [])].slice(0, 5));
+  const removeFile = (i) => setFiles((f) => f.filter((_, idx) => idx !== i));
   const confirmar = () => {
     if (desc.trim().length < 5) { setError('Descreva em poucas palavras o que precisa.'); return; }
-    onConfirm(desc.trim());
+    onConfirm(desc.trim(), files);
   };
   return (
     <Modal open={open} onClose={onClose} size="sm">
@@ -455,6 +500,23 @@ function ServiceDescModal({ open, onClose, service, onConfirm }) {
           />
           <div className="field-error">{error}</div>
         </div>
+        <div className="field" style={{ marginTop: 4 }}>
+          <label>Anexos (opcional) — referências, brief, imagens…</label>
+          <label className="attach-btn">
+            <i className="fa-solid fa-paperclip" aria-hidden="true" /> Escolher ficheiros
+            <input type="file" multiple style={{ display: 'none' }} onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
+          </label>
+          {files.length > 0 && (
+            <ul className="attach-list">
+              {files.map((f, i) => (
+                <li key={i}>
+                  <i className="fa-solid fa-file" aria-hidden="true" /><span>{f.name}</span>
+                  <button type="button" onClick={() => removeFile(i)} aria-label="Remover"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
           <button type="button" className="btn btn-accent" onClick={confirmar}>
             Adicionar ao pedido<Icon.Arrow size={14} />
@@ -466,158 +528,145 @@ function ServiceDescModal({ open, onClose, service, onConfirm }) {
   );
 }
 
-// ---------- Pagamento automático (MozPayment: M-Pesa / e-Mola) ----------
-function GatewayPay({ leadId, email, codigo, gateway }) {
-  const disponiveis = [];
-  if (gateway && gateway.mpesa) disponiveis.push('mpesa');
-  if (gateway && gateway.emola) disponiveis.push('emola');
-  const [metodo, setMetodo] = useS4(disponiveis[0] || 'mpesa');
-  const [numero, setNumero] = useS4('');
-  const [valor, setValor] = useS4('');
-  const [status, setStatus] = useS4('idle'); // idle | sending | sent | error
-  const [feedback, setFeedback] = useS4('');
-  useE4(() => { if (disponiveis[0]) setMetodo(disponiveis[0]); }, [gateway]);
-  if (!disponiveis.length) return null;
-
-  const pagar = async (e) => {
-    e.preventDefault();
-    if (numero.replace(/\D/g, '').length < 9) { setFeedback('Indique um número de telemóvel válido.'); setStatus('error'); return; }
-    const v = parseFloat(String(valor).replace(',', '.'));
-    if (!v || v <= 0) { setFeedback('Indique o valor a pagar.'); setStatus('error'); return; }
-    setStatus('sending'); setFeedback('Enviámos um pedido de confirmação para o seu telemóvel — aprove-o para concluir.');
-    try {
-      const res = await window.payGateway({ leadId, email, codigo, metodo, numero: numero.replace(/\D/g, ''), valor: v });
-      setStatus('sent'); setFeedback(res.message || 'Pagamento confirmado! Obrigado.');
-    } catch (err) {
-      setStatus('error'); setFeedback(err.message || 'Não foi possível confirmar o pagamento.');
-    }
+// ---------- Checkout: dados + forma de pagamento (Carteira / Transferência / Link) ----------
+function CopyCode({ codigo }) {
+  const [copiado, setCopiado] = useS4(false);
+  const copiar = () => {
+    if (navigator.clipboard) navigator.clipboard.writeText(codigo).then(() => setCopiado(true)).catch(() => {});
+    setTimeout(() => setCopiado(false), 2000);
   };
-
-  if (status === 'sent') {
-    return (
-      <div className="gateway-pay">
-        <div className="lead-success" style={{ padding: '10px 0' }}>
-          <div className="ls-icon"><Icon.Check size={22} /></div><h4>{feedback}</h4>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="gateway-pay">
-      <div className="cart-pay-head"><i className="fa-solid fa-mobile-screen-button" aria-hidden="true" /> Pagar agora (automático)</div>
-      <form onSubmit={pagar}>
-        {disponiveis.length > 1 && (
-          <div className="gw-methods">
-            {disponiveis.map((m) => (
-              <label key={m} className={`gw-method ${metodo === m ? 'active' : ''}`}>
-                <input type="radio" name="gw-metodo" value={m} checked={metodo === m} onChange={() => setMetodo(m)} />
-                {m === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
-              </label>
-            ))}
-          </div>
-        )}
-        <div className="cf-row">
-          <div className="field"><label>Número {metodo === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</label><input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" /><div className="field-error" /></div>
-          <div className="field"><label>Valor (MT)</label><input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" /><div className="field-error" /></div>
-        </div>
-        {feedback && <p style={{ fontSize: 13, fontWeight: 600, color: status === 'error' ? 'var(--danger,#e5484d)' : 'var(--ink-soft)' }}>{feedback}</p>}
-        <button type="submit" className="btn btn-accent" disabled={status === 'sending'} style={{ marginTop: 4 }}>
-          {status === 'sending' ? 'A confirmar…' : `Pagar com ${metodo === 'mpesa' ? 'M-Pesa' : 'e-Mola'}`}<Icon.Arrow size={14} />
-        </button>
-      </form>
-    </div>
+    <button type="button" className="btn btn-ghost" onClick={copiar} style={{ padding: '6px 12px', fontSize: 12.5 }}>
+      <i className={`fa-solid ${copiado ? 'fa-check' : 'fa-copy'}`} aria-hidden="true" /> {copiado ? 'Copiado' : 'Copiar'}
+    </button>
   );
 }
 
 function CartModal({ open, onClose, items, onRemove, onClear }) {
   const [form, setForm] = useS4({ name: '', email: '', phone: '' });
-  const [status, setStatus] = useS4('idle');
+  const [stage, setStage] = useS4('form'); // form | sending | done
   const [feedback, setFeedback] = useS4('');
   const [pay, setPay] = useS4({});
   const [gateway, setGateway] = useS4({});
-  const [order, setOrder] = useS4(null); // { leadId, codigo, email } depois de enviar
+  const [order, setOrder] = useS4(null); // { leadId, codigo, email }
+  const [payMetodo, setPayMetodo] = useS4('carteira'); // carteira | link | transferencia
+  const [walletMetodo, setWalletMetodo] = useS4('mpesa'); // mpesa | emola
+  const [numero, setNumero] = useS4('');
+  const [valor, setValor] = useS4('');
+  const [payStatus, setPayStatus] = useS4(null); // { ok, message } — resultado do pagamento por carteira
+  const [uploadNote, setUploadNote] = useS4('');
+
   useE4(() => {
-    if (open) { setStatus('idle'); setFeedback(''); setOrder(null); }
+    if (open) { setStage('form'); setFeedback(''); setOrder(null); setPayStatus(null); setUploadNote(''); }
     window.loadContent().then((c) => {
       if (c && c.payments) setPay(c.payments);
       if (c && c.gateway) setGateway(c.gateway);
     });
   }, [open]);
-  const hasPay = pay && pay.enabled && (pay.mpesa || pay.emola || pay.bank || pay.onlineLink);
-  const resumo = (it) => it.service + (it.desc ? ' — ' + it.desc : '');
 
-  const submit = async (e) => {
+  const abas = [];
+  if (gateway.mpesa || gateway.emola) abas.push('carteira');
+  if (pay.enabled && pay.onlineLink) abas.push('link');
+  if (pay.enabled && (pay.mpesa || pay.emola || pay.bank)) abas.push('transferencia');
+  useE4(() => { if (abas.length && !abas.includes(payMetodo)) setPayMetodo(abas[0]); }, [gateway, pay]);
+  useE4(() => { if (gateway.mpesa) setWalletMetodo('mpesa'); else if (gateway.emola) setWalletMetodo('emola'); }, [gateway]);
+
+  const resumo = (it) => it.service + (it.desc ? ' — ' + it.desc : '');
+  const nomeAba = (k) => (k === 'carteira' ? 'Carteira (M-Pesa/e-Mola)' : k === 'link' ? 'Link / Cartão' : 'Transferência');
+
+  const enviarAnexos = async (leadId, email, codigo) => {
+    const comFicheiros = items.filter((it) => it.files && it.files.length);
+    if (!comFicheiros.length) return;
+    setUploadNote('A enviar anexos…');
+    let enviados = 0, total = 0;
+    for (const it of comFicheiros) {
+      for (const file of it.files) {
+        total++;
+        try { await window.uploadClienteFicheiro(file, { leadId, email, codigo }); enviados++; } catch (e) { /* falha isolada não bloqueia o pedido */ }
+      }
+    }
+    setUploadNote(enviados === total ? `${enviados} anexo(s) enviado(s).` : `${enviados} de ${total} anexo(s) enviado(s) — os restantes ficaram por enviar.`);
+  };
+
+  const finalizar = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       setFeedback('Preencha o nome e um e-mail válido.'); return;
     }
-    setStatus('sending'); setFeedback('');
-    const msg = 'Pedido de serviços:\n- ' + items.map(resumo).join('\n- ');
-    try {
-      const res = await window.sendLead({ name: form.name, email: form.email, phone: form.phone, service: (items[0] && items[0].service) || 'Vários serviços', message: msg });
-      setStatus('sent'); setFeedback(res.message || 'Pedido enviado! Entraremos em contacto em breve.');
-      if (res.leadId && res.codigo) setOrder({ leadId: res.leadId, codigo: res.codigo, email: form.email });
-      onClear();
-    } catch (err) {
-      setStatus('error'); setFeedback('Não foi possível enviar agora. Continue pelo WhatsApp.');
+    if (abas.length && payMetodo === 'carteira') {
+      if (numero.replace(/\D/g, '').length < 9) { setFeedback('Indique um número de telemóvel válido.'); return; }
+      const v = parseFloat(String(valor).replace(',', '.'));
+      if (!v || v <= 0) { setFeedback('Indique o valor a pagar.'); return; }
     }
+    setStage('sending'); setFeedback('');
+    const msg = 'Pedido de serviços:\n- ' + items.map(resumo).join('\n- ');
+    let res;
+    try {
+      res = await window.sendLead({ name: form.name, email: form.email, phone: form.phone, service: (items[0] && items[0].service) || 'Vários serviços', message: msg });
+    } catch (err) {
+      setStage('form'); setFeedback('Não foi possível enviar agora. Continue pelo WhatsApp.');
+      return;
+    }
+    const novaOrdem = (res.leadId && res.codigo) ? { leadId: res.leadId, codigo: res.codigo, email: form.email } : null;
+    setOrder(novaOrdem);
+    onClear();
+
+    if (novaOrdem) await enviarAnexos(novaOrdem.leadId, novaOrdem.email, novaOrdem.codigo);
+
+    if (novaOrdem && payMetodo === 'carteira') {
+      const v = parseFloat(String(valor).replace(',', '.'));
+      try {
+        const pr = await window.payGateway({ leadId: novaOrdem.leadId, email: novaOrdem.email, codigo: novaOrdem.codigo, metodo: walletMetodo, numero: numero.replace(/\D/g, ''), valor: v });
+        setPayStatus({ ok: true, message: pr.message || 'Pagamento confirmado! Obrigado.' });
+      } catch (err) {
+        setPayStatus({ ok: false, message: err.message || 'Não foi possível confirmar o pagamento automaticamente. Pode usar as outras formas de pagamento abaixo.' });
+      }
+    } else if (payMetodo === 'link' && pay.onlineLink) {
+      window.open(pay.onlineLink, '_blank', 'noopener');
+    }
+    setFeedback(res.message || 'Pedido enviado! Entraremos em contacto em breve.');
+    setStage('done');
   };
+
   const wa = () => window.open(window.buildWhatsAppLink({
     name: form.name, email: form.email, phone: form.phone,
     service: 'Vários serviços', message: 'Pedido de serviços: ' + items.map(resumo).join(', '),
   }), '_blank', 'noopener');
 
   return (
-    <Modal open={open} onClose={onClose} size="md">
-      <div className="cart-modal">
+    <Modal open={open} onClose={onClose} size="lg">
+      <div className="checkout-modal">
         <div className="eyebrow" style={{ color: 'var(--accent)' }}>Pedido de serviços</div>
-        <h3 className="h-section" style={{ fontSize: 28, marginTop: 6 }}>Finalizar pedido</h3>
+        <h3 className="h-section" style={{ fontSize: 28, marginTop: 6, marginBottom: 18 }}>Finalizar pedido</h3>
+
         {items.length === 0 && !order ? (
-          <p style={{ color: 'var(--ink-muted)', marginTop: 12 }}>
+          <p style={{ color: 'var(--ink-muted)' }}>
             O seu pedido está vazio. Explore os serviços e clique em <strong>“Adicionar ao pedido”</strong>.
           </p>
-        ) : (
-          <>
-            {!order && (
-              <ul className="cart-list">
-                {items.map((it) => (
-                  <li key={it.id}>
-                    <Icon.Check size={14} />
-                    <div className="cart-item-info">
-                      <span>{it.service}</span>
-                      {it.desc && <div className="cart-item-desc">{it.desc}</div>}
-                    </div>
-                    <button type="button" onClick={() => onRemove(it.id)} aria-label="Remover">
-                      <i className="fa-solid fa-xmark" aria-hidden="true" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+        ) : stage === 'done' ? (
+          <div className="lead-success">
+            <div className="ls-icon"><Icon.Check size={28} /></div>
+            <h4>{feedback}</h4>
+            {uploadNote && <p style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 4 }}>{uploadNote}</p>}
+            {payStatus && (
+              <p style={{ fontSize: 13, fontWeight: 600, marginTop: 8, color: payStatus.ok ? 'var(--success,#30a46c)' : 'var(--danger,#e5484d)' }}>{payStatus.message}</p>
             )}
-            {status === 'sent' ? (
-              <div className="lead-success"><div className="ls-icon"><Icon.Check size={28} /></div><h4>{feedback}</h4></div>
-            ) : (
-              <form className="cart-form" onSubmit={submit}>
-                <div className="cf-row">
-                  <div className="field"><label>Nome</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="O seu nome" /><div className="field-error" /></div>
-                  <div className="field"><label>E-mail</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" /><div className="field-error" /></div>
+            {order && (
+              <div className="order-code-box">
+                <div style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>O seu código de acesso (é também a sua senha na Área de Cliente):</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+                  <code style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.05em', color: 'var(--brand-mid)' }}>{order.codigo}</code>
+                  <CopyCode codigo={order.codigo} />
                 </div>
-                <div className="field"><label>Telefone (opcional)</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+258 …" /><div className="field-error" /></div>
-                {feedback && <p style={{ fontSize: 13, fontWeight: 600, color: status === 'error' ? 'var(--danger,#e5484d)' : 'var(--ink-soft)' }}>{feedback}</p>}
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-                  <button type="submit" className="btn btn-accent" disabled={status === 'sending'}>
-                    {status === 'sending' ? 'A enviar…' : 'Enviar pedido'}<Icon.Arrow size={14} />
-                  </button>
-                  <button type="button" className="btn" onClick={wa} style={{ background: '#25D366', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                    <i className="fa-brands fa-whatsapp" aria-hidden="true" /> WhatsApp
-                  </button>
-                </div>
-              </form>
+                <a className="btn btn-ghost" style={{ marginTop: 10 }}
+                  href={`cliente.html?email=${encodeURIComponent(order.email)}&codigo=${encodeURIComponent(order.codigo)}`}
+                  target="_blank" rel="noreferrer noopener">
+                  <i className="fa-solid fa-magnifying-glass" aria-hidden="true" /> Consultar o meu pedido
+                </a>
+              </div>
             )}
-            {order && <GatewayPay leadId={order.leadId} email={order.email} codigo={order.codigo} gateway={gateway} />}
-            {hasPay && (
-              <div className="cart-pay">
+            {pay.enabled && (pay.mpesa || pay.emola || pay.bank) && payMetodo !== 'carteira' && (
+              <div className="cart-pay" style={{ textAlign: 'left', marginTop: 16 }}>
                 <div className="cart-pay-head"><i className="fa-solid fa-credit-card" aria-hidden="true" /> Formas de pagamento</div>
                 {pay.note && <p className="cart-pay-note">{pay.note}</p>}
                 <ul className="cart-pay-list">
@@ -625,14 +674,112 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                   {pay.emola && <li><strong>e-Mola</strong><span>{pay.emola}</span></li>}
                   {pay.bank && <li><strong>Transferência</strong><span>{pay.bank}</span></li>}
                 </ul>
-                {pay.onlineLink && (
-                  <a className="btn btn-accent" href={pay.onlineLink} target="_blank" rel="noreferrer noopener" style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                    <i className="fa-solid fa-lock" aria-hidden="true" /> Pagar online
-                  </a>
-                )}
               </div>
             )}
-          </>
+          </div>
+        ) : (
+          <form className="checkout-grid" onSubmit={finalizar}>
+            <div className="checkout-col">
+              <div className="checkout-card">
+                <h4>Os seus dados</h4>
+                <div className="cf-row">
+                  <div className="field"><label>Nome</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="O seu nome" /><div className="field-error" /></div>
+                  <div className="field"><label>E-mail</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" /><div className="field-error" /></div>
+                </div>
+                <div className="field"><label>Telefone (opcional)</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+258 …" /><div className="field-error" /></div>
+              </div>
+
+              <div className="checkout-card">
+                <h4>Forma de pagamento</h4>
+                {abas.length === 0 ? (
+                  <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>Sem métodos de pagamento configurados — enviaremos o pedido e entraremos em contacto para combinar o pagamento.</p>
+                ) : (
+                  <>
+                    <div className="pay-tabs">
+                      {abas.map((a) => (
+                        <button type="button" key={a} className={`pay-tab ${payMetodo === a ? 'active' : ''}`} onClick={() => setPayMetodo(a)}>
+                          {a === 'carteira' && <i className="fa-solid fa-mobile-screen-button" aria-hidden="true" />}
+                          {a === 'link' && <i className="fa-solid fa-credit-card" aria-hidden="true" />}
+                          {a === 'transferencia' && <i className="fa-solid fa-dollar-sign" aria-hidden="true" />}
+                          <span>{nomeAba(a)}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {payMetodo === 'carteira' && (
+                      <div style={{ marginTop: 14 }}>
+                        {(gateway.mpesa && gateway.emola) && (
+                          <div className="gw-methods" style={{ marginBottom: 10 }}>
+                            {['mpesa', 'emola'].map((m) => (
+                              <label key={m} className={`gw-method ${walletMetodo === m ? 'active' : ''}`}>
+                                <input type="radio" name="gw-metodo" value={m} checked={walletMetodo === m} onChange={() => setWalletMetodo(m)} />
+                                {m === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        <div className="cf-row">
+                          <div className="field"><label>Número {walletMetodo === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</label><input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" /><div className="field-error" /></div>
+                          <div className="field"><label>Valor (MT)</label><input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" /><div className="field-error" /></div>
+                        </div>
+                        <p style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Ao finalizar, recebe um pedido de confirmação no telemóvel — aprove-o para concluir o pagamento.</p>
+                      </div>
+                    )}
+                    {payMetodo === 'link' && (
+                      <p style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 12 }}>Ao finalizar o pedido, abrimos a página de pagamento online numa nova aba.</p>
+                    )}
+                    {payMetodo === 'transferencia' && (
+                      <div style={{ marginTop: 12 }}>
+                        {pay.note && <p className="cart-pay-note">{pay.note}</p>}
+                        <ul className="cart-pay-list">
+                          {pay.mpesa && <li><strong>M-Pesa</strong><span>{pay.mpesa}</span></li>}
+                          {pay.emola && <li><strong>e-Mola</strong><span>{pay.emola}</span></li>}
+                          {pay.bank && <li><strong>Transferência</strong><span>{pay.bank}</span></li>}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="checkout-col">
+              <div className="checkout-card order-summary">
+                <h4>Resumo do pedido</h4>
+                <ul className="cart-list">
+                  {items.map((it) => (
+                    <li key={it.id}>
+                      <Icon.Check size={14} />
+                      <div className="cart-item-info">
+                        <span>{it.service}</span>
+                        {it.desc && <div className="cart-item-desc">{it.desc}</div>}
+                        {it.files && it.files.length > 0 && (
+                          <div className="cart-item-desc"><i className="fa-solid fa-paperclip" aria-hidden="true" /> {it.files.length} anexo(s)</div>
+                        )}
+                      </div>
+                      <button type="button" onClick={() => onRemove(it.id)} aria-label="Remover">
+                        <i className="fa-solid fa-xmark" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {payMetodo === 'carteira' && abas.length > 0 && parseFloat(String(valor).replace(',', '.')) > 0 && (
+                  <div className="order-total">
+                    <span>Total</span>
+                    <strong>{parseFloat(String(valor).replace(',', '.')).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT</strong>
+                  </div>
+                )}
+                {feedback && stage !== 'done' && <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--danger,#e5484d)' }}>{feedback}</p>}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+                  <button type="submit" className="btn btn-accent" disabled={stage === 'sending'}>
+                    {stage === 'sending' ? 'A processar…' : 'Finalizar pedido'}<Icon.Arrow size={14} />
+                  </button>
+                  <button type="button" className="btn" onClick={wa} style={{ background: '#25D366', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <i className="fa-brands fa-whatsapp" aria-hidden="true" /> WhatsApp
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
         )}
       </div>
     </Modal>
@@ -667,11 +814,17 @@ function SitesFeitos({ t }) {
                   <span className="spb-dot" /><span className="spb-dot" /><span className="spb-dot" />
                   <span className="spb-url">{host(s.url)}</span>
                 </div>
-                <div className="site-preview-frame">
-                  <iframe src={s.url} title={s.nome || host(s.url)} loading="lazy" scrolling="no"
-                    sandbox="allow-scripts allow-same-origin allow-popups" tabIndex="-1" />
-                  <span className="site-preview-shield" aria-hidden="true" />
-                </div>
+                {s.img ? (
+                  <div className="site-preview-frame">
+                    <img src={s.img} alt={s.nome || host(s.url)} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className="site-preview-frame">
+                    <iframe src={s.url} title={s.nome || host(s.url)} loading="lazy" scrolling="no"
+                      sandbox="allow-scripts allow-same-origin allow-popups" tabIndex="-1" />
+                    <span className="site-preview-shield" aria-hidden="true" />
+                  </div>
+                )}
               </a>
               <div className="site-card-body">
                 <h3>{s.nome || host(s.url)}</h3>
@@ -688,4 +841,4 @@ function SitesFeitos({ t }) {
   );
 }
 
-Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant, CartFab, CartModal, ServiceDescModal, GatewayPay, SitesFeitos });
+Object.assign(window, { Modal, LeadModal, ServiceModal, PortfolioModal, Partners, ChatAssistant, CartFab, CartModal, ServiceDescModal, SitesFeitos });

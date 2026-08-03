@@ -38,8 +38,8 @@ function App() {
 
   const openLead = (svc = '') => { setLeadService(svc); setLeadOpen(true); };
   const addToCart = (svc) => setDescService(svc); // abre o popup de descrição antes de adicionar
-  const confirmAddToCart = (desc) => {
-    setCart((c) => [...c, { id: Date.now() + '-' + c.length, service: descService, desc }]);
+  const confirmAddToCart = (desc, files) => {
+    setCart((c) => [...c, { id: Date.now() + '-' + c.length, service: descService, desc, files: files || [] }]);
     setDescService('');
     setCartOpen(true);
   };

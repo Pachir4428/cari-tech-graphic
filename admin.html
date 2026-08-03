@@ -6,15 +6,15 @@
   <title>Admin · Cari Tech Graphic</title>
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#0B4E50" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=118" />
-  <link rel="icon" href="assets/icons/icon-192.png?v=118" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=119" />
+  <link rel="icon" href="assets/icons/icon-192.png?v=119" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=118" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=118" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=118" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=119" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=119" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=119" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -424,7 +424,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.10.0';
+    const APP_VERSION = '1.11.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -973,6 +973,38 @@
       );
     }
 
+    function MozTestBox({ metodo, carteira }) {
+      const [numero, setNumero] = useState('');
+      const [valor, setValor] = useState('1');
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      const testar = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('mozpayment-test', 'POST', { metodo, carteira, numero, valor });
+        setBusy(false);
+        setMsg({ ok: !!r.ok, text: r.message || AT('genErr') });
+      };
+      return (
+        <div style={{marginTop:10,borderTop:'1px dashed var(--line)',paddingTop:10}}>
+          <div style={{fontSize:12.5,color:'var(--ink-muted)',marginBottom:8}}>{AT('mozTestNote')}</div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
+            <div className="field" style={{flex:'1 1 140px',marginBottom:0}}>
+              <label>{AT('mozTestNumero')}</label>
+              <input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" />
+            </div>
+            <div className="field" style={{flex:'0 1 100px',marginBottom:0}}>
+              <label>{AT('mozTestValor')}</label>
+              <input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1" />
+            </div>
+            <button type="button" className="btn btn-ghost" onClick={testar} disabled={busy || !carteira || !numero}>
+              {busy ? AT('mozTesting') : AT('mozTest')}
+            </button>
+          </div>
+          {msg && <p style={{marginTop:8,fontSize:12.5,fontWeight:600,color: msg.ok ? 'var(--success,#30a46c)' : 'var(--danger,#e5484d)'}}>{msg.text}</p>}
+        </div>
+      );
+    }
+
     function MozPaymentEditor({ mozpayment, onSaved }) {
       const [m, setM] = useState(mozpayment || {});
       const [busy, setBusy] = useState(false);
@@ -997,6 +1029,7 @@
                 {AT('mozEnableMpesa')}
               </label>
               <div className="field"><label>{AT('mozCarteira')}</label><input value={m.mpesaCarteira || ''} onChange={(e) => f('mpesaCarteira', e.target.value)} placeholder={AT('mozCarteiraPh')} /><div className="field-error"/></div>
+              {m.mpesaEnabled && <MozTestBox metodo="mpesa" carteira={m.mpesaCarteira || ''} />}
             </div>
             <div style={{border:'1px solid var(--line)',borderRadius:10,padding:'12px 14px'}}>
               <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:10,fontWeight:600,fontSize:14,cursor:'pointer'}}>
@@ -1004,6 +1037,7 @@
                 {AT('mozEnableEmola')}
               </label>
               <div className="field"><label>{AT('mozCarteira')}</label><input value={m.emolaCarteira || ''} onChange={(e) => f('emolaCarteira', e.target.value)} placeholder={AT('mozCarteiraPh')} /><div className="field-error"/></div>
+              {m.emolaEnabled && <MozTestBox metodo="emola" carteira={m.emolaCarteira || ''} />}
             </div>
             <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveMoz')}</button>
           </div>
@@ -1064,10 +1098,20 @@
       const [list, setList] = useState(Array.isArray(sites) ? sites : []);
       const [busy, setBusy] = useState(false);
       const [msg, setMsg] = useState(null);
+      const [imgBusy, setImgBusy] = useState(-1);
       useEffect(() => { setList(Array.isArray(sites) ? sites : []); }, [sites]);
       const upd = (i, k, v) => setList((L) => L.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
-      const add = () => setList((L) => [...L, { id: 'n' + Date.now(), nome: '', url: '', desc: '', status: 'active' }]);
+      const add = () => setList((L) => [...L, { id: 'n' + Date.now(), nome: '', url: '', desc: '', img: '', status: 'active' }]);
       const del = (i) => setList((L) => L.filter((_, idx) => idx !== i));
+      const subirImg = async (i, file) => {
+        if (!file) return;
+        setImgBusy(i);
+        const fd = new FormData(); fd.append('image', file);
+        const r = await apiUpload('upload-image', fd);
+        setImgBusy(-1);
+        if (r.ok) upd(i, 'img', r.url);
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
       const save = async () => {
         setBusy(true); setMsg(null);
         const r = await api('sites-save', 'POST', { sites: list });
@@ -1101,6 +1145,17 @@
                     style={{padding:'8px 11px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
                   <input value={it.desc || ''} onChange={(e) => upd(i, 'desc', e.target.value)} placeholder={AT('sitesDesc')}
                     style={{padding:'8px 11px',border:'1px solid var(--line)',borderRadius:8,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    {it.img
+                      ? <img src={it.img} alt="" style={{width:56,height:38,objectFit:'cover',borderRadius:6,border:'1px solid var(--line)'}} />
+                      : <div style={{width:56,height:38,borderRadius:6,border:'1px dashed var(--line)',display:'grid',placeItems:'center',color:'var(--ink-muted)'}}><FA name="image" s={12} /></div>}
+                    <label className="btn btn-ghost" style={{padding:'6px 12px',fontSize:12,cursor:'pointer'}}>
+                      {imgBusy === i ? AT('saving') : AT('sitesImg')}
+                      <input type="file" accept="image/*" style={{display:'none'}} onChange={(e) => subirImg(i, e.target.files[0])} disabled={imgBusy === i} />
+                    </label>
+                    {it.img && <button type="button" className="ra-btn danger" onClick={() => upd(i, 'img', '')} title={AT('btnRemove')}><Trash s={12} /></button>}
+                    <span style={{fontSize:11.5,color:'var(--ink-muted)'}}>{AT('sitesImgHint')}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1442,6 +1497,7 @@
         'audit_login-admin':'Entrada de administrador', 'audit_login-falhou':'Tentativa de entrada falhada',
         'audit_credenciais-alteradas':'Credenciais alteradas', 'audit_lead-apagado':'Lead removido',
         audit_pagamento:'Estado de pagamento alterado', 'audit_site-atualizado':'Site actualizado (ZIP)', 'audit_site-revertido':'Atualização revertida',
+        'audit_pagamento-gateway':'Pagamento automático no checkout', 'audit_pagamento-gateway-teste':'Teste de ligação MozPayment',
         updRestore:'Reverter', updRestoreHint:'Repor a versão anterior a esta atualização.',
         updRestoreConfirm:'Reverter para a versão anterior a esta atualização? Os ficheiros do site (excepto config.php, dados/ e uploads/) voltam ao estado guardado no backup.',
         // Pagamentos
@@ -1457,6 +1513,8 @@
         mozEnableMpesa:'Activar M-Pesa automático', mozEnableEmola:'Activar e-Mola automático',
         mozCarteira:'Carteira (ID da conta MozPayment)', mozCarteiraPh:'ID fornecido pela MozPayment',
         btnSaveMoz:'Guardar pagamento automático', mozSaved:'Pagamento automático guardado.',
+        mozTestNote:'Teste real: envia um pedido de confirmação (USSD) para o número indicado, com o valor de teste (ex.: 1 MT). Confirma se este método já pode receber pagamentos reais via API.',
+        mozTestNumero:'Número para teste', mozTestValor:'Valor (MT)', mozTest:'Testar ligação', mozTesting:'A testar…',
         // Login social
         socialTitle:'Login social (Google / Facebook)',
         socialNote:'Deixe os clientes entrarem na Área de Cliente com a conta Google ou Facebook. Os botões aparecem na página de entrada assim que preencher os IDs abaixo. O cliente entra se o e-mail da conta coincidir com um pedido.',
@@ -1475,6 +1533,7 @@
         sitesName:'Nome', sitesUrl:'Link (URL)', sitesDesc:'Descrição (opcional)',
         sitesAdd:'Adicionar site', btnSaveSites:'Guardar sites', sitesSaved:'Sites guardados.',
         sitesEmpty:'Ainda sem sites. Clique em "Adicionar site".', sitesDraft:'Rascunho', sitesActive:'Activo',
+        sitesImg:'Imagem', sitesImgHint:'Opcional — se não houver imagem, mostra a pré-visualização ao vivo do link.',
         // Segurança (endereço secreto do painel)
         segTitle:'Segurança — endereço secreto do painel',
         segNote:'Oculte o endereço do painel para despistar ataques automáticos. Defina uma palavra secreta (ou gere uma) e o painel passa a abrir só nesse endereço. O acesso directo a admin.html deixa de funcionar.',
@@ -1600,6 +1659,7 @@
         'audit_login-admin':'Admin login', 'audit_login-falhou':'Failed login attempt',
         'audit_credenciais-alteradas':'Credentials changed', 'audit_lead-apagado':'Lead removed',
         audit_pagamento:'Payment status changed', 'audit_site-atualizado':'Site updated (ZIP)', 'audit_site-revertido':'Update rolled back',
+        'audit_pagamento-gateway':'Automatic checkout payment', 'audit_pagamento-gateway-teste':'MozPayment connection test',
         updRestore:'Roll back', updRestoreHint:'Restore the version prior to this update.',
         updRestoreConfirm:'Roll back to the version before this update? Site files (except config.php, dados/ and uploads/) return to the backed-up state.',
         updTip:'Tip: make a backup (hPanel → Backups) before updating, just in case.',
@@ -1616,6 +1676,8 @@
         mozEnableMpesa:'Enable automatic M-Pesa', mozEnableEmola:'Enable automatic e-Mola',
         mozCarteira:'Wallet (MozPayment account ID)', mozCarteiraPh:'ID provided by MozPayment',
         btnSaveMoz:'Save automatic payment', mozSaved:'Automatic payment saved.',
+        mozTestNote:'Live test: sends a confirmation request (USSD) to the number below, charging the test amount (e.g. 1 MT). Confirms whether this method can already receive real payments via the API.',
+        mozTestNumero:'Number to test', mozTestValor:'Amount (MT)', mozTest:'Test connection', mozTesting:'Testing…',
         // Social login
         socialTitle:'Social login (Google / Facebook)',
         socialNote:'Let clients sign in to the Client Area with their Google or Facebook account. The buttons appear on the login page once you fill in the IDs below. A client signs in if their account email matches an order.',
@@ -1634,6 +1696,7 @@
         sitesName:'Name', sitesUrl:'Link (URL)', sitesDesc:'Description (optional)',
         sitesAdd:'Add site', btnSaveSites:'Save sites', sitesSaved:'Sites saved.',
         sitesEmpty:'No sites yet. Click "Add site".', sitesDraft:'Draft', sitesActive:'Active',
+        sitesImg:'Image', sitesImgHint:'Optional — without an image, the live link preview is shown instead.',
         // Security (secret panel address)
         segTitle:'Security — secret panel address',
         segNote:'Hide the panel address to throw off automated attacks. Set a secret word (or generate one) and the panel opens only at that address. Direct access to admin.html stops working.',

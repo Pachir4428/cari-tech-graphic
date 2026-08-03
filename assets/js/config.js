@@ -90,6 +90,23 @@ window.payGateway = async function (data) {
   return payload;
 };
 
+/* Envia um anexo (brief/referência) de um pedido já criado. Requer o
+ * leadId + email + código devolvidos por sendLead. Devolve { ok, message }. */
+window.uploadClienteFicheiro = async function (file, { leadId, email, codigo }) {
+  const form = new FormData();
+  form.append('leadId', leadId);
+  form.append('email', email);
+  form.append('codigo', codigo);
+  form.append('file', file);
+  const res = await fetch('cliente-api.php?action=upload', { method: 'POST', body: form });
+  let payload = {};
+  try { payload = await res.json(); } catch (e) { /* resposta não-JSON */ }
+  if (!res.ok || !payload.ok) {
+    throw new Error((payload && payload.message) || `Falha no envio do anexo (HTTP ${res.status})`);
+  }
+  return payload;
+};
+
 /* Envia os dados do formulário para o servidor. Devolve { ok, message }.
  * Se o endpoint não existir (ex.: aberto por file:// ou ambiente sem PHP),
  * o chamador deve oferecer o WhatsApp como alternativa. */
