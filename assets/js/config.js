@@ -65,11 +65,46 @@ window.loadContent = function () {
         contact,
         branding: (d && d.branding) || {},
         payments: (d && d.payments) || {},
+        gateway: (d && d.gateway) || { mpesa: false, emola: false },
         sites: (d && d.sites) || [],
       };
     })
-    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {}, branding: {}, payments: {}, sites: [] }));
+    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {}, branding: {}, payments: {}, gateway: { mpesa: false, emola: false }, sites: [] }));
   return window.__contentPromise;
+};
+
+/* Pede à MozPayment (via pagamento.php) para cobrar o valor por M-Pesa/e-Mola.
+ * Requer o leadId + email + código do pedido (devolvidos por sendLead).
+ * Devolve { ok, message }. */
+window.payGateway = async function (data) {
+  const res = await fetch('pagamento.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  let payload = {};
+  try { payload = await res.json(); } catch (e) { /* resposta não-JSON */ }
+  if (!res.ok || !payload.ok) {
+    throw new Error((payload && payload.message) || `Falha no pagamento (HTTP ${res.status})`);
+  }
+  return payload;
+};
+
+/* Envia um anexo (brief/referência) de um pedido já criado. Requer o
+ * leadId + email + código devolvidos por sendLead. Devolve { ok, message }. */
+window.uploadClienteFicheiro = async function (file, { leadId, email, codigo }) {
+  const form = new FormData();
+  form.append('leadId', leadId);
+  form.append('email', email);
+  form.append('codigo', codigo);
+  form.append('file', file);
+  const res = await fetch('cliente-api.php?action=upload', { method: 'POST', body: form });
+  let payload = {};
+  try { payload = await res.json(); } catch (e) { /* resposta não-JSON */ }
+  if (!res.ok || !payload.ok) {
+    throw new Error((payload && payload.message) || `Falha no envio do anexo (HTTP ${res.status})`);
+  }
+  return payload;
 };
 
 /* Envia os dados do formulário para o servidor. Devolve { ok, message }.

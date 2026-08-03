@@ -133,6 +133,10 @@ entre sempre por `entrar.html`: o servidor encaminha-o automaticamente para o en
 - **Definições → Conta:** mude utilizador e palavra-passe (pede a senha actual).
 - **Definições → Logótipo:** dois logótipos (fundo claro/escuro); também vira o *favicon*.
 - **Definições → Pagamentos:** métodos mostrados no checkout (M-Pesa, e-Mola, transferência, link online).
+- **Definições → Pagamento automático:** cobrança directa por M-Pesa/e-Mola no checkout via
+  [MozPayment](https://mozpayment.co.mz) — o cliente aprova um pedido de confirmação (USSD) no
+  telemóvel e o pedido é marcado **Pago** automaticamente. Precisa de uma carteira MozPayment por
+  método; o ID fica só no servidor, nunca é exposto ao site.
 - **Definições → Sites & Sistemas:** cole links de sites/sistemas que criou — aparecem na secção
   “Nossos Sites & Sistemas” do site com **pré-visualização ao vivo**. "Rascunho" fica oculto.
 - **Definições → Atualizar o site (ZIP):** aplica uma nova versão preservando `config.php`, `dados/` e `uploads/`.

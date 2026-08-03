@@ -65,6 +65,7 @@ function exigir_login() {
 require_once __DIR__ . '/armazenamento.php';
 require_once __DIR__ . '/email-enviar.php';
 require_once __DIR__ . '/email-template.php';
+require_once __DIR__ . '/mozpayment.php';
 $config = ctg_apply_smtp($config); // definições SMTP do painel (se existirem)
 
 /* Utilizador em vigor: o guardado no painel, ou o padrão do config. */
@@ -282,6 +283,7 @@ switch ($action) {
             'contact'      => $c['contact']      ?? null,
             'branding'     => store_get_branding($config),
             'payments'     => store_get_payments($config),
+            'mozpayment'   => store_get_mozpayment($config),
             'social'       => ctg_social($config),
             'sites'        => store_get_sites($config),
             'seg'          => ['admin_slug' => ctg_admin_slug($config)],
@@ -306,6 +308,39 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         store_set_payments($config, $p);
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'mozpayment-save':
+        exigir_login();
+        $m = $body['mozpayment'] ?? null;
+        if (!is_array($m)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        store_set_mozpayment($config, [
+            'mpesaEnabled'  => !empty($m['mpesaEnabled']),
+            'mpesaCarteira' => trim((string) ($m['mpesaCarteira'] ?? '')),
+            'emolaEnabled'  => !empty($m['emolaEnabled']),
+            'emolaCarteira' => trim((string) ($m['emolaCarteira'] ?? '')),
+        ]);
+        responder(true, ['message' => 'Pagamento automático guardado.']);
+
+    case 'mozpayment-test':
+        exigir_login();
+        $metodo = (($body['metodo'] ?? '') === 'emola') ? 'emola' : 'mpesa';
+        $numero = preg_replace('/\D+/', '', (string) ($body['numero'] ?? ''));
+        $valor  = (float) ($body['valor'] ?? 0);
+        // Usa a carteira já guardada; se o admin ainda não guardou, aceita a do formulário (teste antes de guardar).
+        $moz = store_get_mozpayment($config);
+        $carteira = trim((string) ($body['carteira'] ?? ($moz[$metodo === 'emola' ? 'emolaCarteira' : 'mpesaCarteira'] ?? '')));
+        if ($carteira === '') responder(false, ['message' => 'Indique a carteira antes de testar.'], 422);
+        if (strlen($numero) < 9) responder(false, ['message' => 'Indique um número de telemóvel válido para o teste.'], 422);
+        if ($valor <= 0) responder(false, ['message' => 'Indique um valor de teste (ex.: 1 MT).'], 422);
+
+        $res = mozpay_cobrar($carteira, $numero, $valor, $metodo);
+        store_add_audit(
+            $config,
+            'pagamento-gateway-teste',
+            strtoupper($metodo) . ' · ' . number_format($valor, 2, ',', ' ') . ' MT · ' . ($res['ok'] ? 'sucesso' : 'falha') . ': ' . $res['message']
+        );
+        if (!$res['ok']) responder(false, ['message' => $res['message']], 402);
+        responder(true, ['message' => 'Confirmado: este método pode receber pagamentos reais via API. ' . $res['message']]);
 
     case 'smtp-save':
         exigir_login();
@@ -377,6 +412,7 @@ switch ($action) {
                 'nome'   => $nome,
                 'url'    => $url,
                 'desc'   => trim((string) ($it['desc'] ?? '')),
+                'img'    => trim((string) ($it['img'] ?? '')),
                 'status' => (($it['status'] ?? 'active') === 'draft') ? 'draft' : 'active',
             ];
         }
