@@ -6,15 +6,15 @@
   <title>Admin · Cari Tech Graphic</title>
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#0B4E50" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=119" />
-  <link rel="icon" href="assets/icons/icon-192.png?v=119" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=120" />
+  <link rel="icon" href="assets/icons/icon-192.png?v=120" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=119" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=119" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=119" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=120" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=120" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=120" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -424,7 +424,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.11.0';
+    const APP_VERSION = '1.12.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -1498,6 +1498,7 @@
         'audit_credenciais-alteradas':'Credenciais alteradas', 'audit_lead-apagado':'Lead removido',
         audit_pagamento:'Estado de pagamento alterado', 'audit_site-atualizado':'Site actualizado (ZIP)', 'audit_site-revertido':'Atualização revertida',
         'audit_pagamento-gateway':'Pagamento automático no checkout', 'audit_pagamento-gateway-teste':'Teste de ligação MozPayment',
+        'audit_pagamento-gateway-estado':'Estado de pagamento actualizado (checkout)', 'audit_valor-acordado':'Valor acordado alterado',
         updRestore:'Reverter', updRestoreHint:'Repor a versão anterior a esta atualização.',
         updRestoreConfirm:'Reverter para a versão anterior a esta atualização? Os ficheiros do site (excepto config.php, dados/ e uploads/) voltam ao estado guardado no backup.',
         // Pagamentos
@@ -1584,6 +1585,7 @@
         dlvDelivered:'Entregue', dlvPending:'Sem entrega', dlvErr:'Erro ao guardar a entrega.',
         dlvComments:'Comentários', dlvNoComments:'Sem comentários do cliente.', dlvReplyPh:'Responder ao cliente…',
         dlvPay:'Estado de pagamento', dlvPayHint:'Enquanto não estiver «Pago», as imagens aparecem ao cliente com marca de água (demo) e as descargas ficam bloqueadas.',
+        dlvValorAcordado:'Valor acordado (MT)', dlvSaveValor:'Guardar valor', dlvValorPago:'Valor já pago',
         payNao:'Por pagar', payParcial:'Parcial', payPago:'Pago',
         dlvClientFiles:'Ficheiros enviados pelo cliente', dlvNoClientFiles:'O cliente ainda não enviou ficheiros.',
         dlvNotifyMsg:'Olá {nome}! O seu pedido na Cari Tech Graphic está pronto. Aceda às suas entregas em {url}/cliente.html — E-mail: {email} · Código: {codigo}',
@@ -1660,6 +1662,7 @@
         'audit_credenciais-alteradas':'Credentials changed', 'audit_lead-apagado':'Lead removed',
         audit_pagamento:'Payment status changed', 'audit_site-atualizado':'Site updated (ZIP)', 'audit_site-revertido':'Update rolled back',
         'audit_pagamento-gateway':'Automatic checkout payment', 'audit_pagamento-gateway-teste':'MozPayment connection test',
+        'audit_pagamento-gateway-estado':'Payment status updated (checkout)', 'audit_valor-acordado':'Agreed amount changed',
         updRestore:'Roll back', updRestoreHint:'Restore the version prior to this update.',
         updRestoreConfirm:'Roll back to the version before this update? Site files (except config.php, dados/ and uploads/) return to the backed-up state.',
         updTip:'Tip: make a backup (hPanel → Backups) before updating, just in case.',
@@ -1747,6 +1750,7 @@
         dlvDelivered:'Delivered', dlvPending:'No delivery', dlvErr:'Error saving the delivery.',
         dlvComments:'Comments', dlvNoComments:'No comments from the client.', dlvReplyPh:'Reply to the client…',
         dlvPay:'Payment status', dlvPayHint:'Until it is “Paid”, images are shown to the client with a watermark (demo) and downloads stay locked.',
+        dlvValorAcordado:'Agreed total (MT)', dlvSaveValor:'Save amount', dlvValorPago:'Already paid',
         payNao:'Unpaid', payParcial:'Partial', payPago:'Paid',
         dlvClientFiles:'Files uploaded by the client', dlvNoClientFiles:'The client hasn\'t uploaded files yet.',
         dlvNotifyMsg:'Hi {nome}! Your request at Cari Tech Graphic is ready. Access your deliveries at {url}/cliente.html — Email: {email} · Code: {codigo}',
@@ -1795,6 +1799,9 @@
       const [dSaved, setDSaved] = useState(false);
       const [dReply, setDReply] = useState('');
       const [dPago, setDPago] = useState('nao');           // estado de pagamento: nao | parcial | pago
+      const [dValorAcordado, setDValorAcordado] = useState('');
+      const [dValorPago, setDValorPago] = useState(0);
+      const [dValorBusy, setDValorBusy] = useState(false);
 
       // Tema (claro/escuro) e idioma do painel — persistidos no navegador.
       useEffect(() => { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('ctg_admin_theme', theme); }, [theme]);
@@ -1934,6 +1941,8 @@
         const ex = deliveries[lead.id];
         setDForm({ msg: (ex && ex.msg) || '', entregas: (ex && ex.entregas) ? ex.entregas.map((e) => ({ ...e })) : [] });
         setDPago((ex && ex.pago) || 'nao');
+        setDValorAcordado((ex && ex.valorAcordado) ? String(ex.valorAcordado) : '');
+        setDValorPago((ex && ex.valorPago) || 0);
         setDSaved(false);
         setDReply('');
         setDelivering(lead);
@@ -1943,6 +1952,16 @@
         setDPago(estado);
         const r = await api('lead-pago', 'POST', { leadId: delivering.id, pago: estado });
         if (r.ok) setDeliveries((d) => ({ ...d, [delivering.id]: { ...(d[delivering.id] || { leadId: delivering.id }), pago: estado } }));
+      };
+      // Define/corrige o valor total acordado do pedido (para acompanhar entrada + saldo).
+      const dSaveValor = async () => {
+        setDValorBusy(true);
+        const r = await api('lead-valor', 'POST', { leadId: delivering.id, valor: dValorAcordado === '' ? null : dValorAcordado });
+        setDValorBusy(false);
+        if (r.ok && r.entrega) {
+          setDeliveries((d) => ({ ...d, [delivering.id]: r.entrega }));
+          setDValorAcordado(r.entrega.valorAcordado != null ? String(r.entrega.valorAcordado) : '');
+        }
       };
       const dUploadFile = async (file) => {
         if (!file) return;
@@ -2521,6 +2540,14 @@
                     ))}
                   </div>
                   <div style={{fontSize:11.5,color:'var(--ink-muted)',marginTop:6,lineHeight:1.45}}>{T.dlvPayHint}</div>
+                  <div style={{marginTop:12,display:'flex',gap:8,alignItems:'flex-end',flexWrap:'wrap'}}>
+                    <div className="field" style={{flex:'1 1 160px',marginBottom:0}}>
+                      <label>{T.dlvValorAcordado}</label>
+                      <input type="number" min="0" step="0.01" value={dValorAcordado} onChange={(e) => setDValorAcordado(e.target.value)} placeholder="Ex.: 5000" />
+                    </div>
+                    <button type="button" className="btn btn-ghost" onClick={dSaveValor} disabled={dValorBusy}>{dValorBusy ? T.saving : T.dlvSaveValor}</button>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--ink-muted)',marginTop:6}}>{T.dlvValorPago}: <strong style={{color:'var(--ink)'}}>{(dValorPago || 0).toLocaleString('pt-MZ',{minimumFractionDigits:2})} MT</strong></div>
                 </div>
 
                 <div style={{display:'grid',gap:12}}>

@@ -3,11 +3,15 @@
  * Cari Tech Graphic — Checkout: pagamento automático (M-Pesa / e-Mola)
  * ---------------------------------------------------------------------------
  * Recebe do site público o pedido de cobrança via MozPayment e, em caso de
- * sucesso, marca o pedido como Pago, regista a entrada nas Finanças e avisa
- * o cliente por e-mail — tal como acontece quando o admin marca "Pago" no
- * painel.
+ * sucesso, regista o valor pago (total ou parcial — entrada/parcela), regista
+ * a entrada nas Finanças e, quando o pedido fica totalmente pago, avisa o
+ * cliente por e-mail — tal como acontece quando o admin marca "Pago" no painel.
  *
- *   POST { leadId, email, codigo, metodo: 'mpesa'|'emola', numero, valor }
+ *   POST { leadId, email, codigo, metodo: 'mpesa'|'emola', numero, valor,
+ *          ehTotal?: bool, valorTotal?: number }
+ *   - ehTotal: true quando o cliente está a pagar o valor total do pedido.
+ *   - valorTotal: quando paga só uma percentagem, o valor total do trabalho
+ *     que o próprio declarou (usado para calcular o saldo em falta).
  *
  * Segurança: exige o e-mail + código que o cliente recebeu no e-mail de
  * confirmação do pedido (mesma verificação usada na Área de Cliente), e
@@ -44,6 +48,8 @@ $codigo = strtoupper(trim((string) ($body['codigo'] ?? '')));
 $metodo = (($body['metodo'] ?? '') === 'emola') ? 'emola' : 'mpesa';
 $numero = preg_replace('/\D+/', '', (string) ($body['numero'] ?? ''));
 $valor  = (float) ($body['valor'] ?? 0);
+$ehTotal = !empty($body['ehTotal']);
+$valorTotalDeclarado = isset($body['valorTotal']) && $body['valorTotal'] !== '' ? (float) $body['valorTotal'] : null;
 
 if ($leadId === '' || $email === '' || $codigo === '') {
     responder(false, ['message' => 'Não foi possível identificar o seu pedido. Recarregue a página e tente novamente.'], 422);
@@ -100,30 +106,45 @@ if (!$res['ok']) {
     responder(false, ['message' => $res['message']], 402);
 }
 
-/* Sucesso: marca o pedido como pago (desbloqueia entregas), regista a
-   entrada nas Finanças e avisa o cliente — tal como o admin faz no painel. */
-store_set_pagamento($config, $leadId, 'pago');
+/* Sucesso: regista o valor pago (a função recalcula 'nao'/'parcial'/'pago'
+   consoante o valor acordado) e a entrada nas Finanças. */
+$estadoAnterior = store_get_delivery($config, $leadId);
+$pagoAntes = $estadoAnterior['pago'] ?? 'nao';
+$slot = store_registar_pagamento($config, $leadId, $valor, $ehTotal, $valorTotalDeclarado);
+$pagoAgora = $slot['pago'] ?? 'nao';
+$saldo = !empty($slot['valorAcordado']) ? max(0, round($slot['valorAcordado'] - $slot['valorPago'], 2)) : null;
 
 $financas = store_get_financas($config);
 $financas[] = [
     'id'    => bin2hex(random_bytes(8)),
     'data'  => date('Y-m-d'),
-    'desc'  => 'Pagamento online (' . strtoupper($metodo) . ') — ' . ($lead['servico'] ?: ($lead['nome'] ?? $leadId)),
+    'desc'  => ($pagoAgora === 'parcial' ? 'Entrada (parcela) — ' : 'Pagamento — ') . strtoupper($metodo) . ' — ' . ($lead['servico'] ?: ($lead['nome'] ?? $leadId)),
     'tipo'  => 'entrada',
     'valor' => $valor,
     'categoria' => 'Checkout',
 ];
 store_set_financas($config, $financas);
 
-$marca = $config['from_name'] ?? 'Cari Tech Graphic';
-$branding = store_get_branding($config);
-$html = email_notificacao_html($config, [
-    'tipo' => 'pago', 'nome' => $lead['nome'] ?? '', 'servico' => $lead['servico'] ?? '',
-    'texto' => '', 'codigo' => $codigo, 'email' => $email, 'logo' => $branding['light'] ?? ($branding['dark'] ?? ''),
-]);
-$corpo = "Olá " . ($lead['nome'] ?? '') . ",\n\n"
-    . "Recebemos o seu pagamento de " . number_format($valor, 2, ',', ' ') . " MT. "
-    . "Os seus ficheiros já estão disponíveis para descarregar na Área de Cliente.\n";
-enviar_email($config, $email, 'Pagamento confirmado — Cari Tech Graphic', $corpo, $config['to_email'] ?? '', $marca, $html);
+/* Só avisa o cliente por e-mail (ficheiros desbloqueados) na TRANSIÇÃO para "pago". */
+if ($pagoAgora === 'pago' && $pagoAntes !== 'pago') {
+    $marca = $config['from_name'] ?? 'Cari Tech Graphic';
+    $branding = store_get_branding($config);
+    $html = email_notificacao_html($config, [
+        'tipo' => 'pago', 'nome' => $lead['nome'] ?? '', 'servico' => $lead['servico'] ?? '',
+        'texto' => '', 'codigo' => $codigo, 'email' => $email, 'logo' => $branding['light'] ?? ($branding['dark'] ?? ''),
+    ]);
+    $corpo = "Olá " . ($lead['nome'] ?? '') . ",\n\n"
+        . "Recebemos o seu pagamento de " . number_format($valor, 2, ',', ' ') . " MT — o pedido está totalmente pago. "
+        . "Os seus ficheiros já estão disponíveis para descarregar na Área de Cliente.\n";
+    enviar_email($config, $email, 'Pagamento confirmado — Cari Tech Graphic', $corpo, $config['to_email'] ?? '', $marca, $html);
+}
+store_add_audit($config, 'pagamento-gateway-estado', "Pedido {$leadId}: {$pagoAntes} → {$pagoAgora}");
 
-responder(true, ['message' => $res['message'] ?: 'Pagamento confirmado! Obrigado.']);
+$msg = $res['message'] ?: 'Pagamento confirmado! Obrigado.';
+if ($pagoAgora === 'parcial' && $saldo !== null) {
+    $msg .= ' Falta pagar ' . number_format($saldo, 2, ',', ' ') . ' MT — pode fazê-lo mais tarde na Área de Cliente.';
+} elseif ($pagoAgora === 'parcial') {
+    $msg .= ' Registámos esta parcela — combine o saldo com o estúdio ou pague o resto na Área de Cliente.';
+}
+
+responder(true, ['message' => $msg, 'pago' => $pagoAgora, 'valorPago' => $slot['valorPago'] ?? $valor, 'valorAcordado' => $slot['valorAcordado'] ?? null, 'saldo' => $saldo]);

@@ -7,13 +7,13 @@
   <meta name="description" content="Acompanhe os seus pedidos e receba as suas entregas na Área de Cliente da Cari Tech Graphic." />
   <meta name="robots" content="noindex" />
   <!-- PWA (aplicação instalável) -->
-  <link rel="manifest" href="manifest.webmanifest?v=119" />
+  <link rel="manifest" href="manifest.webmanifest?v=120" />
   <meta name="theme-color" content="#0B4E50" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Cari Tech" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=119" />
-  <link rel="icon" href="assets/icons/icon-192.png?v=119" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=120" />
+  <link rel="icon" href="assets/icons/icon-192.png?v=120" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -123,6 +123,34 @@
     .pay-pago{background:#e7f5ee;color:var(--ok)}
     .pay-parcial{background:var(--accent-soft);color:var(--accent-2)}
     .pay-nao{background:#fdeaea;color:#c0392b}
+    .pay-summary{font-size:12.5px;color:var(--muted);margin:6px 0 8px}
+    .pay-summary b{color:var(--ink)}
+    .pay-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:10px}
+    .pay-btn:hover{background:var(--accent-2)}
+    /* Modal de pagamento */
+    .paymodal{position:fixed;inset:0;z-index:70;background:rgba(6,12,13,.6);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+    .paymodal .pm-card{background:var(--card,#fff);border-radius:16px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:24px;position:relative}
+    .paymodal .pm-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:none;background:var(--bg-soft,#f4f7f7);color:var(--ink);font-size:15px;cursor:pointer}
+    .paymodal h3{margin:0 0 14px;font-size:19px}
+    .pm-field{margin-bottom:14px}
+    .pm-field label{display:block;font-weight:600;font-size:13px;margin-bottom:6px}
+    .pm-field input{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14.5px;font-family:inherit;background:#fff;color:var(--ink)}
+    .pm-choice{display:flex;gap:8px;margin-bottom:14px}
+    .pm-choice button{flex:1;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-soft,var(--muted));font-weight:700;font-size:12.5px;cursor:pointer}
+    .pm-choice button.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+    .pm-methods{display:flex;gap:8px;margin-bottom:14px}
+    .pm-methods button{flex:1;padding:9px;border:1.5px solid var(--line);border-radius:999px;background:transparent;font-weight:700;font-size:12.5px;cursor:pointer}
+    .pm-methods button.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+    .pm-pct{display:flex;gap:6px;margin-bottom:14px}
+    .pm-pct button{flex:1;padding:8px;border:1px dashed var(--line);border-radius:8px;background:transparent;font-size:12px;font-weight:700;cursor:pointer}
+    .pm-pct button.active{border-style:solid;border-color:var(--accent);color:var(--accent)}
+    .pm-submit{width:100%;padding:13px;border:none;border-radius:11px;cursor:pointer;font-size:15px;font-weight:700;color:#fff;background:var(--accent)}
+    .pm-submit:disabled{opacity:.6}
+    .pm-msg{font-size:12.5px;font-weight:600;margin-top:10px}
+    .pm-msg.err{color:#c0392b}
+    .pm-msg.ok{color:var(--ok)}
+    :root[data-theme=dark] .paymodal .pm-card,:root:not([data-theme=light]) .paymodal .pm-card{background:#0e1719}
+    :root[data-theme=dark] .pm-field input,:root:not([data-theme=light]) .pm-field input{background:#0e1719;color:#fff}
     .demo{position:relative;border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:8px;background:#0e1719}
     .demo img{display:block;width:100%;height:auto;max-height:280px;object-fit:cover;cursor:zoom-in;-webkit-user-drag:none;user-select:none;transition:opacity .15s}
     .demo img:hover{opacity:.92}
@@ -315,9 +343,19 @@
     </figure>
   </div>
 
+  <div id="payModal" class="paymodal" style="display:none" onclick="fecharPagamento()">
+    <div class="pm-card" onclick="event.stopPropagation()">
+      <button class="pm-close" onclick="fecharPagamento()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+      <h3 id="pmTitle"><i class="fa-solid fa-mobile-screen-button"></i> <span id="pmTitleTxt"></span></h3>
+      <div id="pmSummary" class="pay-summary"></div>
+      <div id="pmBody"></div>
+    </div>
+  </div>
+
   <script>
     var CRED = { email:'', codigo:'' };
     var PEDIDOS = [];
+    var GATEWAY = { mpesa:false, emola:false };
 
     /* ---------- Idioma (PT / EN) ---------- */
     var CI18N = {
@@ -350,6 +388,13 @@
         payPaid:'Pago', payPartial:'Pagamento parcial', payUnpaid:'Por pagar',
         demoTag:'Pré-visualização (demo)', afterPayment:'Descarga disponível após o pagamento', locked:'Bloqueado até ao pagamento',
         yourFiles:'Os seus ficheiros', uploadFile:'Enviar ficheiro', uploading:'A enviar…', fileTooBig:'Ficheiro demasiado grande (máx. 15 MB).', noFilesYet:'Ainda não enviou ficheiros.',
+        payBtn:'Pagar', payTitle:'Pagar este pedido', payTotal:'Total acordado', payDone:'Já pago', paySaldo:'Saldo em falta',
+        payFull:'Pagar tudo', payPartialOpt:'Pagar uma parcela agora', payTotalWork:'Valor total do trabalho (MT)',
+        payMethod:'Método', payNumero:'Número de telefone', payValor:'Valor a pagar agora (MT)',
+        paySubmit:'Pagar agora', paySending:'A confirmar…', payClose:'Fechar',
+        payNoGateway:'De momento não há pagamento automático disponível — fale connosco.',
+        payHint:'Ao confirmar, recebe um pedido de aprovação no telemóvel.',
+        payErrPhone:'Indique um número de telemóvel válido.', payErrValor:'Indique o valor a pagar.', payErrTotal:'Indique o valor total do trabalho.',
       },
       en: {
         myOrders:'My orders', newOrder:'New request', talkToUs:'Contact us', logout:'Log out',
@@ -380,6 +425,13 @@
         payPaid:'Paid', payPartial:'Partial payment', payUnpaid:'Unpaid',
         demoTag:'Preview (demo)', afterPayment:'Download available after payment', locked:'Locked until payment',
         yourFiles:'Your files', uploadFile:'Upload file', uploading:'Uploading…', fileTooBig:'File too large (max 15 MB).', noFilesYet:'You haven\'t uploaded files yet.',
+        payBtn:'Pay', payTitle:'Pay this order', payTotal:'Agreed total', payDone:'Already paid', paySaldo:'Balance due',
+        payFull:'Pay in full', payPartialOpt:'Pay an installment now', payTotalWork:'Total value of the work (MT)',
+        payMethod:'Method', payNumero:'Phone number', payValor:'Amount to pay now (MT)',
+        paySubmit:'Pay now', paySending:'Confirming…', payClose:'Close',
+        payNoGateway:'No automatic payment is available right now — please contact us.',
+        payHint:'On confirming, you\'ll get an approval request on your phone.',
+        payErrPhone:'Enter a valid phone number.', payErrValor:'Enter the amount to pay.', payErrTotal:'Enter the total value of the work.',
       },
     };
     var LANG = 'pt'; try{ LANG = localStorage.getItem('ctg_cli_lang') || 'pt'; }catch(e){}
@@ -389,6 +441,7 @@
     var esc = function(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; };
     var fmtData = function(iso){ if(!iso) return ''; var dt=new Date(iso); if(isNaN(dt)) return ''; return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}); };
     var fmtDataHora = function(iso){ if(!iso) return ''; var dt=new Date(iso); if(isNaN(dt)) return ''; return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}); };
+    var fmtMT = function(v){ return (Number(v)||0).toLocaleString('pt-MZ',{minimumFractionDigits:2,maximumFractionDigits:2})+' MT'; };
     var inicial = function(s){ return (s||'?').trim().charAt(0).toUpperCase(); };
 
     function isImage(nome){ var ext=(String(nome).split('.').pop()||'').toLowerCase(); return ['png','jpg','jpeg','gif','webp','bmp'].indexOf(ext)>=0; }
@@ -485,6 +538,113 @@
       return {cls:'pay-nao', ic:'fa-lock', txt:T('payUnpaid')};
     }
 
+    /* ---------- Pagamento (M-Pesa / e-Mola via MozPayment) ---------- */
+    var PM = { index:-1, escolha:'total', metodo:'mpesa', pct:50 };
+
+    window.abrirPagamento = function(i){
+      var metodos = [];
+      if(GATEWAY.mpesa) metodos.push('mpesa');
+      if(GATEWAY.emola) metodos.push('emola');
+      PM = { index:i, escolha:'total', metodo: metodos[0]||'mpesa', pct:50 };
+      document.getElementById('pmTitleTxt').textContent = T('payTitle');
+      renderPagamento();
+      document.getElementById('payModal').style.display='flex';
+      document.body.style.overflow='hidden';
+    };
+    window.fecharPagamento = function(){
+      document.getElementById('payModal').style.display='none';
+      document.body.style.overflow='';
+    };
+    window.pmEscolher = function(tipo){ PM.escolha = tipo; renderPagamento(); };
+    window.pmEscolherMetodo = function(m){ PM.metodo = m; renderPagamento(true); };
+    window.pmEscolherPct = function(p){
+      PM.pct = p;
+      var p_ = PEDIDOS[PM.index];
+      var base = p_.valorAcordado ? Math.max(0, p_.valorAcordado - (p_.valorPago||0)) : parseFloat(document.getElementById('pmTotalWork') && document.getElementById('pmTotalWork').value || 0);
+      var campo = document.getElementById('pmValor');
+      if(campo && base) campo.value = (base * p/100).toFixed(2);
+      renderPagamento(true);
+    };
+
+    function renderPagamento(manterValor){
+      var p = PEDIDOS[PM.index];
+      var metodos = [];
+      if(GATEWAY.mpesa) metodos.push('mpesa');
+      if(GATEWAY.emola) metodos.push('emola');
+      var saldo = p.valorAcordado ? Math.max(0, p.valorAcordado - (p.valorPago||0)) : null;
+      document.getElementById('pmSummary').innerHTML = p.valorAcordado
+        ? (T('payTotal')+': <b>'+fmtMT(p.valorAcordado)+'</b> · '+T('payDone')+': <b>'+fmtMT(p.valorPago||0)+'</b> · '+T('paySaldo')+': <b>'+fmtMT(saldo)+'</b>')
+        : '';
+      var valorAnterior = manterValor && document.getElementById('pmValor') ? document.getElementById('pmValor').value : '';
+      var totalAnterior = document.getElementById('pmTotalWork') ? document.getElementById('pmTotalWork').value : '';
+
+      if(!metodos.length){
+        document.getElementById('pmBody').innerHTML = '<p style="font-size:13.5px;color:var(--muted)">'+T('payNoGateway')+'</p>';
+        return;
+      }
+      var h = '';
+      h += '<div class="pm-choice">';
+      h += '<button type="button" class="'+(PM.escolha==='total'?'active':'')+'" onclick="pmEscolher(\'total\')">'+T('payFull')+'</button>';
+      h += '<button type="button" class="'+(PM.escolha==='parcial'?'active':'')+'" onclick="pmEscolher(\'parcial\')">'+T('payPartialOpt')+'</button>';
+      h += '</div>';
+      if(metodos.length>1){
+        h += '<div class="pm-methods">';
+        metodos.forEach(function(m){
+          h += '<button type="button" class="'+(PM.metodo===m?'active':'')+'" onclick="pmEscolherMetodo(\''+m+'\')">'+(m==='mpesa'?'M-Pesa':'e-Mola')+'</button>';
+        });
+        h += '</div>';
+      }
+      if(PM.escolha==='parcial' && !p.valorAcordado){
+        h += '<div class="pm-field"><label>'+T('payTotalWork')+'</label><input type="number" min="1" step="0.01" id="pmTotalWork" value="'+esc(totalAnterior)+'" placeholder="Ex.: 5000"></div>';
+      }
+      if(PM.escolha==='parcial'){
+        h += '<div class="pm-pct">';
+        [30,50,70].forEach(function(pc){
+          h += '<button type="button" class="'+(PM.pct===pc?'active':'')+'" onclick="pmEscolherPct('+pc+')">'+pc+'%</button>';
+        });
+        h += '</div>';
+      }
+      h += '<div class="pm-field"><label>'+T('payNumero')+'</label><input type="tel" id="pmNumero" placeholder="84 000 0000"></div>';
+      var valorDefault = valorAnterior || (PM.escolha==='total' && saldo ? saldo.toFixed(2) : '');
+      h += '<div class="pm-field"><label>'+T('payValor')+'</label><input type="number" min="1" step="0.01" id="pmValor" value="'+esc(valorDefault)+'"></div>';
+      h += '<div id="pmMsg"></div>';
+      h += '<button type="button" class="pm-submit" id="pmSubmitBtn" onclick="pmSubmit()">'+T('paySubmit')+'</button>';
+      h += '<p style="font-size:11.5px;color:var(--muted);margin-top:10px">'+T('payHint')+'</p>';
+      document.getElementById('pmBody').innerHTML = h;
+    }
+
+    window.pmSubmit = function(){
+      var p = PEDIDOS[PM.index];
+      var numero = (document.getElementById('pmNumero').value||'').replace(/\D/g,'');
+      var valor = parseFloat(document.getElementById('pmValor').value||'0');
+      var msgBox = document.getElementById('pmMsg');
+      msgBox.className='pm-msg';
+      if(numero.length<9){ msgBox.textContent=T('payErrPhone'); msgBox.className='pm-msg err'; return; }
+      if(!valor || valor<=0){ msgBox.textContent=T('payErrValor'); msgBox.className='pm-msg err'; return; }
+      var valorTotal = null;
+      if(PM.escolha==='parcial' && !p.valorAcordado){
+        var tw = document.getElementById('pmTotalWork');
+        valorTotal = tw ? parseFloat(tw.value||'0') : 0;
+        if(!valorTotal || valorTotal<=0){ msgBox.textContent=T('payErrTotal'); msgBox.className='pm-msg err'; return; }
+      }
+      var btn = document.getElementById('pmSubmitBtn');
+      btn.disabled = true; btn.textContent = T('paySending');
+      fetch('pagamento.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        leadId: p.id, email: CRED.email, codigo: CRED.codigo, metodo: PM.metodo, numero: numero, valor: valor,
+        ehTotal: PM.escolha==='total', valorTotal: valorTotal,
+      })})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        btn.disabled=false; btn.textContent=T('paySubmit');
+        if(!res.ok || !res.j.ok){ msgBox.textContent = (res.j && res.j.message) || T('errConn'); msgBox.className='pm-msg err'; return; }
+        msgBox.textContent = res.j.message; msgBox.className='pm-msg ok';
+        p.pago = res.j.pago || p.pago;
+        p.valorPago = res.j.valorPago!=null ? res.j.valorPago : p.valorPago;
+        p.valorAcordado = res.j.valorAcordado!=null ? res.j.valorAcordado : p.valorAcordado;
+        setTimeout(function(){ fecharPagamento(); renderGrid(document.getElementById('search').value||''); }, 1600);
+      }).catch(function(){ btn.disabled=false; btn.textContent=T('paySubmit'); msgBox.textContent=T('errConn'); msgBox.className='pm-msg err'; });
+    };
+
     // Bloco de texto com pré-visualização quando o conteúdo é grande (ver mais / ver menos).
     var txSeq = 0;
     function blocoTexto(cls, texto, iconHtml){
@@ -530,6 +690,13 @@
       if(p.mensagem) h += blocoTexto('req-msg', p.mensagem);
       h += ' <div class="sec-label"><i class="fa-solid fa-box"></i> '+T('deliveries')
          + '<span class="paybadge '+pay.cls+'"><i class="fa-solid '+pay.ic+'"></i> '+pay.txt+'</span></div>';
+      if(pago!=='pago'){
+        if(p.valorAcordado){
+          var saldo = Math.max(0, p.valorAcordado - (p.valorPago||0));
+          h += '<div class="pay-summary">'+T('payTotal')+': <b>'+fmtMT(p.valorAcordado)+'</b> · '+T('payDone')+': <b>'+fmtMT(p.valorPago||0)+'</b> · '+T('paySaldo')+': <b>'+fmtMT(saldo)+'</b></div>';
+        }
+        h += '<button type="button" class="pay-btn" onclick="abrirPagamento('+i+')"><i class="fa-solid fa-mobile-screen-button"></i> '+T('payBtn')+'</button>';
+      }
       if(temEntrega){
         if(p.entrega.msg) h += blocoTexto('deliver-msg', p.entrega.msg, '<i class="fa-solid fa-comment-dots"></i> ');
         p.entrega.entregas.forEach(function(it){
@@ -868,8 +1035,11 @@
       });
     })();
 
-    // Marca (logo)
-    fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){ aplicarMarca(d&&d.branding); }).catch(function(){});
+    // Marca (logo) + pagamento automático disponível
+    fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){
+      aplicarMarca(d&&d.branding);
+      if(d && d.gateway) GATEWAY = d.gateway;
+    }).catch(function(){});
 
     // Fluxo de entrada:
     //  1) link do e-mail (?email=&codigo=) → entra directo
