@@ -180,6 +180,8 @@ $pedidos = array_map(function ($l) use ($config, $estados) {
             return ['de' => $c['de'] ?? 'cliente', 'nome' => $c['nome'] ?? '', 'texto' => $c['texto'] ?? '', 'data' => $c['data'] ?? ''];
         }, $entrega['comentarios']) : [],
         'pago' => $entrega['pago'] ?? 'nao',
+        'valorAcordado' => (isset($entrega['valorAcordado']) && $entrega['valorAcordado'] !== null) ? (float) $entrega['valorAcordado'] : null,
+        'valorPago' => (float) ($entrega['valorPago'] ?? 0),
         'cliente_ficheiros' => ($entrega && !empty($entrega['cliente_ficheiros'])) ? array_map(function ($f) {
             return ['url' => $f['url'] ?? '', 'nome' => $f['nome'] ?? '', 'data' => $f['data'] ?? ''];
         }, $entrega['cliente_ficheiros']) : [],

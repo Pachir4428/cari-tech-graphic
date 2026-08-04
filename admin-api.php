@@ -527,6 +527,15 @@ switch ($action) {
         if ($novo !== $estadoAnt) store_add_audit($config, 'pagamento', "Pedido {$leadId}: {$estadoAnt} → {$novo}");
         responder(true, ['message' => 'Pagamento actualizado.', 'pago' => $novo, 'notified' => $notificado]);
 
+    case 'lead-valor':
+        exigir_login();
+        $leadId = (string) ($body['leadId'] ?? '');
+        if ($leadId === '') responder(false, ['message' => 'Lead em falta.'], 422);
+        $valor = array_key_exists('valor', $body) ? $body['valor'] : null;
+        $slot = store_set_valor_acordado($config, $leadId, $valor);
+        store_add_audit($config, 'valor-acordado', "Pedido {$leadId}: valor acordado = " . ($slot['valorAcordado'] ?? '—'));
+        responder(true, ['message' => 'Valor acordado guardado.', 'entrega' => $slot]);
+
     case 'upload-file':
         exigir_login();
         $r = guardar_ficheiro_entrega($_FILES['file'] ?? null, 25);

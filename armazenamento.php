@@ -374,6 +374,51 @@ function store_set_pagamento($config, $leadId, $estado) {
     return $todas[$leadId]['pago'];
 }
 
+/* Valor total acordado para o pedido (definido pelo admin ao orçamentar, ou
+   declarado pelo próprio cliente ao pagar uma percentagem no checkout). */
+function store_set_valor_acordado($config, $leadId, $valor) {
+    $todas = store_get_deliveries($config);
+    _entrega_slot($todas, $leadId);
+    $todas[$leadId]['valorAcordado'] = ($valor !== null && $valor !== '') ? round((float) $valor, 2) : null;
+    store_set_deliveries($config, $todas);
+    return $todas[$leadId];
+}
+
+/* Regista um pagamento (entrada, parcela ou saldo) recebido pela carteira
+   (MozPayment) e recalcula automaticamente o estado 'nao'/'parcial'/'pago'.
+   - $ehTotal: o cliente indicou que este pagamento fecha o valor total do pedido.
+   - $valorTotalDeclarado: quando o cliente paga uma percentagem, o valor total
+     que declarou (só é guardado se ainda não houver um valor acordado). */
+function store_registar_pagamento($config, $leadId, $valor, $ehTotal = false, $valorTotalDeclarado = null) {
+    $todas = store_get_deliveries($config);
+    _entrega_slot($todas, $leadId);
+    $slot = &$todas[$leadId];
+    $valor = round((float) $valor, 2);
+    $acordado = isset($slot['valorAcordado']) ? (float) $slot['valorAcordado'] : 0.0;
+    $pago = round((float) ($slot['valorPago'] ?? 0), 2);
+
+    if ($valorTotalDeclarado !== null && $acordado <= 0) {
+        $acordado = round((float) $valorTotalDeclarado, 2);
+    }
+    $pago += $valor;
+    if ($ehTotal) {
+        // O próprio pagamento fecha o valor total (mesmo que ainda não houvesse um valor acordado).
+        $acordado = max($acordado, $pago);
+    }
+    $slot['valorAcordado'] = $acordado > 0 ? $acordado : null;
+    $slot['valorPago'] = $pago;
+
+    if ($acordado > 0 && $pago >= $acordado - 0.01) {
+        $slot['pago'] = 'pago';
+    } elseif ($pago > 0) {
+        $slot['pago'] = 'parcial';
+    } else {
+        $slot['pago'] = 'nao';
+    }
+    store_set_deliveries($config, $todas);
+    return $slot;
+}
+
 /* Registo (log) das actualizações do site por ZIP. */
 function store_get_update_log($config)    { $v = _meta_get($config, 'update_log', 'update_log.json'); return is_array($v) ? $v : []; }
 function store_add_update_log($config, $entry) {

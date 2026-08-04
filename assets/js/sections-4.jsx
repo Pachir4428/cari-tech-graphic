@@ -551,13 +551,15 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
   const [order, setOrder] = useS4(null); // { leadId, codigo, email }
   const [payMetodo, setPayMetodo] = useS4('carteira'); // carteira | link | transferencia
   const [walletMetodo, setWalletMetodo] = useS4('mpesa'); // mpesa | emola
+  const [payPlano, setPayPlano] = useS4('total'); // total | parcial
+  const [valorTotalDecl, setValorTotalDecl] = useS4(''); // valor total do trabalho (só quando parcial)
   const [numero, setNumero] = useS4('');
   const [valor, setValor] = useS4('');
   const [payStatus, setPayStatus] = useS4(null); // { ok, message } — resultado do pagamento por carteira
   const [uploadNote, setUploadNote] = useS4('');
 
   useE4(() => {
-    if (open) { setStage('form'); setFeedback(''); setOrder(null); setPayStatus(null); setUploadNote(''); }
+    if (open) { setStage('form'); setFeedback(''); setOrder(null); setPayStatus(null); setUploadNote(''); setPayPlano('total'); setValorTotalDecl(''); setNumero(''); setValor(''); }
     window.loadContent().then((c) => {
       if (c && c.payments) setPay(c.payments);
       if (c && c.gateway) setGateway(c.gateway);
@@ -597,6 +599,10 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
       if (numero.replace(/\D/g, '').length < 9) { setFeedback('Indique um número de telemóvel válido.'); return; }
       const v = parseFloat(String(valor).replace(',', '.'));
       if (!v || v <= 0) { setFeedback('Indique o valor a pagar.'); return; }
+      if (payPlano === 'parcial') {
+        const vt = parseFloat(String(valorTotalDecl).replace(',', '.'));
+        if (!vt || vt <= 0) { setFeedback('Indique o valor total do trabalho.'); return; }
+      }
     }
     setStage('sending'); setFeedback('');
     const msg = 'Pedido de serviços:\n- ' + items.map(resumo).join('\n- ');
@@ -615,8 +621,12 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
 
     if (novaOrdem && payMetodo === 'carteira') {
       const v = parseFloat(String(valor).replace(',', '.'));
+      const vt = payPlano === 'parcial' ? parseFloat(String(valorTotalDecl).replace(',', '.')) : null;
       try {
-        const pr = await window.payGateway({ leadId: novaOrdem.leadId, email: novaOrdem.email, codigo: novaOrdem.codigo, metodo: walletMetodo, numero: numero.replace(/\D/g, ''), valor: v });
+        const pr = await window.payGateway({
+          leadId: novaOrdem.leadId, email: novaOrdem.email, codigo: novaOrdem.codigo, metodo: walletMetodo,
+          numero: numero.replace(/\D/g, ''), valor: v, ehTotal: payPlano === 'total', valorTotal: vt,
+        });
         setPayStatus({ ok: true, message: pr.message || 'Pagamento confirmado! Obrigado.' });
       } catch (err) {
         setPayStatus({ ok: false, message: err.message || 'Não foi possível confirmar o pagamento automaticamente. Pode usar as outras formas de pagamento abaixo.' });
@@ -717,9 +727,31 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                             ))}
                           </div>
                         )}
+                        <div className="pay-plano">
+                          <button type="button" className={`pay-plano-btn ${payPlano === 'total' ? 'active' : ''}`} onClick={() => setPayPlano('total')}>Pagar tudo</button>
+                          <button type="button" className={`pay-plano-btn ${payPlano === 'parcial' ? 'active' : ''}`} onClick={() => setPayPlano('parcial')}>Pagar uma parcela agora</button>
+                        </div>
+                        {payPlano === 'parcial' && (
+                          <>
+                            <div className="field">
+                              <label>Valor total do trabalho (MT)</label>
+                              <input value={valorTotalDecl} onChange={(e) => setValorTotalDecl(e.target.value)} placeholder="Ex.: 5000" inputMode="decimal" />
+                              <div className="field-error" />
+                            </div>
+                            <div className="pay-pct">
+                              {[30, 50, 70].map((pc) => (
+                                <button type="button" key={pc} className="pay-pct-btn" onClick={() => {
+                                  const vt = parseFloat(String(valorTotalDecl).replace(',', '.'));
+                                  if (vt > 0) setValor(((vt * pc) / 100).toFixed(2));
+                                }}>{pc}%</button>
+                              ))}
+                            </div>
+                            <p style={{ fontSize: 12, color: 'var(--ink-muted)' }}>O saldo fica registado no seu pedido — pode pagá-lo mais tarde na Área de Cliente, à finalização do trabalho.</p>
+                          </>
+                        )}
                         <div className="cf-row">
                           <div className="field"><label>Número {walletMetodo === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</label><input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" /><div className="field-error" /></div>
-                          <div className="field"><label>Valor (MT)</label><input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" /><div className="field-error" /></div>
+                          <div className="field"><label>Valor a pagar agora (MT)</label><input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" /><div className="field-error" /></div>
                         </div>
                         <p style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Ao finalizar, recebe um pedido de confirmação no telemóvel — aprove-o para concluir o pagamento.</p>
                       </div>
@@ -764,8 +796,14 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                 </ul>
                 {payMetodo === 'carteira' && abas.length > 0 && parseFloat(String(valor).replace(',', '.')) > 0 && (
                   <div className="order-total">
-                    <span>Total</span>
+                    <span>{payPlano === 'parcial' ? 'A pagar agora' : 'Total'}</span>
                     <strong>{parseFloat(String(valor).replace(',', '.')).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT</strong>
+                  </div>
+                )}
+                {payMetodo === 'carteira' && payPlano === 'parcial' && parseFloat(String(valorTotalDecl).replace(',', '.')) > 0 && (
+                  <div className="order-total" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
+                    <span>Valor total do trabalho</span>
+                    <strong style={{ fontSize: 14, color: 'var(--ink-soft)' }}>{parseFloat(String(valorTotalDecl).replace(',', '.')).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT</strong>
                   </div>
                 )}
                 {feedback && stage !== 'done' && <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--danger,#e5484d)' }}>{feedback}</p>}
