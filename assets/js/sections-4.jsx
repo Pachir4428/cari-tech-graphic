@@ -566,15 +566,17 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
     });
   }, [open]);
 
+  const walletDisponiveis = ['mpesa', 'emola', 'mkesh', 'cartao'].filter((m) => gateway[m]);
   const abas = [];
-  if (gateway.mpesa || gateway.emola) abas.push('carteira');
+  if (walletDisponiveis.length) abas.push('carteira');
   if (pay.enabled && pay.onlineLink) abas.push('link');
   if (pay.enabled && (pay.mpesa || pay.emola || pay.bank)) abas.push('transferencia');
   useE4(() => { if (abas.length && !abas.includes(payMetodo)) setPayMetodo(abas[0]); }, [gateway, pay]);
-  useE4(() => { if (gateway.mpesa) setWalletMetodo('mpesa'); else if (gateway.emola) setWalletMetodo('emola'); }, [gateway]);
+  useE4(() => { if (walletDisponiveis.length && !walletDisponiveis.includes(walletMetodo)) setWalletMetodo(walletDisponiveis[0]); }, [gateway]);
 
   const resumo = (it) => it.service + (it.desc ? ' — ' + it.desc : '');
-  const nomeAba = (k) => (k === 'carteira' ? 'Carteira (M-Pesa/e-Mola)' : k === 'link' ? 'Link / Cartão' : 'Transferência');
+  const nomeAba = (k) => (k === 'carteira' ? 'Carteira / Cartão' : k === 'link' ? 'Link online' : 'Transferência');
+  const nomeMetodo = (m) => (m === 'mpesa' ? 'M-Pesa' : m === 'emola' ? 'e-Mola' : m === 'mkesh' ? 'mKesh' : 'Cartão');
 
   const enviarAnexos = async (leadId, email, codigo) => {
     const comFicheiros = items.filter((it) => it.files && it.files.length);
@@ -596,7 +598,7 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
       setFeedback('Preencha o nome e um e-mail válido.'); return;
     }
     if (abas.length && payMetodo === 'carteira') {
-      if (numero.replace(/\D/g, '').length < 9) { setFeedback('Indique um número de telemóvel válido.'); return; }
+      if (walletMetodo !== 'cartao' && numero.replace(/\D/g, '').length < 9) { setFeedback('Indique um número de telemóvel válido.'); return; }
       const v = parseFloat(String(valor).replace(',', '.'));
       if (!v || v <= 0) { setFeedback('Indique o valor a pagar.'); return; }
       if (payPlano === 'parcial') {
@@ -628,6 +630,7 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
           numero: numero.replace(/\D/g, ''), valor: v, ehTotal: payPlano === 'total', valorTotal: vt,
         });
         setPayStatus({ ok: true, message: pr.message || 'Pagamento confirmado! Obrigado.' });
+        if (pr.checkout_url) window.open(pr.checkout_url, '_blank', 'noopener');
       } catch (err) {
         setPayStatus({ ok: false, message: err.message || 'Não foi possível confirmar o pagamento automaticamente. Pode usar as outras formas de pagamento abaixo.' });
       }
@@ -717,12 +720,12 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                     </div>
                     {payMetodo === 'carteira' && (
                       <div style={{ marginTop: 14 }}>
-                        {(gateway.mpesa && gateway.emola) && (
+                        {walletDisponiveis.length > 1 && (
                           <div className="gw-methods" style={{ marginBottom: 10 }}>
-                            {['mpesa', 'emola'].map((m) => (
+                            {walletDisponiveis.map((m) => (
                               <label key={m} className={`gw-method ${walletMetodo === m ? 'active' : ''}`}>
                                 <input type="radio" name="gw-metodo" value={m} checked={walletMetodo === m} onChange={() => setWalletMetodo(m)} />
-                                {m === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
+                                {nomeMetodo(m)}
                               </label>
                             ))}
                           </div>
@@ -750,10 +753,16 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                           </>
                         )}
                         <div className="cf-row">
-                          <div className="field"><label>Número {walletMetodo === 'mpesa' ? 'M-Pesa' : 'e-Mola'}</label><input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" /><div className="field-error" /></div>
+                          {walletMetodo !== 'cartao' && (
+                            <div className="field"><label>Número {nomeMetodo(walletMetodo)}</label><input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" /><div className="field-error" /></div>
+                          )}
                           <div className="field"><label>Valor a pagar agora (MT)</label><input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" /><div className="field-error" /></div>
                         </div>
-                        <p style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Ao finalizar, recebe um pedido de confirmação no telemóvel — aprove-o para concluir o pagamento.</p>
+                        <p style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>
+                          {walletMetodo === 'cartao'
+                            ? 'Ao finalizar, abrimos a página segura de pagamento por cartão numa nova aba.'
+                            : 'Ao finalizar, recebe um pedido de confirmação no telemóvel — aprove-o para concluir o pagamento.'}
+                        </p>
                       </div>
                     )}
                     {payMetodo === 'link' && (

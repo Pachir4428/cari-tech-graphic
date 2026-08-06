@@ -62,10 +62,31 @@ function exigir_login() {
     if (!autenticado()) responder(false, ['message' => 'Sessão não autorizada.'], 401);
 }
 
+/* Mensagem de erro específica quando uma gravação falha — normalmente a pasta
+   dados/ sem permissão de escrita (comum em hospedagem partilhada após um
+   carregamento manual de ficheiros). Aponta directamente para a causa mais
+   provável e para o diagnóstico em Definições → Estado do sistema. */
+function ctg_erro_gravacao() {
+    $dadosDir = __DIR__ . '/dados';
+    if (!is_dir($dadosDir) || !is_writable($dadosDir)) {
+        return 'Não foi possível gravar: a pasta dados/ não tem permissão de escrita no servidor. '
+            . 'No hPanel → Gestor de ficheiros, clique com o botão direito em dados/ → Permissões → 755 (ou 775). '
+            . 'Pode confirmar em Definições → Estado do sistema.';
+    }
+    return 'Não foi possível gravar no servidor. Tente novamente; se persistir, veja Definições → Estado do sistema.';
+}
+
+/* Interrompe com um erro claro se a gravação ($ok) tiver falhado — evita que o
+   painel diga "guardado" quando, na verdade, nada foi escrito no servidor. */
+function exigir_gravacao($ok) {
+    if (!$ok) responder(false, ['message' => ctg_erro_gravacao()], 500);
+}
+
 require_once __DIR__ . '/armazenamento.php';
 require_once __DIR__ . '/email-enviar.php';
 require_once __DIR__ . '/email-template.php';
 require_once __DIR__ . '/mozpayment.php';
+require_once __DIR__ . '/pagaja.php';
 $config = ctg_apply_smtp($config); // definições SMTP do painel (se existirem)
 
 /* Utilizador em vigor: o guardado no painel, ou o padrão do config. */
@@ -205,6 +226,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && autenticado() && $action !== 'login
     }
 }
 
+/* --- Pasta dados/ gravável --------------------------------------------------
+   Verificação antecipada, comum a quase todas as acções que gravam (leads,
+   conteúdo, pagamentos, entregas…): sem isto, uma pasta dados/ sem permissão
+   de escrita (frequente após um carregamento manual de ficheiros na
+   hospedagem partilhada) fazia o painel dizer "guardado" sem nada ter sido
+   realmente escrito. As excepções abaixo são leituras, o próprio login/sessão,
+   uploads (gravam em uploads/, com a sua própria verificação) e a
+   actualização por ZIP (tem o seu próprio tratamento de erros). */
+$acoesSemVerificacaoDados = [
+    'login', 'logout', 'session', 'leads', 'content', 'stats', 'deliveries', 'financas', 'audit', 'health',
+    'update-log', 'upload-logo', 'remove-logo', 'upload-image', 'upload-file', 'update-zip', 'update-restore',
+    'mozpayment-test', 'pagaja-test', 'pagaja-webhook-status',
+];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && autenticado() && !in_array($action, $acoesSemVerificacaoDados, true)) {
+    $dadosDir = __DIR__ . '/dados';
+    if (!is_dir($dadosDir) || !is_writable($dadosDir)) {
+        responder(false, ['message' => ctg_erro_gravacao()], 500);
+    }
+}
+
 /* --- Rotas ----------------------------------------------------------------- */
 switch ($action) {
     case 'login':
@@ -257,18 +298,20 @@ switch ($action) {
         if (!in_array($status, $validos, true)) {
             responder(false, ['message' => 'Estado inválido.'], 422);
         }
-        if (!store_set_lead_status($config, $id, $status)) {
+        if (!ctg_lead_por_id($config, $id)) {
             responder(false, ['message' => 'Lead não encontrado.'], 404);
         }
+        exigir_gravacao(store_set_lead_status($config, $id, $status));
         responder(true, ['message' => 'Estado actualizado.']);
 
     case 'lead-delete':
         exigir_login();
         $id = (string) ($body['id'] ?? '');
         $leadRem = ctg_lead_por_id($config, $id);
-        if (!store_delete_lead($config, $id)) {
+        if (!$leadRem) {
             responder(false, ['message' => 'Lead não encontrado.'], 404);
         }
+        exigir_gravacao(store_delete_lead($config, $id));
         store_add_audit($config, 'lead-apagado', trim(($leadRem['nome'] ?? '') . ' ' . ($leadRem['email'] ?? '')) ?: $id);
         responder(true, ['message' => 'Lead removido.']);
 
@@ -284,6 +327,15 @@ switch ($action) {
             'branding'     => store_get_branding($config),
             'payments'     => store_get_payments($config),
             'mozpayment'   => store_get_mozpayment($config),
+            'pagaja'       => (function () use ($config) {
+                $p = store_get_pagaja($config);
+                return [
+                    'enabled'       => !empty($p['enabled']),
+                    'client_id'     => $p['client_id'] ?? '',
+                    'client_secret' => $p['client_secret'] ?? '',
+                    'webhook_set'   => !empty($p['webhook_secret']),
+                ];
+            })(),
             'social'       => ctg_social($config),
             'sites'        => store_get_sites($config),
             'seg'          => ['admin_slug' => ctg_admin_slug($config)],
@@ -306,19 +358,19 @@ switch ($action) {
         exigir_login();
         $p = $body['payments'] ?? null;
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
-        store_set_payments($config, $p);
+        exigir_gravacao(store_set_payments($config, $p));
         responder(true, ['message' => 'Pagamentos guardados.']);
 
     case 'mozpayment-save':
         exigir_login();
         $m = $body['mozpayment'] ?? null;
         if (!is_array($m)) responder(false, ['message' => 'Dados inválidos.'], 422);
-        store_set_mozpayment($config, [
+        exigir_gravacao(store_set_mozpayment($config, [
             'mpesaEnabled'  => !empty($m['mpesaEnabled']),
             'mpesaCarteira' => trim((string) ($m['mpesaCarteira'] ?? '')),
             'emolaEnabled'  => !empty($m['emolaEnabled']),
             'emolaCarteira' => trim((string) ($m['emolaCarteira'] ?? '')),
-        ]);
+        ]));
         responder(true, ['message' => 'Pagamento automático guardado.']);
 
     case 'mozpayment-test':
@@ -342,11 +394,57 @@ switch ($action) {
         if (!$res['ok']) responder(false, ['message' => $res['message']], 402);
         responder(true, ['message' => 'Confirmado: este método pode receber pagamentos reais via API. ' . $res['message']]);
 
+    case 'pagaja-save':
+        exigir_login();
+        $pj = $body['pagaja'] ?? null;
+        if (!is_array($pj)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        $anteriorPj = store_get_pagaja($config);
+        exigir_gravacao(store_set_pagaja($config, [
+            'enabled'         => !empty($pj['enabled']),
+            'client_id'       => trim((string) ($pj['client_id'] ?? '')),
+            'client_secret'   => trim((string) ($pj['client_secret'] ?? '')),
+            // O segredo do webhook só é definido por "pagaja-webhook-setup" — preserva-se aqui.
+            'webhook_secret'  => $anteriorPj['webhook_secret'] ?? '',
+        ]));
+        // Credenciais novas invalidam qualquer token OAuth em cache da chave anterior.
+        store_set_pagaja_token($config, []);
+        responder(true, ['message' => 'PagaJá guardado.']);
+
+    case 'pagaja-test':
+        exigir_login();
+        // Só pede um novo access_token — confirma as credenciais sem mover dinheiro nenhum.
+        store_set_pagaja_token($config, []);
+        $res = pagaja_token($config);
+        if (!$res['ok']) responder(false, ['message' => $res['message']], 402);
+        $modo = pagaja_modo_chave((string) (store_get_pagaja($config)['client_secret'] ?? ''));
+        $rotulo = $modo === 'live' ? 'produção (live)' : ($modo === 'test' ? 'teste' : 'desconhecido');
+        responder(true, ['message' => "Ligação confirmada — chave de {$rotulo} válida."]);
+
+    case 'pagaja-webhook-setup':
+        exigir_login();
+        $siteUrl = rtrim((string) ($config['site_url'] ?? ''), '/');
+        if ($siteUrl === '' || !preg_match('~^https://~i', $siteUrl)) {
+            responder(false, ['message' => 'Defina um site_url com https:// em config.php antes de configurar o webhook.'], 422);
+        }
+        $res = pagaja_configurar_webhook($config, $siteUrl . '/webhook-pagaja.php');
+        if (!$res['ok']) responder(false, ['message' => $res['message']], 402);
+        $pjAtual = store_get_pagaja($config);
+        $pjAtual['webhook_secret'] = (string) ($res['webhook']['secret'] ?? '');
+        exigir_gravacao(store_set_pagaja($config, $pjAtual));
+        store_add_audit($config, 'pagaja-webhook', 'Webhook configurado: ' . $siteUrl . '/webhook-pagaja.php');
+        responder(true, ['message' => 'Webhook configurado com sucesso.', 'webhook' => $res['webhook']]);
+
+    case 'pagaja-webhook-status':
+        exigir_login();
+        $res = pagaja_estado_webhook($config);
+        if (!$res['ok']) responder(false, ['message' => $res['message']], 402);
+        responder(true, ['webhook' => $res['webhook']]);
+
     case 'smtp-save':
         exigir_login();
         $s = $body['smtp'] ?? null;
         if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
-        store_set_smtp($config, [
+        exigir_gravacao(store_set_smtp($config, [
             'smtp_enabled' => !empty($s['smtp_enabled']),
             'smtp_host'    => trim((string) ($s['smtp_host']   ?? '')),
             'smtp_port'    => (int) ($s['smtp_port'] ?? 465),
@@ -354,7 +452,7 @@ switch ($action) {
             'smtp_user'    => trim((string) ($s['smtp_user']   ?? '')),
             'smtp_pass'    => (string) ($s['smtp_pass'] ?? ''),
             'from_email'   => trim((string) ($s['from_email']  ?? ($s['smtp_user'] ?? ''))),
-        ]);
+        ]));
         responder(true, ['message' => 'E-mail (SMTP) guardado.']);
 
     case 'financas':
@@ -387,14 +485,14 @@ switch ($action) {
                 'categoria' => trim((string) ($m['categoria'] ?? '')),
             ];
         }
-        store_set_financas($config, $limpos);
+        exigir_gravacao(store_set_financas($config, $limpos));
         responder(true, ['message' => 'Finanças guardadas.', 'financas' => $limpos]);
 
     case 'seg-save':
         exigir_login();
         $slug = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($body['admin_slug'] ?? ''));
         $slug = substr($slug, 0, 40);
-        store_set_seg($config, ['admin_slug' => $slug]);
+        exigir_gravacao(store_set_seg($config, ['admin_slug' => $slug]));
         responder(true, ['message' => 'Segurança guardada.', 'admin_slug' => $slug, 'painel' => ctg_painel_url($config)]);
 
     case 'sites-save':
@@ -416,20 +514,20 @@ switch ($action) {
                 'status' => (($it['status'] ?? 'active') === 'draft') ? 'draft' : 'active',
             ];
         }
-        store_set_sites($config, $limpos);
+        exigir_gravacao(store_set_sites($config, $limpos));
         responder(true, ['message' => 'Sites guardados.', 'sites' => $limpos]);
 
     case 'social-save':
         exigir_login();
         $s = $body['social'] ?? null;
         if (!is_array($s)) responder(false, ['message' => 'Dados inválidos.'], 422);
-        store_set_social($config, [
+        exigir_gravacao(store_set_social($config, [
             'enabled'             => !empty($s['enabled']),
             'google_client_id'    => trim((string) ($s['google_client_id']    ?? '')),
             'facebook_app_id'     => trim((string) ($s['facebook_app_id']      ?? '')),
             'facebook_app_secret' => trim((string) ($s['facebook_app_secret']  ?? '')),
             'admin_email'         => trim((string) ($s['admin_email']          ?? '')),
-        ]);
+        ]));
         responder(true, ['message' => 'Login social guardado.', 'social' => ctg_social($config)]);
 
     case 'content-save':

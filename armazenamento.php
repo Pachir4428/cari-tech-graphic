@@ -111,8 +111,7 @@ function store_set_lead_status($config, $id, $status) {
     $ok = false;
     foreach ($lista as &$l) { if (($l['id'] ?? '') === $id) { $l['status'] = $status; $ok = true; break; } }
     unset($l);
-    if ($ok) file_put_leads($config, $lista);
-    return $ok;
+    return $ok && file_put_leads($config, $lista);
 }
 
 function store_delete_lead($config, $id) {
@@ -126,8 +125,7 @@ function store_delete_lead($config, $id) {
     $antes = count($lista);
     $lista = array_values(array_filter($lista, fn($l) => ($l['id'] ?? '') !== $id));
     if (count($lista) === $antes) return false;
-    file_put_leads($config, $lista);
-    return true;
+    return file_put_leads($config, $lista);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -240,6 +238,41 @@ function store_set_payments($config, $p) { return _meta_set($config, 'payments',
    público só sabe se cada método está activo (ver conteudo.php). */
 function store_get_mozpayment($config)   { return _meta_get($config, 'mozpayment', 'mozpayment.json') ?: []; }
 function store_set_mozpayment($config, $m) { return _meta_set($config, 'mozpayment', 'mozpayment.json', $m); }
+
+/* Gateway PagaJá (OAuth2 — M-Pesa/e-Mola/mKesh/Cartão numa só API). As
+   credenciais e o segredo do webhook nunca são públicos. */
+function store_get_pagaja($config)   { return _meta_get($config, 'pagaja', 'pagaja.json') ?: []; }
+function store_set_pagaja($config, $p) { return _meta_set($config, 'pagaja', 'pagaja.json', $p); }
+
+/* Token OAuth da PagaJá em cache (expira ao fim de 1h — evita pedir um novo a
+   cada chamada, como a documentação recomenda). */
+function store_get_pagaja_token($config)   { return _meta_get($config, 'pagaja_token', 'pagaja_token.json') ?: []; }
+function store_set_pagaja_token($config, $t) { return _meta_set($config, 'pagaja_token', 'pagaja_token.json', $t); }
+
+/* Cobranças PagaJá por confirmar: reference (id devolvido pela PagaJá) →
+   {leadId,email,codigo,valor,ehTotal,valorTotal,criado}. O webhook só traz o
+   id da PagaJá — isto é o que permite ligar o evento ao pedido local. */
+function store_get_pagaja_pendentes($config) {
+    $v = _meta_get($config, 'pagaja_pendentes', 'pagaja_pendentes.json');
+    return is_array($v) ? $v : [];
+}
+function store_set_pagaja_pendente($config, $reference, $dados) {
+    $todas = store_get_pagaja_pendentes($config);
+    $todas[$reference] = $dados;
+    $limite = time() - 7 * 86400; // nunca confirmadas há mais de 7 dias — descarta.
+    foreach ($todas as $ref => $d) { if (($d['criado'] ?? 0) < $limite) unset($todas[$ref]); }
+    return _meta_set($config, 'pagaja_pendentes', 'pagaja_pendentes.json', $todas);
+}
+/* Retira (consome) uma cobrança pendente pelo reference — usado quando o
+   webhook confirma o pagamento. Devolve null se não houver correspondência. */
+function store_tomar_pagaja_pendente($config, $reference) {
+    $todas = store_get_pagaja_pendentes($config);
+    if (!isset($todas[$reference])) return null;
+    $dados = $todas[$reference];
+    unset($todas[$reference]);
+    _meta_set($config, 'pagaja_pendentes', 'pagaja_pendentes.json', $todas);
+    return $dados;
+}
 
 /* Login social: IDs/segredos do Google e Facebook, geridos no painel. */
 function store_get_social($config)    { return _meta_get($config, 'social', 'social.json') ?: []; }
@@ -656,7 +689,7 @@ function file_get_leads($config) {
 function file_put_leads($config, $lista) {
     $path = _leads_path($config);
     @mkdir(dirname($path), 0755, true);
-    file_put_contents($path, json_encode(array_values($lista), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+    return file_put_contents($path, json_encode(array_values($lista), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX) !== false;
 }
 function file_add_lead($config, $lead) {
     $path = _leads_path($config);
