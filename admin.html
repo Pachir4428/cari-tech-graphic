@@ -6,15 +6,15 @@
   <title>Admin · Cari Tech Graphic</title>
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#0B4E50" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=121" />
-  <link rel="icon" href="assets/icons/icon-192.png?v=121" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=122" />
+  <link rel="icon" href="assets/icons/icon-192.png?v=122" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=121" />
-  <link rel="stylesheet" href="assets/css/styles-sections.css?v=121" />
-  <link rel="stylesheet" href="assets/css/styles-modals.css?v=121" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=122" />
+  <link rel="stylesheet" href="assets/css/styles-sections.css?v=122" />
+  <link rel="stylesheet" href="assets/css/styles-modals.css?v=122" />
   <style>
     body { background: var(--bg-soft); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .admin-shell {
@@ -26,7 +26,8 @@
       padding: 22px 14px;
       display: flex; flex-direction: column; gap: 3px;
       position: fixed; top: 0; left: 0; bottom: 0; width: 256px; z-index: 40;
-      overflow-y: auto;
+      overflow-y: auto; overflow-x: hidden;
+      transition: width 0.22s ease;
     }
     .admin-logo {
       display: flex; align-items: center; gap: 10px;
@@ -34,12 +35,35 @@
       margin-bottom: 8px;
     }
     .admin-logo-mark {
-      width: 34px; height: 34px;
+      width: 34px; height: 34px; flex: none;
       background: var(--accent);
       border-radius: 11px;
       display: inline-flex; align-items: center; justify-content: center;
       font-weight: 800; color: #fff;
+      overflow: hidden;
     }
+    .admin-logo-mark img { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; }
+    .side-collapse-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      position: absolute; top: 20px; right: -12px;
+      width: 24px; height: 24px;
+      background: var(--accent); color: #fff;
+      border: 2px solid var(--brand-deep); border-radius: 50%;
+      cursor: pointer; z-index: 41;
+      transition: filter 0.15s ease;
+    }
+    .side-collapse-toggle:hover { filter: brightness(1.08); }
+    /* Painel encolhido (desktop): mostra só ícones, esconde texto. */
+    .admin-side.collapsed { width: 76px; }
+    .admin-side.collapsed .admin-logo { justify-content: center; padding-left: 0; padding-right: 0; }
+    .admin-side.collapsed .admin-logo-text,
+    .admin-side.collapsed .nav-label,
+    .admin-side.collapsed .admin-nav-group,
+    .admin-side.collapsed .admin-foot { display: none; }
+    .admin-side.collapsed .admin-nav-item { justify-content: center; padding: 11px; }
+    .admin-side.collapsed .side-cta { padding: 12px; }
+    .admin-main.collapsed { margin-left: 76px; }
     .side-cta {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       margin: 0 6px 12px; padding: 12px;
@@ -91,6 +115,10 @@
     .admin-main {
       padding: 24px 32px 80px;
       margin-left: 256px;
+      transition: margin-left 0.22s ease;
+    }
+    @media (min-width: 1025px) {
+      .side-collapse-toggle { display: inline-flex; }
     }
     .admin-topbar {
       display: flex; align-items: center; gap: 14px;
@@ -270,6 +298,7 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: #fff;
+      background: #64748b; /* cor por omissão para categorias sem cor própria definida abaixo */
     }
     .tag-web { background: #3B82F6; }
     .tag-design { background: #A78BFA; }
@@ -372,16 +401,23 @@
 
     /* ---- Painel responsivo: menu lateral vira gaveta (drawer) ---- */
     @media (max-width: 1024px) {
-      .admin-side {
+      .admin-side, .admin-side.collapsed {
         width: 264px; z-index: 60;
         transform: translateX(-100%); transition: transform 0.28s ease;
       }
       .admin-side.open { transform: translateX(0); box-shadow: 0 0 60px rgba(0,0,0,0.5); }
+      .admin-side.collapsed .admin-logo-text,
+      .admin-side.collapsed .nav-label,
+      .admin-side.collapsed .admin-nav-group,
+      .admin-side.collapsed .admin-foot { display: block; }
+      .admin-side.collapsed .nav-label { display: inline; }
+      .admin-side.collapsed .admin-nav-item { justify-content: flex-start; padding: 11px 14px; }
+      .side-collapse-toggle { display: none !important; }
       .side-close { display: inline-flex; }
       .admin-hamburger { display: inline-flex; }
       .dash-grid { grid-template-columns: 1fr; }
       .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .admin-main { padding: 16px; margin-left: 0; }
+      .admin-main, .admin-main.collapsed { padding: 16px; margin-left: 0; }
       .admin-topbar h1 { font-size: 20px; }
       .admin-search { min-width: 0; width: 140px; }
     }
@@ -424,7 +460,7 @@
     };
 
     // Versão do painel/site — mostrada APENAS no painel (nunca no site público).
-    const APP_VERSION = '1.13.0';
+    const APP_VERSION = '1.14.0';
 
     // Upload de ficheiros (logótipo, ZIP) — multipart.
     const apiUpload = async (action, formData) => {
@@ -692,6 +728,64 @@
       );
     }
 
+    // Configuração de entrega automática de um serviço: ficheiros/links + mensagens.
+    function ServicoEntregaFields({ editing, setEditing, T }) {
+      const [busy, setBusy] = useState(false);
+      const ficheiros = Array.isArray(editing.entregaFicheiros) ? editing.entregaFicheiros : [];
+      const setFicheiros = (f) => setEditing({ ...editing, entregaFicheiros: f });
+      const addLink = () => setFicheiros([...ficheiros, { tipo: 'link', url: '', nome: '', note: '' }]);
+      const uploadFile = async (file) => {
+        if (!file) return;
+        setBusy(true);
+        const fd = new FormData(); fd.append('file', file);
+        const r = await apiUpload('upload-file', fd);
+        setBusy(false);
+        if (r.ok) setFicheiros([...ficheiros, { tipo: 'file', url: r.url, nome: r.nome, note: '' }]);
+        else window.alert(r.message || AT('upError'));
+      };
+      const updateItem = (i, k, v) => setFicheiros(ficheiros.map((f, idx) => idx === i ? { ...f, [k]: v } : f));
+      const removeItem = (i) => setFicheiros(ficheiros.filter((_, idx) => idx !== i));
+      return (
+        <div style={{display:'grid',gap:10}}>
+          <div className="field"><label>{T.entregaMsg}</label><textarea rows="2" value={editing.entregaMsg || ''} onChange={(e) => setEditing({...editing, entregaMsg: e.target.value})} placeholder={T.phEntregaMsg} /><div className="field-error"/></div>
+          <div className="field"><label>{T.entregaInstrucoes}</label><textarea rows="3" value={editing.entregaInstrucoes || ''} onChange={(e) => setEditing({...editing, entregaInstrucoes: e.target.value})} placeholder={T.phEntregaInstrucoes} /><div className="field-error"/></div>
+          <div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+              <label style={{margin:0,fontWeight:600,fontSize:13}}>{T.entregaFicheiros}</label>
+              <div style={{display:'flex',gap:8}}>
+                <label className="btn btn-ghost" style={{cursor:'pointer',margin:0,fontSize:12}}>
+                  <FA name="upload" s={11} /> {busy ? T.dlvUploading : T.dlvAddFile}
+                  <input type="file" style={{display:'none'}} disabled={busy} onChange={(e) => { uploadFile(e.target.files[0]); e.target.value=''; }} />
+                </label>
+                <button type="button" className="btn btn-ghost" style={{fontSize:12}} onClick={addLink}><FA name="link" s={11} /> {T.dlvAddLink}</button>
+              </div>
+            </div>
+            {ficheiros.length === 0 ? (
+              <div style={{border:'1px dashed var(--line)',borderRadius:10,padding:'12px',textAlign:'center',color:'var(--ink-muted)',fontSize:12.5}}>{T.entregaSemFicheiros}</div>
+            ) : (
+              <div style={{display:'grid',gap:8}}>
+                {ficheiros.map((f, i) => (
+                  <div key={i} style={{border:'1px solid var(--line)',borderRadius:9,padding:'8px 10px',display:'grid',gap:6}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span className={`table-tag ${f.tipo === 'file' ? 'tag-active' : 'tag-marketing'}`}><FA name={f.tipo === 'file' ? 'file' : 'link'} s={10} /> {f.tipo === 'file' ? T.dlvFile : T.dlvLink}</span>
+                      <input value={f.nome || ''} onChange={(e) => updateItem(i, 'nome', e.target.value)} placeholder={T.dlvItemName}
+                        style={{flex:1,minWidth:0,padding:'5px 9px',border:'1px solid var(--line)',borderRadius:7,fontSize:12.5,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                      <button type="button" className="ra-btn danger" onClick={() => removeItem(i)} title={T.btnRemove}><Trash s={11} /></button>
+                    </div>
+                    {f.tipo === 'link' && (
+                      <input value={f.url || ''} onChange={(e) => updateItem(i, 'url', e.target.value)} placeholder={T.dlvLinkUrl}
+                        style={{padding:'5px 9px',border:'1px solid var(--line)',borderRadius:7,fontSize:12.5,background:'var(--card,#fff)',color:'var(--ink)'}} />
+                    )}
+                    {f.tipo === 'file' && <div style={{fontSize:11,color:'var(--ink-muted)',wordBreak:'break-all'}}><FA name="paperclip" s={10} /> {f.url}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     function AccountEditor({ username, onChanged }) {
       const [cur, setCur] = useState('');
       const [nu, setNu] = useState(username || 'admin');
@@ -772,6 +866,14 @@
           <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
             <LogoSlot variant="light" label={AT('logoLight')} bg="var(--bg-soft)" logo={branding.light} onChanged={onChange} />
             <LogoSlot variant="dark" label={AT('logoDark')} bg="var(--brand-deep)" logo={branding.dark} onChanged={onChange} />
+          </div>
+          <div style={{borderTop:'1px solid var(--line)',marginTop:18,paddingTop:16}}>
+            <h3 style={{fontSize:14,marginBottom:6}}>{AT('logoAdminTitle')}</h3>
+            <p style={{color:'var(--ink-muted)',fontSize:12.5,marginBottom:14}}>{AT('logoAdminNote')}</p>
+            <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
+              <LogoSlot variant="adminFavicon" label={AT('logoAdminFavicon')} bg="var(--bg-soft)" logo={branding.adminFavicon} onChanged={onChange} />
+              <LogoSlot variant="adminLogo" label={AT('logoAdminLogo')} bg="var(--brand-deep)" logo={branding.adminLogo} onChanged={onChange} />
+            </div>
           </div>
         </div>
       );
@@ -1127,6 +1229,85 @@
               </div>
             )}
           </div>
+        </div>
+      );
+    }
+
+    function LimiteValorEditor({ limiteValor, onSaved }) {
+      const [l, setL] = useState(limiteValor || {});
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setL(limiteValor || {}); }, [limiteValor]);
+      const f = (k, v) => setL((x) => ({ ...x, [k]: v }));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('limite-valor-save', 'POST', { limiteValor: l });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: AT('limiteSaved') }); onSaved && onSaved(l); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>{AT('limiteTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('limiteNote')}</p>
+          <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,fontWeight:600,fontSize:14,cursor:'pointer'}}>
+            <input type="checkbox" checked={!!l.ativo} onChange={(e) => f('ativo', e.target.checked)} style={{width:18,height:18,accentColor:'var(--accent)'}} />
+            {AT('limiteAtivo')}
+          </label>
+          <div style={{display:'grid',gap:12,maxWidth:520}}>
+            <div className="cf-row">
+              <div className="field"><label>{AT('limiteMin')}</label><input type="number" min="0" step="0.01" value={l.min ?? ''} onChange={(e) => f('min', e.target.value)} placeholder="Ex.: 50" /><div className="field-error"/></div>
+              <div className="field"><label>{AT('limiteMax')}</label><input type="number" min="0" step="0.01" value={l.max ?? ''} onChange={(e) => f('max', e.target.value)} placeholder="Ex.: 50000" /><div className="field-error"/></div>
+            </div>
+            <div className="field"><label>{AT('limiteMsg')}</label><input value={l.mensagem || ''} onChange={(e) => f('mensagem', e.target.value)} placeholder={AT('limiteMsgPh')} /><div className="field-error"/></div>
+            <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{justifySelf:'start'}}>{busy ? AT('saving') : AT('btnSaveLimite')}</button>
+          </div>
+          <Aviso msg={msg} />
+        </div>
+      );
+    }
+
+    function CategoriasEditor({ categorias, onSaved }) {
+      const [lista, setLista] = useState(categorias && categorias.length ? categorias : ['design', 'web', 'marketing']);
+      const [novo, setNovo] = useState('');
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState(null);
+      useEffect(() => { setLista(categorias && categorias.length ? categorias : ['design', 'web', 'marketing']); }, [categorias]);
+      const adicionar = () => {
+        const nome = novo.trim();
+        if (!nome || lista.includes(nome)) return;
+        setLista((l) => [...l, nome]); setNovo('');
+      };
+      const remover = (nome) => setLista((l) => l.filter((c) => c !== nome));
+      const save = async () => {
+        setBusy(true); setMsg(null);
+        const r = await api('categorias-save', 'POST', { categorias: lista });
+        setBusy(false);
+        if (r.ok) { setMsg({ ok: true, text: AT('catSaved') }); onSaved && onSaved(r.categorias || lista); }
+        else setMsg({ ok: false, text: r.message || AT('genErr') });
+      };
+      return (
+        <div className="admin-panel" style={{marginBottom:16}}>
+          <h2 style={{marginBottom:6}}>{AT('catTitle')}</h2>
+          <p style={{color:'var(--ink-muted)',fontSize:13,marginBottom:16}}>{AT('catNote')}</p>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:14}}>
+            {lista.map((c) => (
+              <span key={c} className="table-tag" style={{display:'inline-flex',alignItems:'center',gap:6,background:'var(--bg-soft)',color:'var(--ink)'}}>
+                {c}
+                <button type="button" onClick={() => remover(c)} style={{border:'none',background:'none',color:'inherit',cursor:'pointer',padding:0,display:'inline-flex'}} title={AT('btnRemove')}>
+                  <FA name="xmark" s={10} />
+                </button>
+              </span>
+            ))}
+            {!lista.length && <span style={{fontSize:12.5,color:'var(--ink-muted)'}}>{AT('catEmpty')}</span>}
+          </div>
+          <div style={{display:'flex',gap:8,maxWidth:420}}>
+            <input value={novo} onChange={(e) => setNovo(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); adicionar(); } }}
+              placeholder={AT('catPh')} style={{flex:1,padding:'9px 12px',border:'1px solid var(--line)',borderRadius:9,fontSize:13,background:'var(--card,#fff)',color:'var(--ink)'}} />
+            <button type="button" className="btn btn-ghost" onClick={adicionar}><Plus />{AT('catAdd')}</button>
+          </div>
+          <button type="button" className="btn btn-accent" onClick={save} disabled={busy} style={{marginTop:14}}>{busy ? AT('saving') : AT('btnSaveCat')}</button>
+          <Aviso msg={msg} />
         </div>
       );
     }
@@ -1567,6 +1748,9 @@
         logoTitle:'Logótipo do site',
         logoNote:'Carregue duas versões (PNG/SVG até 2 MB). O site escolhe automaticamente conforme o fundo, e o logótipo passa também a ser o ícone (favicon) do site. Sem logótipo, é usado o símbolo padrão.',
         logoLight:'Para fundo claro (cores escuras)', logoDark:'Para fundo escuro (cores claras)', logoDefault:'Símbolo padrão',
+        logoAdminTitle:'Ícone e logótipo do painel', logoAdminNote:'Só para o painel de administração (admin.html) — independentes do logótipo do site. O ícone aparece no separador do navegador; o logótipo, no topo da barra lateral.',
+        logoAdminFavicon:'Ícone do separador (favicon)', logoAdminLogo:'Logótipo da barra lateral',
+        sidebarCollapse:'Encolher menu', sidebarExpand:'Expandir menu',
         btnChange:'Trocar', btnLoad:'Carregar',
         // Atualização por ZIP
         updTitle:'Atualizar o site (ZIP)',
@@ -1613,6 +1797,12 @@
         pagajaWebhookTitle:'Webhook de confirmação',
         pagajaWebhookNote:'Necessário para pagamentos por M-Pesa/e-Mola/mKesh em modo produção (STK push) e por cartão — é o que confirma o pagamento automaticamente. Configure uma vez; usa o site_url definido em config.php.',
         pagajaWebhookSetup:'Configurar webhook', pagajaWebhookCheck:'Ver estado', pagajaWebhookNone:'Nenhum webhook configurado ainda.',
+        // Intervalo de valores
+        limiteTitle:'Intervalo de valores (checkout)',
+        limiteNote:'Limita o valor que o cliente pode pagar de cada vez pela carteira automática (M-Pesa/e-Mola/mKesh/Cartão). Fora do intervalo, o pagamento é recusado com a mensagem abaixo.',
+        limiteAtivo:'Activar validação de intervalo', limiteMin:'Valor mínimo (MT)', limiteMax:'Valor máximo (MT)',
+        limiteMsg:'Mensagem personalizada (opcional)', limiteMsgPh:'Ex.: Este pagamento tem de estar entre 50 e 50.000 MT.',
+        btnSaveLimite:'Guardar intervalo', limiteSaved:'Intervalo guardado.',
         // Login social
         socialTitle:'Login social (Google / Facebook)',
         socialNote:'Deixe os clientes entrarem na Área de Cliente com a conta Google ou Facebook. Os botões aparecem na página de entrada assim que preencher os IDs abaixo. O cliente entra se o e-mail da conta coincidir com um pedido.',
@@ -1632,6 +1822,10 @@
         sitesAdd:'Adicionar site', btnSaveSites:'Guardar sites', sitesSaved:'Sites guardados.',
         sitesEmpty:'Ainda sem sites. Clique em "Adicionar site".', sitesDraft:'Rascunho', sitesActive:'Activo',
         sitesImg:'Imagem', sitesImgHint:'Opcional — se não houver imagem, mostra a pré-visualização ao vivo do link.',
+        // Categorias de serviços
+        catTitle:'Categorias de serviços', catNote:'Geridas aqui — usadas no campo "Categoria" ao criar/editar um serviço.',
+        catPh:'Nome da categoria (ex.: Fotografia)', catAdd:'Adicionar', catEmpty:'Ainda sem categorias.',
+        btnSaveCat:'Guardar categorias', catSaved:'Categorias guardadas.',
         // Segurança (endereço secreto do painel)
         segTitle:'Segurança — endereço secreto do painel',
         segNote:'Oculte o endereço do painel para despistar ataques automáticos. Defina uma palavra secreta (ou gere uma) e o painel passa a abrir só nesse endereço. O acesso directo a admin.html deixa de funcionar.',
@@ -1680,6 +1874,11 @@
         dlvNoItems:'Ainda sem ficheiros nem links. Carregue um ficheiro ou adicione um link para entregar.',
         dlvSave:'Guardar entrega', dlvSaved:'Entrega guardada.', dlvNotify:'Notificar cliente', dlvOpenClient:'Abrir Área de Cliente',
         dlvDelivered:'Entregue', dlvPending:'Sem entrega', dlvErr:'Erro ao guardar a entrega.',
+        entregaAtiva:'Entregar automaticamente após o pagamento',
+        entregaNote:'Assim que o pedido deste serviço ficar Pago, os ficheiros/links abaixo são entregues automaticamente na Área de Cliente e as instruções seguem no e-mail de confirmação.',
+        entregaMsg:'Mensagem de entrega (opcional)', phEntregaMsg:'Ex.: Aqui está o seu ficheiro. Obrigado pela confiança!',
+        entregaInstrucoes:'Instruções de utilização (opcional)', phEntregaInstrucoes:'Ex.: Descarregue o ficheiro e abra-o no Photoshop ou Illustrator. Para dúvidas, fale connosco.',
+        entregaFicheiros:'Ficheiros/links a entregar', entregaSemFicheiros:'Ainda sem ficheiros nem links configurados.',
         dlvComments:'Comentários', dlvNoComments:'Sem comentários do cliente.', dlvReplyPh:'Responder ao cliente…',
         dlvPay:'Estado de pagamento', dlvPayHint:'Enquanto não estiver «Pago», as imagens aparecem ao cliente com marca de água (demo) e as descargas ficam bloqueadas.',
         dlvValorAcordado:'Valor acordado (MT)', dlvSaveValor:'Guardar valor', dlvValorPago:'Valor já pago',
@@ -1744,6 +1943,9 @@
         logoTitle:'Site logo',
         logoNote:'Upload two versions (PNG/SVG up to 2 MB). The site picks the right one automatically based on the background, and the logo also becomes the site icon (favicon). Without a logo, the default symbol is used.',
         logoLight:'For light background (dark colours)', logoDark:'For dark background (light colours)', logoDefault:'Default symbol',
+        logoAdminTitle:'Panel icon and logo', logoAdminNote:'Only for the admin panel (admin.html) — independent from the site logo. The icon shows in the browser tab; the logo, at the top of the sidebar.',
+        logoAdminFavicon:'Tab icon (favicon)', logoAdminLogo:'Sidebar logo',
+        sidebarCollapse:'Collapse menu', sidebarExpand:'Expand menu',
         btnChange:'Change', btnLoad:'Upload',
         // ZIP update
         updTitle:'Update site (ZIP)',
@@ -1790,6 +1992,12 @@
         pagajaWebhookTitle:'Confirmation webhook',
         pagajaWebhookNote:'Required for M-Pesa/e-Mola/mKesh in production mode (STK push) and for card payments — this is what confirms the payment automatically. Set up once; uses the site_url defined in config.php.',
         pagajaWebhookSetup:'Set up webhook', pagajaWebhookCheck:'Check status', pagajaWebhookNone:'No webhook configured yet.',
+        // Value range
+        limiteTitle:'Value range (checkout)',
+        limiteNote:'Limits how much a client can pay at once via the automatic wallet (M-Pesa/e-Mola/mKesh/Card). Outside the range, the payment is rejected with the message below.',
+        limiteAtivo:'Enable range validation', limiteMin:'Minimum amount (MT)', limiteMax:'Maximum amount (MT)',
+        limiteMsg:'Custom message (optional)', limiteMsgPh:'e.g. This payment must be between 50 and 50,000 MT.',
+        btnSaveLimite:'Save range', limiteSaved:'Range saved.',
         // Social login
         socialTitle:'Social login (Google / Facebook)',
         socialNote:'Let clients sign in to the Client Area with their Google or Facebook account. The buttons appear on the login page once you fill in the IDs below. A client signs in if their account email matches an order.',
@@ -1809,6 +2017,10 @@
         sitesAdd:'Add site', btnSaveSites:'Save sites', sitesSaved:'Sites saved.',
         sitesEmpty:'No sites yet. Click "Add site".', sitesDraft:'Draft', sitesActive:'Active',
         sitesImg:'Image', sitesImgHint:'Optional — without an image, the live link preview is shown instead.',
+        // Service categories
+        catTitle:'Service categories', catNote:'Managed here — used in the "Category" field when creating/editing a service.',
+        catPh:'Category name (e.g. Photography)', catAdd:'Add', catEmpty:'No categories yet.',
+        btnSaveCat:'Save categories', catSaved:'Categories saved.',
         // Security (secret panel address)
         segTitle:'Security — secret panel address',
         segNote:'Hide the panel address to throw off automated attacks. Set a secret word (or generate one) and the panel opens only at that address. Direct access to admin.html stops working.',
@@ -1857,6 +2069,11 @@
         dlvNoItems:'No files or links yet. Upload a file or add a link to deliver.',
         dlvSave:'Save delivery', dlvSaved:'Delivery saved.', dlvNotify:'Notify client', dlvOpenClient:'Open Client Area',
         dlvDelivered:'Delivered', dlvPending:'No delivery', dlvErr:'Error saving the delivery.',
+        entregaAtiva:'Deliver automatically after payment',
+        entregaNote:'As soon as an order for this service is marked Paid, the files/links below are delivered automatically in the Client Area, and the instructions go in the confirmation email.',
+        entregaMsg:'Delivery message (optional)', phEntregaMsg:'e.g. Here is your file. Thanks for trusting us!',
+        entregaInstrucoes:'Usage instructions (optional)', phEntregaInstrucoes:'e.g. Download the file and open it in Photoshop or Illustrator. Questions? Get in touch.',
+        entregaFicheiros:'Files/links to deliver', entregaSemFicheiros:'No files or links configured yet.',
         dlvComments:'Comments', dlvNoComments:'No comments from the client.', dlvReplyPh:'Reply to the client…',
         dlvPay:'Payment status', dlvPayHint:'Until it is “Paid”, images are shown to the client with a watermark (demo) and downloads stay locked.',
         dlvValorAcordado:'Agreed total (MT)', dlvSaveValor:'Save amount', dlvValorPago:'Already paid',
@@ -1892,6 +2109,8 @@
       const [payments, setPayments] = useState({});
       const [mozpayment, setMozpayment] = useState({});
       const [pagaja, setPagaja] = useState({});
+      const [limiteValor, setLimiteValor] = useState({});
+      const [categorias, setCategorias] = useState([]);
       const [social, setSocial] = useState({});
       const [sites, setSites] = useState([]);
       const [seg, setSeg] = useState({});
@@ -1918,6 +2137,20 @@
       useEffect(() => { localStorage.setItem('ctg_admin_lang', lang); }, [lang]);
       // Fecha o menu lateral (mobile) ao mudar de separador.
       useEffect(() => { setSidebarOpen(false); }, [tab]);
+      // Menu lateral encolhido (desktop) — persistido no navegador.
+      const [sidebarCollapsed, setSidebarCollapsed] = useState(localStorage.getItem('ctg_admin_sidebar_collapsed') === '1');
+      useEffect(() => { localStorage.setItem('ctg_admin_sidebar_collapsed', sidebarCollapsed ? '1' : '0'); }, [sidebarCollapsed]);
+      // Favicon do painel: usa o carregado em Definições, ou o padrão do site.
+      useEffect(() => {
+        const href = branding.adminFavicon || 'assets/icons/icon-192.png?v=122';
+        let link = document.querySelector('link[rel="icon"]');
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+        }
+        link.href = href;
+      }, [branding.adminFavicon]);
 
       // Notificações: pede permissão e verifica novos pedidos periodicamente.
       useEffect(() => {
@@ -1970,6 +2203,8 @@
           if (r.payments) setPayments(r.payments);
           if (r.mozpayment) setMozpayment(r.mozpayment);
           if (r.pagaja) setPagaja(r.pagaja);
+          if (r.limiteValor) setLimiteValor(r.limiteValor);
+          if (Array.isArray(r.categorias)) setCategorias(r.categorias);
           if (r.social) setSocial(r.social);
           if (Array.isArray(r.sites)) setSites(r.sites);
           if (r.seg) setSeg(r.seg);
@@ -2124,7 +2359,7 @@
       }
 
       const NEW_ITEM = {
-        service: () => ({ id: Date.now(), t: '', d: '', category: 'design', price: '', status: 'active', img: '' }),
+        service: () => ({ id: Date.now(), t: '', d: '', category: 'design', price: '', status: 'active', img: '', entregaAtiva: false, entregaMsg: '', entregaInstrucoes: '', entregaFicheiros: [] }),
         portfolio: () => ({ id: Date.now(), t: '', c: '', tag: 'web', status: 'active', year: new Date().getFullYear(), img: '', url: '' }),
         testimonial: () => ({ id: Date.now(), q: '', n: '', r: '', status: 'active', img: '' }),
       };
@@ -2181,32 +2416,35 @@
       return (
         <div className="admin-shell">
           {sidebarOpen && <div className="side-overlay" onClick={() => setSidebarOpen(false)} />}
-          <aside className={`admin-side ${sidebarOpen ? 'open' : ''}`}>
+          <aside className={`admin-side ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
+            <button className="side-collapse-toggle" onClick={() => setSidebarCollapsed(v => !v)} aria-label={sidebarCollapsed ? T.sidebarExpand : T.sidebarCollapse} title={sidebarCollapsed ? T.sidebarExpand : T.sidebarCollapse}>
+              <FA name={sidebarCollapsed ? 'angles-right' : 'angles-left'} s={12} />
+            </button>
             <div className="admin-logo">
-              <div className="admin-logo-mark">C</div>
-              <div>
+              <div className="admin-logo-mark">{branding.adminLogo ? <img src={branding.adminLogo} alt="" /> : 'C'}</div>
+              <div className="admin-logo-text">
                 <div style={{fontWeight:700,fontSize:14}}>Cari Tech</div>
                 <div style={{fontSize:10,opacity:0.6}}>Painel</div>
               </div>
               <button className="side-close" onClick={() => setSidebarOpen(false)} aria-label="Fechar menu"><FA name="xmark" s={16} /></button>
             </div>
-            <a className="side-cta" href="index.html" target="_blank" rel="noreferrer"><FA name="up-right-from-square" s={13} />{T.viewsite}</a>
+            <a className="side-cta" href="index.html" target="_blank" rel="noreferrer"><FA name="up-right-from-square" s={13} /><span className="nav-label">{T.viewsite}</span></a>
             {NAV.map((g, gi) => (
               <React.Fragment key={gi}>
                 <div className="admin-nav-group">{g.grp}</div>
                 {g.items.map(([id, ico]) => (
-                  <button key={id} className={`admin-nav-item ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}><FA name={ico} s={15} />{T[id]}</button>
+                  <button key={id} className={`admin-nav-item ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)} title={sidebarCollapsed ? T[id] : ''}><FA name={ico} s={15} /><span className="nav-label">{T[id]}</span></button>
                 ))}
               </React.Fragment>
             ))}
-            <button className="admin-nav-item" onClick={logout}><FA name="arrow-right-from-bracket" s={15} />{T.logout}</button>
+            <button className="admin-nav-item" onClick={logout} title={sidebarCollapsed ? T.logout : ''}><FA name="arrow-right-from-bracket" s={15} /><span className="nav-label">{T.logout}</span></button>
             <div className="admin-foot">
               Sessão activa · <b style={{color:'rgba(255,255,255,0.6)'}}>{APP_VERSION}</b><br/>
               <a href="index.html"><FA name="arrow-left" s={11} /> {T.viewsite}</a>
             </div>
           </aside>
 
-          <main className="admin-main">
+          <main className={`admin-main ${sidebarCollapsed ? 'collapsed' : ''}`}>
             <div className="admin-topbar">
               <button className="admin-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu"><FA name="bars" s={18} /></button>
               <div className="admin-topbar-title">
@@ -2267,6 +2505,7 @@
             {tab === 'services' && (
               <>
               <HeadingEditor heading={headings.services} onCommit={(f, v) => updateHeading('services', f, v)} />
+              <CategoriasEditor categorias={categorias} onSaved={setCategorias} />
               <div className="admin-panel">
                 <div className="admin-panel-head">
                   <h2>{T.svcTitle}</h2>
@@ -2540,6 +2779,7 @@
                 <PaymentsEditor payments={payments} onSaved={setPayments} />
                 <MozPaymentEditor mozpayment={mozpayment} onSaved={setMozpayment} />
                 <PagajaEditor pagaja={pagaja} onSaved={setPagaja} />
+                <LimiteValorEditor limiteValor={limiteValor} onSaved={setLimiteValor} />
                 <SitesEditor sites={sites} onSaved={setSites} />
                 <SocialEditor social={social} onSaved={setSocial} />
                 <SmtpEditor smtp={smtp} onSaved={setSmtp} />
@@ -2569,7 +2809,7 @@
                       <ImageUploadField label={T.fImgOpt} hint={T.hintSvcImg} value={editing.img} onChange={(v) => setEditing({...editing, img: v})} />
                       <div className="field"><label>{T.fCategory}</label>
                         <select value={editing.category} onChange={(e) => setEditing({...editing, category: e.target.value})}>
-                          <option value="design">Design</option><option value="web">Web</option><option value="marketing">Marketing</option>
+                          {(categorias.length ? categorias : ['design', 'web', 'marketing']).map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                         <div className="field-error"/>
                       </div>
@@ -2579,6 +2819,14 @@
                           <option value="active">{T.optActiveSite}</option><option value="draft">{T.optDraftHidden}</option>
                         </select>
                         <div className="field-error"/>
+                      </div>
+                      <div style={{borderTop:'1px solid var(--line)',paddingTop:12,marginTop:4}}>
+                        <label style={{display:'flex',alignItems:'center',gap:10,marginBottom:10,fontWeight:600,fontSize:14,cursor:'pointer'}}>
+                          <input type="checkbox" checked={!!editing.entregaAtiva} onChange={(e) => setEditing({...editing, entregaAtiva: e.target.checked})} style={{width:18,height:18,accentColor:'var(--accent)'}} />
+                          {T.entregaAtiva}
+                        </label>
+                        <p style={{fontSize:12,color:'var(--ink-muted)',marginBottom:10}}>{T.entregaNote}</p>
+                        {editing.entregaAtiva && <ServicoEntregaFields editing={editing} setEditing={setEditing} T={T} />}
                       </div>
                     </>
                   ) : editType === 'portfolio' ? (

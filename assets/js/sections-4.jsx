@@ -548,6 +548,7 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
   const [feedback, setFeedback] = useS4('');
   const [pay, setPay] = useS4({});
   const [gateway, setGateway] = useS4({});
+  const [limiteValor, setLimiteValor] = useS4({});
   const [order, setOrder] = useS4(null); // { leadId, codigo, email }
   const [payMetodo, setPayMetodo] = useS4('carteira'); // carteira | link | transferencia
   const [walletMetodo, setWalletMetodo] = useS4('mpesa'); // mpesa | emola
@@ -563,6 +564,7 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
     window.loadContent().then((c) => {
       if (c && c.payments) setPay(c.payments);
       if (c && c.gateway) setGateway(c.gateway);
+      if (c && c.limiteValor) setLimiteValor(c.limiteValor);
     });
   }, [open]);
 
@@ -601,6 +603,9 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
       if (walletMetodo !== 'cartao' && numero.replace(/\D/g, '').length < 9) { setFeedback('Indique um número de telemóvel válido.'); return; }
       const v = parseFloat(String(valor).replace(',', '.'));
       if (!v || v <= 0) { setFeedback('Indique o valor a pagar.'); return; }
+      if (limiteValor.ativo && ((limiteValor.min != null && v < limiteValor.min) || (limiteValor.max != null && v > limiteValor.max))) {
+        setFeedback(limiteValor.mensagem || `O valor deve estar entre ${limiteValor.min ?? 0} e ${limiteValor.max ?? 0} MT.`); return;
+      }
       if (payPlano === 'parcial') {
         const vt = parseFloat(String(valorTotalDecl).replace(',', '.'));
         if (!vt || vt <= 0) { setFeedback('Indique o valor total do trabalho.'); return; }
@@ -756,8 +761,17 @@ function CartModal({ open, onClose, items, onRemove, onClear }) {
                           {walletMetodo !== 'cartao' && (
                             <div className="field"><label>Número {nomeMetodo(walletMetodo)}</label><input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="84 000 0000" /><div className="field-error" /></div>
                           )}
-                          <div className="field"><label>Valor a pagar agora (MT)</label><input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" /><div className="field-error" /></div>
+                          <div className="field">
+                            <label>Valor a pagar agora (MT)</label>
+                            <input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="1000" inputMode="decimal" />
+                            <div className="field-error" />
+                          </div>
                         </div>
+                        {limiteValor.ativo && (limiteValor.min != null || limiteValor.max != null) && (
+                          <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: -4 }}>
+                            Valor permitido: {limiteValor.min != null ? `${limiteValor.min} MT` : 'sem mínimo'} – {limiteValor.max != null ? `${limiteValor.max} MT` : 'sem máximo'}
+                          </p>
+                        )}
                         <p style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>
                           {walletMetodo === 'cartao'
                             ? 'Ao finalizar, abrimos a página segura de pagamento por cartão numa nova aba.'

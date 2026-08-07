@@ -21,6 +21,7 @@ $sites = store_get_sites($config);
 $moz = store_get_mozpayment($config);
 $pj = store_get_pagaja($config);
 $pagajaActivo = !empty($pj['enabled']) && trim((string) ($pj['client_id'] ?? '')) !== '' && trim((string) ($pj['client_secret'] ?? '')) !== '';
+$limiteValor = store_get_limite_valor($config);
 
 /* Só expõe ao público os itens marcados como activos/publicados. */
 $publicos = fn($lista) => array_values(array_filter(
@@ -28,12 +29,19 @@ $publicos = fn($lista) => array_values(array_filter(
     fn($i) => ($i['status'] ?? 'active') === 'active'
 ));
 
+/* Serviços: nunca expor a configuração de entrega automática (ficheiros/links
+   de entrega, mensagens) — isso daria acesso ao produto sem pagar. */
+$servicosPublicos = array_map(function ($s) {
+    unset($s['entregaAtiva'], $s['entregaFicheiros'], $s['entregaMsg'], $s['entregaInstrucoes']);
+    return $s;
+}, $publicos($dados['services']));
+
 /* Objectos vazios quando não há nada guardado (para o site usar os padrões). */
 $obj = fn($v) => (is_array($v) && $v) ? $v : new stdClass();
 
 echo json_encode([
     'ok'           => true,
-    'services'     => $publicos($dados['services']),
+    'services'     => $servicosPublicos,
     'portfolio'    => $publicos($dados['portfolio']),
     'testimonials' => $publicos($dados['testimonials']),
     'headings'     => $obj($dados['headings']),
@@ -48,6 +56,13 @@ echo json_encode([
         'emola'  => $pagajaActivo || (!empty($moz['emolaEnabled']) && trim((string) ($moz['emolaCarteira'] ?? '')) !== ''),
         'mkesh'  => $pagajaActivo,
         'cartao' => $pagajaActivo,
+    ],
+    // Intervalo de valores permitido no pagamento automático (só para validação no cliente — a regra real corre sempre no servidor).
+    'limiteValor'  => [
+        'ativo'    => !empty($limiteValor['ativo']),
+        'min'      => $limiteValor['min'] ?? null,
+        'max'      => $limiteValor['max'] ?? null,
+        'mensagem' => $limiteValor['mensagem'] ?? '',
     ],
     // Login social (só IDs públicos; o App Secret do Facebook NUNCA é exposto).
     'social'       => (function () use ($config) {

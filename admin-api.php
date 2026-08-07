@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && autenticado() && $action !== 'login
    actualização por ZIP (tem o seu próprio tratamento de erros). */
 $acoesSemVerificacaoDados = [
     'login', 'logout', 'session', 'leads', 'content', 'stats', 'deliveries', 'financas', 'audit', 'health',
-    'update-log', 'upload-logo', 'remove-logo', 'upload-image', 'upload-file', 'update-zip', 'update-restore',
+    'update-log', 'upload-image', 'upload-file', 'update-zip', 'update-restore',
     'mozpayment-test', 'pagaja-test', 'pagaja-webhook-status',
 ];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && autenticado() && !in_array($action, $acoesSemVerificacaoDados, true)) {
@@ -327,6 +327,8 @@ switch ($action) {
             'branding'     => store_get_branding($config),
             'payments'     => store_get_payments($config),
             'mozpayment'   => store_get_mozpayment($config),
+            'limiteValor'  => store_get_limite_valor($config),
+            'categorias'   => store_get_categorias($config),
             'pagaja'       => (function () use ($config) {
                 $p = store_get_pagaja($config);
                 return [
@@ -360,6 +362,23 @@ switch ($action) {
         if (!is_array($p)) responder(false, ['message' => 'Dados inválidos.'], 422);
         exigir_gravacao(store_set_payments($config, $p));
         responder(true, ['message' => 'Pagamentos guardados.']);
+
+    case 'limite-valor-save':
+        exigir_login();
+        $lv = $body['limiteValor'] ?? null;
+        if (!is_array($lv)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        $min = isset($lv['min']) && $lv['min'] !== '' ? (float) $lv['min'] : null;
+        $max = isset($lv['max']) && $lv['max'] !== '' ? (float) $lv['max'] : null;
+        if ($min !== null && $max !== null && $min > $max) {
+            responder(false, ['message' => 'O valor mínimo não pode ser maior do que o máximo.'], 422);
+        }
+        exigir_gravacao(store_set_limite_valor($config, [
+            'ativo'    => !empty($lv['ativo']),
+            'min'      => $min,
+            'max'      => $max,
+            'mensagem' => trim((string) ($lv['mensagem'] ?? '')),
+        ]));
+        responder(true, ['message' => 'Intervalo de valores guardado.']);
 
     case 'mozpayment-save':
         exigir_login();
@@ -517,6 +536,19 @@ switch ($action) {
         exigir_gravacao(store_set_sites($config, $limpos));
         responder(true, ['message' => 'Sites guardados.', 'sites' => $limpos]);
 
+    case 'categorias-save':
+        exigir_login();
+        $c = $body['categorias'] ?? null;
+        if (!is_array($c)) responder(false, ['message' => 'Dados inválidos.'], 422);
+        $limpas = [];
+        foreach ($c as $nome) {
+            $nome = trim((string) $nome);
+            if ($nome === '' || in_array($nome, $limpas, true)) continue;
+            $limpas[] = $nome;
+        }
+        exigir_gravacao(store_set_categorias($config, $limpas));
+        responder(true, ['message' => 'Categorias guardadas.', 'categorias' => $limpas]);
+
     case 'social-save':
         exigir_login();
         $s = $body['social'] ?? null;
@@ -564,24 +596,24 @@ switch ($action) {
 
     case 'upload-logo':
         exigir_login();
-        // variante: 'light' (fundo claro) ou 'dark' (fundo escuro)
-        $variante = ($_POST['variant'] ?? 'light') === 'dark' ? 'dark' : 'light';
+        // variante: 'light'/'dark' (logótipo do site), 'adminFavicon' ou 'adminLogo' (só do painel)
+        $variante = in_array($_POST['variant'] ?? '', ['dark', 'adminFavicon', 'adminLogo'], true) ? $_POST['variant'] : 'light';
         $r = guardar_imagem($_FILES['logo'] ?? null, 'logo-' . $variante, 2);
         if (!$r['ok']) responder(false, ['message' => $r['message']], 422);
         // Remove o logótipo anterior desta variante.
         $branding = store_get_branding($config);
         if (!empty($branding[$variante])) @unlink(__DIR__ . '/' . $branding[$variante]);
         $branding[$variante] = $r['path'];
-        store_set_branding($config, $branding);
+        exigir_gravacao(store_set_branding($config, $branding));
         responder(true, ['message' => 'Logótipo actualizado.', 'branding' => $branding]);
 
     case 'remove-logo':
         exigir_login();
-        $variante = ($_POST['variant'] ?? 'light') === 'dark' ? 'dark' : 'light';
+        $variante = in_array($_POST['variant'] ?? '', ['dark', 'adminFavicon', 'adminLogo'], true) ? $_POST['variant'] : 'light';
         $branding = store_get_branding($config);
         if (!empty($branding[$variante])) @unlink(__DIR__ . '/' . $branding[$variante]);
         unset($branding[$variante]);
-        store_set_branding($config, $branding);
+        exigir_gravacao(store_set_branding($config, $branding));
         responder(true, ['message' => 'Logótipo removido.', 'branding' => $branding]);
 
     case 'upload-image':
