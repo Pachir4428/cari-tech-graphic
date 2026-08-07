@@ -66,10 +66,11 @@ window.loadContent = function () {
         branding: (d && d.branding) || {},
         payments: (d && d.payments) || {},
         gateway: (d && d.gateway) || { mpesa: false, emola: false },
+        limiteValor: (d && d.limiteValor) || { ativo: false },
         sites: (d && d.sites) || [],
       };
     })
-    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {}, branding: {}, payments: {}, gateway: { mpesa: false, emola: false }, sites: [] }));
+    .catch(() => ({ services: [], portfolio: [], testimonials: [], headings: {}, contact: {}, branding: {}, payments: {}, gateway: { mpesa: false, emola: false }, limiteValor: { ativo: false }, sites: [] }));
   return window.__contentPromise;
 };
 

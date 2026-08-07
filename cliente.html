@@ -7,13 +7,13 @@
   <meta name="description" content="Acompanhe os seus pedidos e receba as suas entregas na Área de Cliente da Cari Tech Graphic." />
   <meta name="robots" content="noindex" />
   <!-- PWA (aplicação instalável) -->
-  <link rel="manifest" href="manifest.webmanifest?v=121" />
+  <link rel="manifest" href="manifest.webmanifest?v=122" />
   <meta name="theme-color" content="#0B4E50" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Cari Tech" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=121" />
-  <link rel="icon" href="assets/icons/icon-192.png?v=121" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=122" />
+  <link rel="icon" href="assets/icons/icon-192.png?v=122" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -356,6 +356,7 @@
     var CRED = { email:'', codigo:'' };
     var PEDIDOS = [];
     var GATEWAY = { mpesa:false, emola:false };
+    var LIMITE_VALOR = { ativo:false };
 
     /* ---------- Idioma (PT / EN) ---------- */
     var CI18N = {
@@ -626,6 +627,10 @@
       msgBox.className='pm-msg';
       if(PM.metodo!=='cartao' && numero.length<9){ msgBox.textContent=T('payErrPhone'); msgBox.className='pm-msg err'; return; }
       if(!valor || valor<=0){ msgBox.textContent=T('payErrValor'); msgBox.className='pm-msg err'; return; }
+      if(LIMITE_VALOR.ativo && ((LIMITE_VALOR.min!=null && valor<LIMITE_VALOR.min) || (LIMITE_VALOR.max!=null && valor>LIMITE_VALOR.max))){
+        msgBox.textContent = LIMITE_VALOR.mensagem || ('O valor deve estar entre '+(LIMITE_VALOR.min||0)+' e '+(LIMITE_VALOR.max||0)+' MT.');
+        msgBox.className='pm-msg err'; return;
+      }
       var valorTotal = null;
       if(PM.escolha==='parcial' && !p.valorAcordado){
         var tw = document.getElementById('pmTotalWork');
@@ -1045,6 +1050,7 @@
     fetch('conteudo.php').then(function(r){return r.json();}).then(function(d){
       aplicarMarca(d&&d.branding);
       if(d && d.gateway) GATEWAY = d.gateway;
+      if(d && d.limiteValor) LIMITE_VALOR = d.limiteValor;
     }).catch(function(){});
 
     // Fluxo de entrada:

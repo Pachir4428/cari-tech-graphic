@@ -274,6 +274,55 @@ function store_tomar_pagaja_pendente($config, $reference) {
     return $dados;
 }
 
+/* Intervalo de valores permitido no pagamento automático (checkout). Só o
+   admin configura; nunca é público (fica em conteudo.php de forma limitada —
+   ver ctg_limite_valor_publico). */
+function store_get_limite_valor($config)   { return _meta_get($config, 'limite_valor', 'limite_valor.json') ?: []; }
+function store_set_limite_valor($config, $l) { return _meta_set($config, 'limite_valor', 'limite_valor.json', $l); }
+
+/* Entrega automática (ficheiros/links + mensagem/instruções configuradas no
+   serviço) — aplicada quando um pedido passa a "pago". Nunca apaga uma
+   entrega manual já feita pelo estúdio, só complementa (evita duplicar
+   ficheiros já entregues, ex.: em pagamentos por parcelas). Devolve
+   ['instrucoes'=>string,'ficheiros'=>array] ou null se o serviço não tiver
+   entrega automática configurada. */
+function store_entregar_automaticamente($config, $lead, $leadId) {
+    $servicoNome = trim((string) ($lead['servico'] ?? ''));
+    if ($servicoNome === '') return null;
+    $conteudo = store_get_content($config);
+    $servico = null;
+    foreach (($conteudo['services'] ?? []) as $s) {
+        if (trim((string) ($s['t'] ?? '')) === $servicoNome) { $servico = $s; break; }
+    }
+    if (!$servico || empty($servico['entregaAtiva'])) return null;
+
+    $existente = store_get_delivery($config, $leadId);
+    $entregas = is_array($existente['entregas'] ?? null) ? $existente['entregas'] : [];
+    $ficheiros = is_array($servico['entregaFicheiros'] ?? null) ? $servico['entregaFicheiros'] : [];
+    foreach ($ficheiros as $f) {
+        $url = trim((string) ($f['url'] ?? ''));
+        if ($url === '') continue;
+        $jaExiste = false;
+        foreach ($entregas as $e) { if (($e['url'] ?? '') === $url) { $jaExiste = true; break; } }
+        if ($jaExiste) continue;
+        $entregas[] = [
+            'tipo' => ($f['tipo'] ?? 'link') === 'file' ? 'file' : 'link',
+            'url'  => $url,
+            'nome' => (string) ($f['nome'] ?? $servicoNome),
+            'note' => (string) ($f['note'] ?? ''),
+        ];
+    }
+    $msgEntrega = trim((string) ($servico['entregaMsg'] ?? ''));
+    store_set_delivery($config, $leadId, array_merge($existente ?: ['leadId' => $leadId], [
+        'leadId'   => $leadId,
+        'entregas' => $entregas,
+        'msg'      => $msgEntrega !== '' ? $msgEntrega : ($existente['msg'] ?? ''),
+        'entregue' => true,
+        'data'     => date('c'),
+    ]));
+    return ['instrucoes' => (string) ($servico['entregaInstrucoes'] ?? ''), 'ficheiros' => $ficheiros];
+}
+
 /* Login social: IDs/segredos do Google e Facebook, geridos no painel. */
 function store_get_social($config)    { return _meta_get($config, 'social', 'social.json') ?: []; }
 function store_set_social($config, $s) { return _meta_set($config, 'social', 'social.json', $s); }
@@ -281,6 +330,11 @@ function store_set_social($config, $s) { return _meta_set($config, 'social', 'so
 /* Sites & Sistemas: trabalhos publicados (link + pré-visualização). Público. */
 function store_get_sites($config)    { $v = _meta_get($config, 'sites', 'sites.json'); return is_array($v) ? $v : []; }
 function store_set_sites($config, $s) { return _meta_set($config, 'sites', 'sites.json', array_values($s)); }
+
+/* Categorias de serviços (geridas no painel) — lista simples de nomes,
+   usada no selector de categoria ao criar/editar um serviço. */
+function store_get_categorias($config)    { $v = _meta_get($config, 'categorias', 'categorias.json'); return is_array($v) ? $v : []; }
+function store_set_categorias($config, $c) { return _meta_set($config, 'categorias', 'categorias.json', array_values($c)); }
 
 /* Segurança: slug secreto do painel (ocultar admin.html). Nunca é público. */
 function store_get_seg($config)    { return _meta_get($config, 'seg', 'seg.json') ?: []; }
